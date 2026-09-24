@@ -1,0 +1,34 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#000">
+<!-- アイコン: ゲーム画面と同じ描き方で、青いロボが赤いロボを殴る。headless Chrome で 512×512 を撮る -->
+<canvas id="c" width="512" height="512" style="display:block"></canvas>
+<script src="../sim.js"></script>
+<script>
+const g = document.getElementById('c').getContext('2d');
+const sky = g.createLinearGradient(0, 0, 0, 512); sky.addColorStop(0, '#15173a'); sky.addColorStop(1, '#3a2a63');
+g.fillStyle = sky; g.fillRect(0, 0, 512, 512);
+g.fillStyle = 'rgba(124,131,255,.1)'; for (let x = -40; x < 560; x += 110) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x + 50, 420); g.lineTo(x - 50, 420); g.fill(); }
+g.fillStyle = '#4b3f8f'; g.fillRect(0, 420, 512, 92); g.fillStyle = '#7c83ff'; g.fillRect(0, 420, 512, 6);
+function pl(p) { g.beginPath(); g.moveTo(p[0][0], p[0][1]); for (const q of p.slice(1)) g.lineTo(q[0], q[1]); }
+function robot(ox, oy, s, face, color, armAng, tilt) {
+  g.save(); g.translate(ox, oy); g.rotate(tilt); g.scale(s * face, s);
+  const body = [[-32, -150], [32, -150], [32, -78], [-32, -78]];
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  const lg = (p, c, a) => { g.globalAlpha = a; g.strokeStyle = '#0d1030'; g.lineWidth = 11; pl(p); g.stroke(); g.strokeStyle = c; g.lineWidth = 7; pl(p); g.stroke(); g.globalAlpha = 1; };
+  lg([[0, -78], [-22, -20], [-26, 0]], '#37474f', .7);
+  pl(body); g.closePath(); g.fillStyle = color; g.fill();
+  g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(-32, -150, 64, 22);
+  g.strokeStyle = '#0d1030'; g.lineWidth = 4.5; pl(body); g.closePath(); g.stroke();
+  for (const dx of [-9, 9]) { g.fillStyle = '#fff'; g.beginPath(); g.arc(8 + dx, -126, 7, 0, 7); g.fill(); g.fillStyle = '#0d1030'; g.beginPath(); g.arc(11 + dx, -126, 3.5, 0, 7); g.fill(); }
+  lg([[0, -78], [18, -30], [20, 0]], '#455a64', 1);
+  const ax = 32 + Math.cos(armAng) * 62, ay = -138 + Math.sin(armAng) * 62;
+  g.strokeStyle = '#0d1030'; g.lineWidth = 11; g.beginPath(); g.moveTo(32, -138); g.lineTo(ax, ay); g.stroke();
+  g.strokeStyle = '#90caf9'; if (color !== '#1e88e5') g.strokeStyle = '#ef9a9a'; g.lineWidth = 7; g.stroke();
+  g.fillStyle = '#0d1030'; g.beginPath(); g.arc(ax, ay, 12, 0, 7); g.fill(); g.fillStyle = '#ffca28'; g.beginPath(); g.arc(ax, ay, 9, 0, 7); g.fill();
+  g.restore();
+}
+robot(330, 420, 1.35, -1, '#e53935', -0.6, 0.28);
+robot(170, 420, 1.45, 1, '#1e88e5', 0.1, -0.05);
+// 火花と数字
+g.fillStyle = '#ffd54f'; for (let i = 0; i < 14; i++) { const a = i * 0.45; g.fillRect(292 + Math.cos(a) * 34 - 4, 212 + Math.sin(a) * 34 - 4, 8, 8); }
+g.font = '900 64px sans-serif'; g.textAlign = 'center'; g.lineWidth = 10; g.strokeStyle = '#15173a'; g.strokeText('KO!', 380, 110); g.fillStyle = '#ffd54f'; g.fillText('KO!', 380, 110);
+</script></body></html>

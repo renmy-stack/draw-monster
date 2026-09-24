@@ -1,0 +1,344 @@
+// かいて！ロボファイト — ロボの組み立てとバトルの物理（DOM 非依存。Node でも動く）
+// 土台はドローカーの物理（描いた点の剛体 ＋ 関節で回る形 ＋ 衝突の撃力）。決定的: 1/240 秒の固定ステップ、乱数なし、Math.sin/cos は使わない
+'use strict';
+(function (root) {
+
+const SIM_VERSION = 1;          // 物理・数値を変えたら上げる
+const HZ = 240, DT = 1 / HZ;
+const G = 1400;                 // 重力
+const T = 3.5;                  // 線の太さ（半径）
+const E = 0.1;                  // 反発
+const MU = 0.9;                 // 摩擦
+const HW = 380;                 // 箱の半幅（かべ）
+const HP = 100;
+const TIME = 30;
+// 描ける大きさ（パッド座標 = ワールド座標。ロボの足もとが y=0 あたり）
+const PAD = { x0: -110, x1: 110, y0: -230, y1: 20 };
+const INK = { body: 520, arm: 150, leg: 130 };   // それぞれの線の長さの上限
+const MB = 2, ML = 1;           // 体の点・手足の点の重さ
+// 足（回って歩く）
+const POWER = 1.6, WLEG = 7;
+const REACT_LEG = 0.15, REACT_ARM = 0.2;   // モーターの反動を体に返す割合（大きいと すぐ転ぶ）
+// 腕（前後にパンチ）
+const ARM_AMP = 1.15;           // 振れ幅（rad、描いた向きから ±）
+const ARM_W0 = 16;              // 基準の腕（慣性 ARM_I0）の振りの速さの上限（rad/s）
+const ARM_I0 = 60000;
+const ARM_P = 0.5;              // 慣性が大きいと どれだけ遅くなるか
+// 立っていようとする力（転んだら効かない）
+const KR = 90, DR = 12, FALL_A = 1.25, DOWN_T = 1.0;
+// ダメージ
+const VTH = 120;                // これより遅い当たりは ノーダメージ
+const DMG_DIV = 26;
+const HIT_CD = 0.25;
+const KNOCK_SPIN = 1.0;         // 殴られたときの のけぞり
+
+const PI = 3.141592653589793, TWO_PI = PI * 2, HALF_PI = PI / 2;
+function wrapAngle(x) { if (x > PI || x < -PI) x -= TWO_PI * Math.floor((x + PI) / TWO_PI); return x; }
+function dsin(x) {
+  x = wrapAngle(x);
+  if (x > HALF_PI) x = PI - x; else if (x < -HALF_PI) x = -PI - x;
+  const x2 = x * x;
+  return x * (1 + x2 * (-1 / 6 + x2 * (1 / 120 + x2 * (-1 / 5040 + x2 * (1 / 362880 + x2 * (-1 / 39916800 + x2 * (1 / 6227020800)))))));
+}
+function dcos(x) { return dsin(x + HALF_PI); }
+function len2(x, y) { return Math.sqrt(x * x + y * y); }
+
+// ---------- 線の下ごしらえ ----------
+function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
+// 描いた点を 5 ずつに間引き、パッドの範囲とインクの上限で切る（整数）
+function cleanStroke(raw, inkMax) {
+  const out = []; let ink = 0;
+  for (const p of raw) {
+    const x = Math.round(clamp(p[0], PAD.x0, PAD.x1)), y = Math.round(clamp(p[1], PAD.y0, PAD.y1));
+    if (out.length) {
+      const q = out[out.length - 1], d = len2(x - q[0], y - q[1]);
+      if (d < 5) continue;
+      if (ink + d > inkMax) break;
+      ink += d;
+    }
+    out.push([x, y]);
+  }
+  return out;
+}
+function inkOf(pts) { let s = 0; for (let i = 1; i < pts.length; i++) s += len2(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return s; }
+function sample(pts, spacing, closed) {
+  const src = closed ? pts.concat([pts[0]]) : pts;
+  const out = [[src[0][0], src[0][1]]];
+  let carry = 0;
+  for (let i = 1; i < src.length; i++) {
+    const a = src[i - 1], b = src[i], d = len2(b[0] - a[0], b[1] - a[1]);
+    if (d === 0) continue;
+    let t = spacing - carry;
+    while (t <= d) { out.push([a[0] + (b[0] - a[0]) * t / d, a[1] + (b[1] - a[1]) * t / d]); t += spacing; }
+    carry = d - (t - spacing);
+  }
+  if (!closed && (out[out.length - 1][0] !== src[src.length - 1][0] || out[out.length - 1][1] !== src[src.length - 1][1])) out.push(src[src.length - 1].slice());
+  return out;
+}
+// 肩（体の上半分でいちばん前）と 腰（いちばん下。同じ高さなら まんなか寄り）
+function joints(body) {
+  let y0 = Infinity, y1 = -Infinity, cx = 0;
+  for (const p of body) { y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); cx += p[0]; }
+  cx /= body.length;
+  const mid = (y0 + y1) / 2, poly = sample(body, 3, true);
+  let sh = null, hip = null;
+  for (const p of poly) {
+    if (p[1] <= mid && (!sh || p[0] > sh[0])) sh = p;
+    if (!hip || p[1] > hip[1] + 0.5 || (Math.abs(p[1] - hip[1]) <= 0.5 && Math.abs(p[0] - cx) < Math.abs(hip[0] - cx))) hip = p;
+  }
+  return { shoulder: [Math.round(sh[0]), Math.round(sh[1])], hip: [Math.round(hip[0]), Math.round(hip[1])] };
+}
+// 手足の線を関節につなぐ（描き始めを関節に合わせて平行移動）
+function attach(pts, j) { if (!pts || !pts.length) return []; const dx = j[0] - pts[0][0], dy = j[1] - pts[0][1]; return pts.map(p => [p[0] + dx, p[1] + dy]); }
+function design(body, arm, leg) {
+  const j = joints(body);
+  return { body, arm: attach(arm, j.shoulder), leg: attach(leg, j.hip), shoulder: j.shoulder, hip: j.hip };
+}
+function validDesign(d) { return d && d.body.length >= 3 && inkOf(d.body) >= 80 && d.arm.length >= 2 && inkOf(d.arm) >= 20 && d.leg.length >= 2 && inkOf(d.leg) >= 20; }
+
+// ---------- ロボ ----------
+// facing: +1 右向き / -1 左向き（絵を左右反転）
+function makeRobot(d, facing, x0) {
+  const f = p => [p[0] * facing, p[1]];
+  const bodyS = sample(d.body.map(f), 7, true);
+  const sh = f(d.shoulder), hp = f(d.hip);
+  const armS = sample(d.arm.map(f), 6, false).map(p => [p[0] - sh[0], p[1] - sh[1]]);
+  const legS = sample(d.leg.map(f), 6, false).map(p => [p[0] - hp[0], p[1] - hp[1]]);
+  const leg2 = legS.map(p => [-p[0], -p[1]]);   // 反対向きの もう 1 本
+  let m = 0, sx = 0, sy = 0;
+  for (const p of bodyS) { m += MB; sx += MB * p[0]; sy += MB * p[1]; }
+  const J = [
+    { kind: 'arm', o: sh, pts: armS },
+    { kind: 'leg', o: hp, pts: legS.concat(leg2.slice(1)) },
+  ];
+  for (const j of J) { j.mw = ML * j.pts.length; m += j.mw; sx += j.mw * j.o[0]; sy += j.mw * j.o[1]; }
+  const cx = sx / m, cy = sy / m;
+  const bodyPts = bodyS.map(p => ({ x: p[0] - cx, y: p[1] - cy }));
+  let Ib = 0;
+  for (const p of bodyPts) Ib += MB * (p.x * p.x + p.y * p.y);
+  const joints = J.map(j => {
+    let I = 0, rad = 0;
+    const pts = j.pts.map(p => ({ x: p[0], y: p[1] }));
+    for (const p of pts) { I += ML * (p.x * p.x + p.y * p.y); rad = Math.max(rad, len2(p.x, p.y)); }
+    I += ML * pts.length * T * T / 2;
+    const ox = j.o[0] - cx, oy = j.o[1] - cy;
+    Ib += j.mw * (ox * ox + oy * oy);
+    return { kind: j.kind, ox, oy, pts, I, invI: 1 / Math.max(I, 1), rad: rad + T, a: 0, w: 0, mw: j.mw };
+  });
+  const arm = joints[0];
+  arm.wmax = clamp(ARM_W0 * Math.pow(Math.max(arm.I, 2000) / ARM_I0, -ARM_P), 4, 30);
+  arm.power = 0.7 + 0.3 * Math.sqrt(Math.min(arm.mw, 30) / 15);   // 重い腕ほど 1 発が重い（ある程度まで）
+  const b = {
+    facing, bodyPts, joints, arm, leg: joints[1], m, invM: 1 / m, Ib, invIb: 1 / Ib,
+    x: x0, y: 0, vx: 0, vy: 0, th: 0, om: 0,
+    hp: HP, cd: 0, downT: 0, downs: 0, dealt: 0, hits: 0, poly: [], t: 0,
+  };
+  // 足もとを地面に
+  let low = -Infinity;
+  const co = 1, si = 0;
+  for (const p of bodyPts) low = Math.max(low, p.y);
+  for (const j of joints) for (const p of j.pts) low = Math.max(low, j.oy + p.y);
+  b.y = -low - T - 0.5;
+  return b;
+}
+function world(b, lx, ly) { const co = dcos(b.th), si = dsin(b.th); return [b.x + lx * co - ly * si, b.y + lx * si + ly * co]; }
+
+// ---------- 衝突 ----------
+// 点の速さ（体の点 j=null / 関節 j の点）。h = 重心から体側のレバー、r = ハブから点
+function lever(b, j, px, py) {
+  let hx, hy;
+  if (j) { const h = world(b, j.ox, j.oy); hx = h[0] - b.x; hy = h[1] - b.y; } else { hx = px - b.x; hy = py - b.y; }
+  const rx = j ? px - (b.x + hx) : 0, ry = j ? py - (b.y + hy) : 0;
+  return { hx, hy, rx, ry };
+}
+function pvel(b, j, L) { const w = j ? j.w : 0; return [b.vx - b.om * L.hy - w * L.ry, b.vy + b.om * L.hx + w * L.rx]; }
+function kEff(b, j, L, nx, ny) { const bn = L.hx * ny - L.hy * nx, rn = L.rx * ny - L.ry * nx; return b.invM + bn * bn * b.invIb + (j ? rn * rn * j.invI : 0); }
+function push(b, j, L, ix, iy) {
+  b.vx += ix * b.invM; b.vy += iy * b.invM;
+  b.om += (L.hx * iy - L.hy * ix) * b.invIb;
+  if (j) j.w += (L.rx * iy - L.ry * ix) * j.invI;
+}
+// A の点（jA）と B（jB、B が null なら動かない物）の接触。n は A を押す向き。戻り値 = ぶつかった速さ
+function contact2(A, jA, B, jB, px, py, qx, qy, nx, ny, pen) {
+  const LA = lever(A, jA, px, py), LB = B ? lever(B, jB, qx, qy) : null;
+  const va = pvel(A, jA, LA), vb = B ? pvel(B, jB, LB) : [0, 0];
+  let vx = va[0] - vb[0], vy = va[1] - vb[1];
+  const vn = vx * nx + vy * ny;
+  let hitSpeed = 0;
+  if (vn < 0) {
+    hitSpeed = -vn;
+    const kn = kEff(A, jA, LA, nx, ny) + (B ? kEff(B, jB, LB, nx, ny) : 0);
+    const jn = -(1 + E) * vn / kn;
+    push(A, jA, LA, jn * nx, jn * ny); if (B) push(B, jB, LB, -jn * nx, -jn * ny);
+    // 摩擦
+    const va2 = pvel(A, jA, LA), vb2 = B ? pvel(B, jB, LB) : [0, 0];
+    const tx = -ny, ty = nx, vt = (va2[0] - vb2[0]) * tx + (va2[1] - vb2[1]) * ty;
+    const kt = kEff(A, jA, LA, tx, ty) + (B ? kEff(B, jB, LB, tx, ty) : 0);
+    const lim = MU * jn, jt = clamp(-vt / kt, -lim, lim);
+    push(A, jA, LA, jt * tx, jt * ty); if (B) push(B, jB, LB, -jt * tx, -jt * ty);
+  }
+  const corr = Math.min(pen, 6) * 0.4;
+  if (B) { const wA = A.invM / (A.invM + B.invM); A.x += nx * corr * wA; A.y += ny * corr * wA; B.x -= nx * corr * (1 - wA); B.y -= ny * corr * (1 - wA); }
+  else { A.x += nx * corr; A.y += ny * corr; }
+  return hitSpeed;
+}
+function ground(b, j, px, py) {
+  if (py + T > 0) contact2(b, j, null, null, px, py, 0, 0, 0, -1, py + T);
+  if (px - T < -HW) contact2(b, j, null, null, px, py, 0, 0, 1, 0, -HW - (px - T));
+  if (px + T > HW) contact2(b, j, null, null, px, py, 0, 0, -1, 0, px + T - HW);
+}
+function closestOnPoly(P, px, py) {
+  let best = null;
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i], b = P[(i + 1) % P.length], dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy;
+    let t = L > 0 ? ((px - a[0]) * dx + (py - a[1]) * dy) / L : 0; t = clamp(t, 0, 1);
+    const qx = a[0] + dx * t, qy = a[1] + dy * t, d = len2(px - qx, py - qy);
+    if (!best || d < best.d) best = { d, x: qx, y: qy };
+  }
+  return best;
+}
+function inside(P, px, py) {
+  let c = false;
+  for (let i = 0, k = P.length - 1; i < P.length; k = i++) {
+    const a = P[i], b = P[k];
+    if ((a[1] > py) !== (b[1] > py) && px < (b[0] - a[0]) * (py - a[1]) / (b[1] - a[1]) + a[0]) c = !c;
+  }
+  return c;
+}
+// X の点が Y の体にぶつかったか
+function versus(S, X, Y, j, px, py) {
+  if (px < Y.bx0 - T || px > Y.bx1 + T || py < Y.by0 - T || py > Y.by1 + T) return;
+  const inn = inside(Y.poly, px, py), cp = closestOnPoly(Y.poly, px, py);
+  const pen = inn ? cp.d + T : T - cp.d;
+  if (pen <= 0) return;
+  let nx, ny;
+  if (cp.d < 1e-6) { nx = X.x < Y.x ? -1 : 1; ny = 0; }
+  else if (inn) { nx = (cp.x - px) / cp.d; ny = (cp.y - py) / cp.d; }
+  else { nx = (px - cp.x) / cp.d; ny = (py - cp.y) / cp.d; }
+  const sp = contact2(X, j, Y, null, px, py, cp.x, cp.y, nx, ny, pen);
+  // 腕が当たった → ダメージ
+  if (j && j.kind === 'arm' && sp > VTH && X.cd <= 0) {
+    const dmg = Math.round((sp - VTH) / DMG_DIV * X.arm.power * (1 + S.t / 20) * 10) / 10;
+    if (dmg > 0) {
+      Y.hp = Math.max(0, Math.round((Y.hp - dmg) * 10) / 10);
+      X.dealt += dmg; X.hits++; X.cd = HIT_CD;
+      Y.vx -= nx * dmg * 16; Y.vy -= ny * dmg * 10 + dmg * 12;   // ふっとばし（少し浮かせる）
+      Y.om += (X.x < Y.x ? 1 : -1) * dmg * KNOCK_SPIN;              // 殴られた向きに のけぞる（強いと転ぶ）
+      S.fx.push({ t: 'hit', x: cp.x, y: cp.y, dmg, who: X === S.A ? 'A' : 'B' });
+    }
+  }
+}
+
+// ---------- バトル ----------
+function create(dA, dB) {
+  return { t: 0, A: makeRobot(dA, 1, -150), B: makeRobot(dB, -1, 150), fx: [], over: false, winner: null, reason: '' };
+}
+function motors(S, b, o) {
+  // 足: 相手のほうへ回って歩く（転んでいる間は止まる）
+  const lg = b.leg, dir = o.x > b.x ? 1 : -1;
+  if (b.downT <= 0 && dir * (lg.w - b.om) < WLEG) {
+    const dw = dir * POWER * G * b.m * lg.rad * lg.invI * DT;
+    lg.w += dw; b.om -= REACT_LEG * dw * lg.I * b.invIb;
+  }
+  // 腕: 描いた向きから ±ARM_AMP を 行ったり来たり（重い腕ほど遅い）
+  const am = b.arm, rel = am.a - b.th;
+  const per = Math.max(0.35, 4 * ARM_AMP / am.wmax);
+  const target = b.facing * ARM_AMP * dsin(TWO_PI * S.t / per);
+  const want = b.om + clamp((target - rel) * 14, -am.wmax, am.wmax);
+  const dw = clamp(want - am.w, -am.wmax * 12 * DT, am.wmax * 12 * DT);
+  am.w += dw; b.om -= REACT_ARM * dw * am.I * b.invIb;
+  // 立っていようとする（転んだら効かない）
+  if (Math.abs(b.th) < FALL_A) b.om += (-KR * b.th - DR * b.om) * DT;
+}
+function integrate(b) {
+  b.vy += G * DT;
+  b.vx *= 1 - 0.2 * DT;
+  b.x += b.vx * DT; b.y += b.vy * DT;
+  b.th += b.om * DT; b.om *= 1 - 0.5 * DT;
+  for (const j of b.joints) { j.a += j.w * DT; }
+  if (b.cd > 0) b.cd -= DT;
+}
+function shape(b) {
+  const co = dcos(b.th), si = dsin(b.th);
+  b.poly.length = 0; b.bx0 = b.by0 = Infinity; b.bx1 = b.by1 = -Infinity;
+  for (const p of b.bodyPts) {
+    const x = b.x + p.x * co - p.y * si, y = b.y + p.x * si + p.y * co;
+    b.poly.push([x, y]);
+    if (x < b.bx0) b.bx0 = x; if (x > b.bx1) b.bx1 = x; if (y < b.by0) b.by0 = y; if (y > b.by1) b.by1 = y;
+  }
+}
+// 体・手足の点を 1 つずつ（fn(j, x, y)）
+function eachPoint(b, fn) {
+  const co = dcos(b.th), si = dsin(b.th);
+  for (const p of b.bodyPts) fn(null, b.x + p.x * co - p.y * si, b.y + p.x * si + p.y * co);
+  for (const j of b.joints) {
+    const hx = b.x + j.ox * co - j.oy * si, hy = b.y + j.ox * si + j.oy * co, cj = dcos(j.a), sj = dsin(j.a);
+    for (const p of j.pts) fn(j, hx + p.x * cj - p.y * sj, hy + p.x * sj + p.y * cj);
+  }
+}
+function step(S) {
+  if (S.over) return;
+  const A = S.A, B = S.B;
+  motors(S, A, B); motors(S, B, A);
+  integrate(A); integrate(B);
+  eachPoint(A, (j, x, y) => ground(A, j, x, y));
+  eachPoint(B, (j, x, y) => ground(B, j, x, y));
+  shape(A); shape(B);
+  eachPoint(A, (j, x, y) => versus(S, A, B, j, x, y));
+  shape(A); shape(B);
+  eachPoint(B, (j, x, y) => versus(S, B, A, j, x, y));
+  // 転んだら しばらくして 起き上がる
+  for (const b of [A, B]) {
+    if (Math.abs(wrapAngle(b.th)) > FALL_A) {
+      b.downT += DT;
+      if (b.downT > DOWN_T) {
+        b.th = wrapAngle(b.th); b.om = -b.th * 5; b.vy = -520; b.downT = 0; b.downs++;
+        S.fx.push({ t: 'getup', who: b === A ? 'A' : 'B', x: b.x, y: b.y });
+      } else if (b.downT === DT) S.fx.push({ t: 'down', who: b === A ? 'A' : 'B', x: b.x, y: b.y });
+    } else b.downT = 0;
+  }
+  S.t += DT;
+  if (A.hp <= 0 || B.hp <= 0) { S.over = true; S.reason = 'ko'; S.winner = A.hp <= 0 && B.hp <= 0 ? null : A.hp > 0 ? 'A' : 'B'; }
+  else if (S.t >= TIME - 1e-9) { S.over = true; S.reason = 'time'; S.winner = A.hp > B.hp ? 'A' : B.hp > A.hp ? 'B' : null; }
+  if (S.over) S.fx.push({ t: 'end' });
+}
+function fight(dA, dB) { const S = create(dA, dB); while (!S.over) { step(S); S.fx.length = 0; } return S; }
+
+// ---------- URL: 3 本の線を 2 バイトずつ ----------
+function encodeDesign(d) {
+  let s = '';
+  for (const k of ['body', 'arm', 'leg']) { s += String.fromCharCode(d[k].length); for (const [x, y] of d[k]) s += String.fromCharCode(x + 128, y + 128); }
+  const b = typeof btoa === 'function' ? btoa(s) : Buffer.from(s, 'binary').toString('base64');
+  return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function decodeDesign(str) {
+  try {
+    const b = str.replace(/-/g, '+').replace(/_/g, '/');
+    const s = typeof atob === 'function' ? atob(b) : Buffer.from(b, 'base64').toString('binary');
+    let i = 0; const out = {};
+    for (const k of ['body', 'arm', 'leg']) { const n = s.charCodeAt(i++); const a = []; for (let q = 0; q < n; q++) { a.push([s.charCodeAt(i) - 128, s.charCodeAt(i + 1) - 128]); i += 2; } out[k] = cleanStroke(a, INK[k]); }
+    const d = design(out.body, out.arm, out.leg);
+    return validDesign(d) ? d : null;
+  } catch (e) { return null; }
+}
+
+// ---------- CPU ロボ ----------
+function rect(x0, y0, x1, y1) { return [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]; }
+function ln(x0, y0, x1, y1, n) { const a = []; for (let i = 0; i <= n; i++) a.push([Math.round(x0 + (x1 - x0) * i / n), Math.round(y0 + (y1 - y0) * i / n)]); return a; }
+// 勝ち抜きの順（CPU どうしの総当たりで 弱い順）
+const CPU_RAW = [
+  { name: 'ノッポ', color: '#5e35b1', body: rect(-20, -200, 20, -90), arm: ln(0, 0, 60, 30, 6), leg: ln(0, 0, 0, 80, 6) },
+  { name: 'デカ', color: '#6d4c41', body: rect(-55, -170, 55, -70), arm: ln(0, 0, 50, 20, 5), leg: ln(0, 0, 10, 60, 5) },
+  { name: 'ハコロボ', color: '#8d6e63', body: rect(-30, -150, 30, -80), arm: ln(0, 0, 50, 10, 5), leg: ln(0, 0, 0, 60, 5) },
+  { name: 'チビ', color: '#00897b', body: rect(-25, -90, 25, -50), arm: ln(0, 0, 40, -10, 4), leg: ln(0, 0, 0, 45, 4) },
+  { name: 'ハンマー', color: '#c62828', body: rect(-30, -150, 30, -80), arm: ln(0, 0, 70, 0, 7).concat([[70, -20], [90, -20], [90, 20], [70, 20], [70, 0]]), leg: ln(0, 0, 0, 60, 5) },
+];
+const CPU = CPU_RAW.map(c => Object.assign({ name: c.name, color: c.color }, design(c.body, c.arm, c.leg)));
+
+const API = {
+  SIM_VERSION, HZ, DT, HW, HP, TIME, PAD, INK, T, CPU,
+  cleanStroke, inkOf, design, validDesign, joints, makeRobot, create, step, fight, world, eachPoint, shape,
+  encodeDesign, decodeDesign,
+};
+if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.RB = API;
+})(this);

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#15173a">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=1">
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-title" content="ロボファイト">
+<meta property="og:title" content="かいて！ロボファイト">
+<meta property="og:description" content="からだ・うで・あし を かいて ロボを つくろう！ロボが あるいて パンチで たたかうよ。ともだちに ロボを おくって しょうぶ！">
+<title>かいて！ロボファイト</title>
+<link rel="stylesheet" href="style.css?v=1">
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<div id="title">
+  <div class="panel">
+    <div class="logo">かいて！<br>ロボファイト</div>
+    <div class="lead">からだ・うで・あし を かくと、ロボが あるいて パンチで たたかうよ！</div>
+    <div id="friendbox" hidden>
+      <div class="fb-title">ともだちの ロボ が とどいた！</div>
+      <canvas id="friendprev" width="240" height="240"></canvas>
+    </div>
+    <div id="tprog"></div>
+    <ul class="howto">
+      <li><b>からだ</b> → <b>うで</b> → <b>あし</b> の じゅんに 1 本ずつ かく</li>
+      <li>うでは <b>かた</b>、あしは <b>こし</b> に くっつくよ</li>
+      <li>あしは ぐるぐる まわって あるく。うでは ぶんぶん パンチ</li>
+      <li>つよく なぐられると ころぶ。HP が 0 で KO！</li>
+      <li>CPU の 5 たいと かちぬき！ロボを ともだちに おくって しょうぶ！</li>
+    </ul>
+    <button id="start" class="main">ロボを つくる</button>
+  </div>
+</div>
+
+<div id="draw" hidden>
+  <div class="tabs">
+    <button class="tab" data-part="body">からだ</button>
+    <button class="tab" data-part="arm">うで</button>
+    <button class="tab" data-part="leg">あし</button>
+  </div>
+  <div class="dhead" id="dhead"></div>
+  <canvas id="pad"></canvas>
+  <div id="hint"></div>
+  <div class="rbtns">
+    <button id="fight" class="main">たたかう</button>
+    <button id="fightfriend" class="main friend" hidden>ともだちと たたかう</button>
+  </div>
+  <div class="rbtns small">
+    <button id="clearpart" class="sub">この パーツを けす</button>
+    <button id="send" class="sub">ロボを おくる</button>
+    <button id="back" class="sub">もどる</button>
+  </div>
+</div>
+
+<div id="result" hidden>
+  <div class="panel">
+    <div class="rtitle" id="rtitle">かち！</div>
+    <div class="rsub" id="rsub"></div>
+    <div id="rprog"></div>
+    <div class="rbtns">
+      <button id="next" class="main">つぎの あいてへ</button>
+      <button id="again" class="main">もういちど</button>
+    </div>
+    <div class="rbtns small">
+      <button id="redraw" class="sub">ロボを なおす</button>
+      <button id="share" class="sub">ロボを おくる</button>
+    </div>
+  </div>
+</div>
+
+<div id="sharebox" hidden>
+  <div class="panel">
+    <div class="rtitle">ロボを おくる</div>
+    <div class="note">この文を LINE などで ともだちに おくってね</div>
+    <textarea id="sharetext" readonly></textarea>
+    <div class="rbtns">
+      <button id="copy" class="main">文をコピー</button>
+      <button id="closeshare" class="sub">とじる</button>
+    </div>
+  </div>
+</div>
+
+<script src="sim.js?v=1"></script>
+<script src="game.js?v=1"></script>
+</body>
+</html>
