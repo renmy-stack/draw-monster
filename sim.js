@@ -3,7 +3,7 @@
 'use strict';
 (function (root) {
 
-const SIM_VERSION = 2;          // 物理・数値を変えたら上げる
+const SIM_VERSION = 7;          // 物理・数値を変えたら上げる
 const HZ = 240, DT = 1 / HZ;
 const G = 1400;                 // 重力
 const T = 3.5;                  // 線の太さ（半径）
@@ -20,7 +20,8 @@ const MB = 2, ML = 1;           // 体の点・手足の点の重さ
 const POWER = 1.6, WLEG = 7;
 const REACT_LEG = 0.15, REACT_ARM = 0.2;   // モーターの反動を体に返す割合（大きいと すぐ転ぶ）
 // 腕（前後にパンチ）
-const ARM_AMP = 1.15;           // 振れ幅（rad、描いた向きから ±）
+const ARM_AMP = 1.15;           // 振れ幅（rad、狙う向きから ±）
+const AIM_MAX = 1.4;            // 相手を狙って 腕の向きを変えられる量（描いた向きから ±rad）
 const ARM_W0 = 16;              // 基準の腕（慣性 ARM_I0）の振りの速さの上限（rad/s）
 const ARM_I0 = 60000;
 const ARM_P = 0.5;              // 慣性が大きいと どれだけ遅くなるか
@@ -30,10 +31,22 @@ const KR = 90, DR = 12, FALL_A = 1.25, DOWN_T = 1.0;
 const VTH = 120;                // これより遅い当たりは ノーダメージ
 const DMG_DIV = 26;
 const HIT_CD = 0.25;
+// 体の大きさの損得: 大きいほど HP が多い（タフ）、重いほど パンチが重い（体重がのる）。基準は 60×70 の四角（ハコロボ）
+const AREA_REF = 4200, HP_MIN = 35, HP_MAX = 170, HP_P = 0.5;
+const M_REF = 120, WEIGHT_P = 0.5, WEIGHT_MIN = 0.4, WEIGHT_MAX = 1.5;
 const TURN_GAP = 35;             // 相手が 背中側に これ以上 回ったら 振り向く
 const TURN_CD = 0.7;             // 振り向いたあと しばらくは 振り向かない
 const KNOCK_SPIN = 1.0;         // 殴られたときの のけぞり
 
+// 調整用のつまみ（tune.js が書きかえて探す）
+const K = {
+  armP: ARM_P, armW0: ARM_W0, armCap: 30, reactArm: 0.2,
+  kb: 10, kbUp: 12, kbMass: 0.7,       // ふっとばし。kbMass > 0 なら 重い相手ほど ふっとびにくい（(M_REF/m)^kbMass）
+  hpP: 0.8, hpMax: 250, spin: 1.4,
+  perBase: 0.3, perLen: 0.007,     // 腕を 1 往復ふる時間 = perBase + 腕の長さ × perLen（秒）
+  dmg: 9,                            // 1 発のダメージ（体重・腕の重さ・時間で増える）
+  lenRef: 60, lenP: 1.5,             // 長い腕ほど 1 発が軽い: × (lenRef / 腕の長さ)^lenP（0.4〜1.8）
+};
 const PI = 3.141592653589793, TWO_PI = PI * 2, HALF_PI = PI / 2;
 function wrapAngle(x) { if (x > PI || x < -PI) x -= TWO_PI * Math.floor((x + PI) / TWO_PI); return x; }
 function dsin(x) {
@@ -44,6 +57,16 @@ function dsin(x) {
 }
 function dcos(x) { return dsin(x + HALF_PI); }
 function len2(x, y) { return Math.sqrt(x * x + y * y); }
+// 決定的な atan2（多項式。Math.atan2 はブラウザで結果がずれることがあるので使わない）
+function datan2(y, x) {
+  const ax = Math.abs(x), ay = Math.abs(y);
+  if (ax < 1e-12 && ay < 1e-12) return 0;
+  const a = Math.min(ax, ay) / Math.max(ax, ay), s = a * a;
+  let r = ((-0.0464964749 * s + 0.15931422) * s - 0.327622764) * s * a + a;
+  if (ay > ax) r = HALF_PI - r;
+  if (x < 0) r = PI - r;
+  return y < 0 ? -r : r;
+}
 
 // ---------- 線の下ごしらえ ----------
 function clamp(v, a, b) { return v < a ? a : v > b ? b : v; }
@@ -127,13 +150,22 @@ function makeRobot(d, facing, x0) {
     Ib += j.mw * (ox * ox + oy * oy);
     return { kind: j.kind, ox, oy, pts, I, invI: 1 / Math.max(I, 1), rad: rad + T, a: 0, w: 0, mw: j.mw };
   });
+  // 体の広さ（ふちの点で面積）
+  let area = 0;
+  for (let i = 0; i < bodyS.length; i++) { const a = bodyS[i], c = bodyS[(i + 1) % bodyS.length]; area += a[0] * c[1] - c[0] * a[1]; }
+  area = Math.abs(area) / 2;
+  const maxHp = Math.round(clamp(HP * Math.pow(area / AREA_REF, K.hpP), HP_MIN, K.hpMax));
+  const weight = clamp(Math.pow(m / M_REF, WEIGHT_P), WEIGHT_MIN, WEIGHT_MAX);
   const arm = joints[0];
-  arm.wmax = clamp(ARM_W0 * Math.pow(Math.max(arm.I, 2000) / ARM_I0, -ARM_P), 4, 30);
+  let armLen = 0; for (const p of arm.pts) armLen = Math.max(armLen, len2(p.x, p.y));
+  arm.len = armLen;
+  arm.per = K.perBase + armLen * K.perLen;          // 長い腕ほど 大振り（1 往復が長い）
+  arm.wmax = 4 * ARM_AMP / arm.per * 1.6;
   arm.power = 0.7 + 0.3 * Math.sqrt(Math.min(arm.mw, 30) / 15);   // 重い腕ほど 1 発が重い（ある程度まで）
   const b = {
     facing, bodyPts, joints, arm, leg: joints[1], m, invM: 1 / m, Ib, invIb: 1 / Ib,
     x: x0, y: 0, vx: 0, vy: 0, th: 0, om: 0,
-    hp: HP, cd: 0, downT: 0, downs: 0, dealt: 0, hits: 0, poly: [], t: 0, turnCd: 0, turns: 0,
+    hp: maxHp, maxHp, area, weight, cd: 0, downT: 0, downs: 0, dealt: 0, hits: 0, poly: [], t: 0, turnCd: 0, turns: 0,
   };
   // 足もとを地面に
   let low = -Infinity;
@@ -217,15 +249,22 @@ function versus(S, X, Y, j, px, py) {
   if (cp.d < 1e-6) { nx = X.x < Y.x ? -1 : 1; ny = 0; }
   else if (inn) { nx = (cp.x - px) / cp.d; ny = (cp.y - py) / cp.d; }
   else { nx = (px - cp.x) / cp.d; ny = (py - cp.y) / cp.d; }
-  const sp = contact2(X, j, Y, null, px, py, cp.x, cp.y, nx, ny, pen);
+  let sp;
+  if (j && j.kind === 'arm') {
+    // 腕は 相手の体を すり抜ける（壁にならない）。当たった速さだけ はかって、ダメージと ふっとばしは下で
+    const LA = lever(X, j, px, py), LB = lever(Y, null, cp.x, cp.y), va = pvel(X, j, LA), vb = pvel(Y, null, LB);
+    sp = -((va[0] - vb[0]) * nx + (va[1] - vb[1]) * ny);
+  } else sp = contact2(X, j, Y, null, px, py, cp.x, cp.y, nx, ny, pen);
   // 腕が当たった → ダメージ
   if (j && j.kind === 'arm' && sp > VTH && X.cd <= 0) {
-    const dmg = Math.round((sp - VTH) / DMG_DIV * X.arm.power * (1 + S.t / 20) * 10) / 10;
+    const lenF = clamp(Math.pow(K.lenRef / Math.max(X.arm.len, 10), K.lenP), 0.4, 1.8);   // 長い腕は かすめるだけ、短い腕は ズドン
+    const dmg = Math.round(K.dmg * X.arm.power * X.weight * lenF * (1 + S.t / 20) * 10) / 10;   // 1 発の重さは 体重と腕の重さ（腕の長さ・速さでは増えない）
     if (dmg > 0) {
       Y.hp = Math.max(0, Math.round((Y.hp - dmg) * 10) / 10);
       X.dealt += dmg; X.hits++; X.cd = HIT_CD;
-      Y.vx -= nx * dmg * 16; Y.vy -= ny * dmg * 10 + dmg * 12;   // ふっとばし（少し浮かせる）
-      Y.om += (X.x < Y.x ? 1 : -1) * dmg * KNOCK_SPIN;              // 殴られた向きに のけぞる（強いと転ぶ）
+      const km = K.kbMass > 0 ? Math.pow(M_REF / Y.m, K.kbMass) : 1;   // 重い相手ほど ふっとびにくい
+      Y.vx -= nx * dmg * K.kb * km; Y.vy -= (ny * dmg * 10 + dmg * K.kbUp) * km;   // ふっとばし（少し浮かせる）
+      Y.om += (X.x < Y.x ? 1 : -1) * dmg * KNOCK_SPIN * K.spin * km;              // 殴られた向きに のけぞる（強いと転ぶ）
       S.fx.push({ t: 'hit', x: cp.x, y: cp.y, dmg, who: X === S.A ? 'A' : 'B' });
     }
   }
@@ -253,13 +292,15 @@ function motors(S, b, o) {
     const dw = dir * POWER * G * b.m * lg.rad * lg.invI * DT;
     lg.w += dw; b.om -= REACT_LEG * dw * lg.I * b.invIb;
   }
-  // 腕: 描いた向きから ±ARM_AMP を 行ったり来たり（重い腕ほど遅い）
+  // 腕: 相手の体を狙う向きを中心に ±ARM_AMP を 行ったり来たり（重い腕ほど遅い）
   const am = b.arm, rel = am.a - b.th;
-  const per = Math.max(0.35, 4 * ARM_AMP / am.wmax);
-  const target = b.facing * ARM_AMP * dsin(TWO_PI * S.t / per);
+  const per = am.per;
+  const tip = am.pts[am.pts.length - 1], sh = world(b, am.ox, am.oy);
+  const aim = clamp(wrapAngle(datan2(o.y - sh[1], o.x - sh[0]) - datan2(tip.y, tip.x) - b.th), -AIM_MAX, AIM_MAX);
+  const target = aim + b.facing * ARM_AMP * dsin(TWO_PI * S.t / per);
   const want = b.om + clamp((target - rel) * 14, -am.wmax, am.wmax);
   const dw = clamp(want - am.w, -am.wmax * 12 * DT, am.wmax * 12 * DT);
-  am.w += dw; b.om -= REACT_ARM * dw * am.I * b.invIb;
+  am.w += dw; b.om -= K.reactArm * dw * am.I * b.invIb;
   // 立っていようとする（転んだら効かない）
   if (Math.abs(b.th) < FALL_A) b.om += (-KR * b.th - DR * b.om) * DT;
 }
@@ -312,8 +353,14 @@ function step(S) {
   }
   S.t += DT;
   if (A.hp <= 0 || B.hp <= 0) { S.over = true; S.reason = 'ko'; S.winner = A.hp <= 0 && B.hp <= 0 ? null : A.hp > 0 ? 'A' : 'B'; }
-  else if (S.t >= TIME - 1e-9) { S.over = true; S.reason = 'time'; S.winner = A.hp > B.hp ? 'A' : B.hp > A.hp ? 'B' : null; }
+  else if (S.t >= TIME - 1e-9) { S.over = true; S.reason = 'time'; S.winner = A.hp / A.maxHp > B.hp / B.maxHp ? 'A' : B.hp / B.maxHp > A.hp / A.maxHp ? 'B' : null; }   // 時間切れは のこり HP の割合
   if (S.over) S.fx.push({ t: 'end' });
+}
+// 描く画面に出す つよさ（タフさ = HP、パンチ = 1 発の重さ、リーチ = 腕の長さ、はやさ = 1 秒に振る回数）
+function robotStats(d) {
+  const b = makeRobot(d, 1, 0), am = b.arm;
+  const lenF = clamp(Math.pow(K.lenRef / Math.max(am.len, 10), K.lenP), 0.4, 1.8);
+  return { hp: b.maxHp, punch: K.dmg * am.power * b.weight * lenF, reach: am.len, speed: 2 / am.per };
 }
 function fight(dA, dB) { const S = create(dA, dB); while (!S.over) { step(S); S.fx.length = 0; } return S; }
 
@@ -366,8 +413,8 @@ const CPU_RAW = [
 const CPU = CPU_RAW.map(c => Object.assign({ name: c.name, color: c.color }, design(c.body, c.arm, c.leg)));
 
 const API = {
-  SIM_VERSION, HZ, DT, HW, HP, TIME, PAD, INK, T, CPU,
-  cleanStroke, inkOf, design, validDesign, joints, makeRobot, create, step, fight, world, eachPoint, shape,
+  SIM_VERSION, K, HZ, DT, HW, HP, TIME, PAD, INK, T, CPU,
+  cleanStroke, inkOf, design, validDesign, robotStats, joints, makeRobot, create, step, fight, world, eachPoint, shape,
   encodeDesign, decodeDesign,
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.RB = API;

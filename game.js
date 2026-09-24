@@ -1,6 +1,6 @@
 // かいて！ロボファイト — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・ロボを送る
 'use strict';
-const VERSION = '4';   // version.txt と合わせる。更新したら index.html の ?v= も上げる
+const VERSION = '5';   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-robot/';
 
 const $ = id => document.getElementById(id);
@@ -195,7 +195,16 @@ function saveRobot() {
   updateButtons();
 }
 function setHint(t) { $('hint').textContent = t; }
-function updateButtons() { $('fight').disabled = !myRobot; $('fightfriend').disabled = !myRobot; $('send').disabled = !myRobot; }
+function updateButtons() { $('fight').disabled = !myRobot; $('fightfriend').disabled = !myRobot; $('send').disabled = !myRobot; updateStats(); }
+// つよさのバー（ロボができているときだけ）
+function updateStats() {
+  const st = myRobot ? RB.robotStats(myRobot) : null;
+  const set = (k, v, max, txt) => { $('b-' + k).style.width = (st ? Math.min(100, v / max * 100) : 0) + '%'; $('v-' + k).textContent = st ? txt : ''; };
+  set('hp', st && st.hp, 250, st && String(st.hp));
+  set('punch', st && st.punch, 22, st && st.punch.toFixed(0));
+  set('reach', st && st.reach, 150, st && String(Math.round(st.reach)));
+  set('speed', st && st.speed, 6, st && st.speed.toFixed(1));
+}
 
 // ---------- バトル ----------
 let S = null, opp = null, acc = 0, last = 0, stop = 0, shake = 0, parts = [], pops = [], hurt = { A: 0, B: 0 }, endAt = 0, isFriend = false, cam = null;
@@ -320,17 +329,17 @@ function drawRobotWorld(b, color, flash) {
 }
 function drawHud() {
   const top = 12, bw = (W - 110) / 2;
-  const bar = (x, hp, name, col, right) => {
+  const bar = (x, hp, max, name, col, right) => {
     ctx.font = '800 14px sans-serif'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = right ? 'right' : 'left'; ctx.fillStyle = '#fff';
     ctx.fillText(name, right ? x + bw : x, top + 16);
     ctx.fillStyle = 'rgba(255,255,255,.15)'; round(x, top + 24, bw, 14, 7); ctx.fill();
-    const w = bw * hp / RB.HP;
-    ctx.fillStyle = hp > 50 ? col : hp > 25 ? '#ffb300' : '#e53935'; round(right ? x + bw - w : x, top + 24, Math.max(0, w), 14, 7); ctx.fill();
+    const w = bw * hp / max;
+    ctx.fillStyle = hp > max / 2 ? col : hp > max / 4 ? '#ffb300' : '#e53935'; round(right ? x + bw - w : x, top + 24, Math.max(0, w), 14, 7); ctx.fill();
     ctx.font = '900 12px sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = right ? 'right' : 'left';
     ctx.fillText(Math.ceil(hp), right ? x + bw - 4 : x + 4, top + 35);
   };
-  bar(12, S.A.hp, ME.name, ME.color, false);
-  bar(W - 12 - bw, S.B.hp, opp.name, opp.color, true);
+  bar(12, S.A.hp, S.A.maxHp, ME.name, ME.color, false);
+  bar(W - 12 - bw, S.B.hp, S.B.maxHp, opp.name, opp.color, true);
   ctx.textAlign = 'center'; ctx.font = '900 26px sans-serif'; ctx.fillStyle = S.t > RB.TIME - 5 ? '#ff8a80' : '#fff';
   ctx.fillText(Math.max(0, Math.ceil(RB.TIME - S.t)), W / 2, top + 34);
   if (!isFriend) { ctx.font = '700 12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText('かちぬき ' + (S.stage + 1) + ' / ' + RB.CPU.length, W / 2, top + 54); }

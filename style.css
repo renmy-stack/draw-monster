@@ -107,3 +107,8 @@ button:disabled { opacity: .45; }
 .tab.done::after { content: ' ✓'; color: #ffd600; }
 .tab.on { background: #7c83ff; color: #fff; }
 #pad { touch-action: none; }
+
+#stats { width: min(100%, 340px); gap: 4px; }
+#stats .st { grid-template-columns: 56px minmax(0, 1fr) 36px; font-size: 12px; }
+#stats em { font-style: normal; font-weight: 800; font-size: 12px; text-align: right; color: #ffd600; }
+#stats .bar { height: 9px; }
