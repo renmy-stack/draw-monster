@@ -1,6 +1,6 @@
 // かいて！ロボファイト — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・ロボを送る
 'use strict';
-const VERSION = '1';   // version.txt と合わせる。更新したら index.html の ?v= も上げる
+const VERSION = '2';   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-robot/';
 
 const $ = id => document.getElementById(id);
@@ -26,6 +26,9 @@ let myRobot = null;
 { const w = lsGet('robot'); if (w) { const d = RB.decodeDesign(w); if (d) { myRobot = d; strokes = { body: d.body, arm: d.arm, leg: d.leg }; } } }
 let stage = Math.min(RB.CPU.length - 1, +(lsGet('stage') || 0));
 let cleared = lsGet('cleared') === '1';
+let best = +(lsGet('best') || 0);   // さいこう 何人抜き
+// 勝ち抜き: 途中でロボを変えたら 1 体目から。負けたら その挑戦は おわり
+function resetRun() { stage = 0; lsSet('stage', '0'); }
 let friendRobot = null;
 { const m = /[#&]r=([A-Za-z0-9_-]+)/.exec(location.hash); if (m) friendRobot = RB.decodeDesign(m[1]); }
 
@@ -44,7 +47,7 @@ function showTitle() {
   mode = 'title'; show('title');
   $('friendbox').hidden = !friendRobot;
   if (friendRobot) drawPreview($('friendprev'), friendRobot, FRIEND.color);
-  $('tprog').textContent = cleared ? '5 たい かちぬき たっせい ずみ！' : stage > 0 ? 'かちぬき ' + stage + ' / ' + RB.CPU.length : '';
+  $('tprog').textContent = (best > 0 ? 'さいこう ' + best + ' にんぬき' + (cleared ? '（かちぬき たっせい！）' : '') : '') + (stage > 0 ? '　いま ' + stage + ' にんぬき ちゅう' : '');
   $('start').textContent = myRobot ? 'ロボを えらぶ' : 'ロボを つくる';
   drawTitleBg();
 }
@@ -54,6 +57,7 @@ function showDraw() {
   $('fightfriend').hidden = !friendRobot;
   $('fight').textContent = 'たたかう（' + (stage + 1) + ' / ' + RB.CPU.length + ' ' + RB.CPU[stage].name + '）';
   sizePad(); setPart(part);
+  if (stage > 0) setHint('かちぬき ちゅう（' + stage + ' にんぬき）: ロボを かえると 1 たいめから やりなおし');
 }
 function setPart(p) {
   part = p;
@@ -173,6 +177,7 @@ const endStroke = () => {
   const need = part === 'body' ? 80 : 20;
   if (pts.length < 2 || RB.inkOf(pts) < need) { setHint('もうすこし おおきく かいてね'); drawPad(); return; }
   strokes[part] = pts;
+  if (stage > 0) { resetRun(); $('fight').textContent = 'たたかう（1 / ' + RB.CPU.length + ' ' + RB.CPU[0].name + '）'; }
   if (part === 'body' && (strokes.arm || strokes.leg)) setHint('からだを かえたので、うで・あしも くっつけなおしたよ');
   else setHint('');
   saveRobot();
@@ -198,7 +203,7 @@ function startBattle(friend) {
   if (!myRobot) return;
   isFriend = !!friend;
   opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: RB.CPU[stage].name, color: RB.CPU[stage].color, d: RB.CPU[stage] };
-  S = RB.create(myRobot, opp.d);
+  S = RB.create(myRobot, opp.d); S.stage = stage;
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
 }
@@ -328,7 +333,7 @@ function drawHud() {
   bar(W - 12 - bw, S.B.hp, opp.name, opp.color, true);
   ctx.textAlign = 'center'; ctx.font = '900 26px sans-serif'; ctx.fillStyle = S.t > RB.TIME - 5 ? '#ff8a80' : '#fff';
   ctx.fillText(Math.max(0, Math.ceil(RB.TIME - S.t)), W / 2, top + 34);
-  if (!isFriend) { ctx.font = '700 12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText('かちぬき ' + (stage + 1) + ' / ' + RB.CPU.length, W / 2, top + 54); }
+  if (!isFriend) { ctx.font = '700 12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText('かちぬき ' + (S.stage + 1) + ' / ' + RB.CPU.length, W / 2, top + 54); }
   if (S.t < 1) big('ファイト！', '#ffd54f', 1 - S.t);
   if (S.over) big(S.reason === 'ko' ? 'KO！' : 'じかんぎれ', S.winner === 'A' ? '#ffd54f' : '#ff8a80', 1);
 }
@@ -354,15 +359,23 @@ function showResult() {
   $('rtitle').textContent = win ? 'かち！' : draw ? 'ひきわけ' : 'まけ…';
   $('rtitle').className = 'rtitle ' + (win ? 'win' : draw ? '' : 'lose');
   $('rsub').textContent = (S.reason === 'ko' ? 'KO（' + S.t.toFixed(1) + ' びょう）' : 'じかんぎれ（のこり HP ' + Math.ceil(S.A.hp) + ' たい ' + Math.ceil(S.B.hp) + '）') + '　パンチ ' + S.A.hits + ' はつ・ダメージ ' + Math.round(S.A.dealt);
-  let showNext = false;
-  if (!isFriend && win) {
-    if (stage < RB.CPU.length - 1) { stage++; lsSet('stage', String(stage)); showNext = true; }
-    else if (!cleared) { cleared = true; lsSet('cleared', '1'); }
+  let showNext = false, wins = stage;
+  if (!isFriend) {
+    if (win) {
+      wins = stage + 1;
+      if (stage < RB.CPU.length - 1) { stage++; lsSet('stage', String(stage)); showNext = true; }
+      else { cleared = true; lsSet('cleared', '1'); resetRun(); $('rsub').textContent += '　5 たい かちぬき たっせい！'; }
+    } else {
+      resetRun();
+      $('rsub').textContent += '　' + wins + ' にんぬき で おわり';
+    }
+    if (wins > best) { best = wins; lsSet('best', String(best)); $('rsub').textContent += '（さいこう きろく！）'; }
   }
-  $('rprog').innerHTML = isFriend ? 'ともだちの ロボ と しょうぶ' : RB.CPU.map((c, i) => '<span class="dot ' + (i < stage || cleared ? 'ok' : i === stage ? 'now' : '') + '">' + c.name + '</span>').join('');
-  if (!isFriend && win && cleared && stage === RB.CPU.length - 1) $('rsub').textContent += '　5 たい かちぬき たっせい！';
+  $('rprog').innerHTML = isFriend ? 'ともだちの ロボ と しょうぶ' : RB.CPU.map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
   $('next').hidden = !showNext;
   $('again').hidden = showNext;
+  $('again').textContent = isFriend ? 'もういちど' : '1 たいめから もういちど';
+  $('redraw').textContent = !isFriend && stage > 0 ? 'ロボを なおす（1 たいめから）' : 'ロボを なおす';
 }
 function shareRobot() {
   if (!myRobot) return;
@@ -381,7 +394,7 @@ onTap($('fight'), () => startBattle(false));
 onTap($('fightfriend'), () => startBattle(true));
 onTap($('send'), shareRobot);
 onTap($('share'), shareRobot);
-onTap($('clearpart'), () => { strokes[part] = null; saveRobot(); setPart(part); });
+onTap($('clearpart'), () => { strokes[part] = null; if (stage > 0) resetRun(); saveRobot(); setPart(part); });
 onTap($('next'), () => startBattle(false));
 onTap($('again'), () => startBattle(isFriend));
 onTap($('redraw'), showDraw);

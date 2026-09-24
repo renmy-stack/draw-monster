@@ -96,6 +96,7 @@ button:disabled { opacity: .45; }
 #rprog .dot { padding: 3px 7px; border-radius: 10px; border: 2px solid var(--ink); background: #eee; opacity: .6; }
 #rprog .dot.ok { background: #ffd54f; opacity: 1; }
 #rprog .dot.now { background: #fff; opacity: 1; outline: 2px solid var(--hot); }
+#rprog .dot.lost { background: #ffcdd2; opacity: 1; text-decoration: line-through; }
 
 /* パーツのタブ */
 .tabs { display: flex; gap: 6px; }
