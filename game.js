@@ -1,6 +1,6 @@
 // かいて！ロボファイト — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・ロボを送る
 'use strict';
-const VERSION = '3';   // version.txt と合わせる。更新したら index.html の ?v= も上げる
+const VERSION = '4';   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-robot/';
 
 const $ = id => document.getElementById(id);

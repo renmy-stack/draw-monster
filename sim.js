@@ -3,7 +3,7 @@
 'use strict';
 (function (root) {
 
-const SIM_VERSION = 1;          // 物理・数値を変えたら上げる
+const SIM_VERSION = 2;          // 物理・数値を変えたら上げる
 const HZ = 240, DT = 1 / HZ;
 const G = 1400;                 // 重力
 const T = 3.5;                  // 線の太さ（半径）
@@ -30,6 +30,8 @@ const KR = 90, DR = 12, FALL_A = 1.25, DOWN_T = 1.0;
 const VTH = 120;                // これより遅い当たりは ノーダメージ
 const DMG_DIV = 26;
 const HIT_CD = 0.25;
+const TURN_GAP = 35;             // 相手が 背中側に これ以上 回ったら 振り向く
+const TURN_CD = 0.7;             // 振り向いたあと しばらくは 振り向かない
 const KNOCK_SPIN = 1.0;         // 殴られたときの のけぞり
 
 const PI = 3.141592653589793, TWO_PI = PI * 2, HALF_PI = PI / 2;
@@ -131,7 +133,7 @@ function makeRobot(d, facing, x0) {
   const b = {
     facing, bodyPts, joints, arm, leg: joints[1], m, invM: 1 / m, Ib, invIb: 1 / Ib,
     x: x0, y: 0, vx: 0, vy: 0, th: 0, om: 0,
-    hp: HP, cd: 0, downT: 0, downs: 0, dealt: 0, hits: 0, poly: [], t: 0,
+    hp: HP, cd: 0, downT: 0, downs: 0, dealt: 0, hits: 0, poly: [], t: 0, turnCd: 0, turns: 0,
   };
   // 足もとを地面に
   let low = -Infinity;
@@ -233,7 +235,18 @@ function versus(S, X, Y, j, px, py) {
 function create(dA, dB) {
   return { t: 0, A: makeRobot(dA, 1, -150), B: makeRobot(dB, -1, 150), fx: [], over: false, winner: null, reason: '' };
 }
+// 振り向く: 重心を通る たての線で 左右反転（位置・速さは そのまま。見た目も物理も つながる）
+function turnAround(b) {
+  b.facing = -b.facing;
+  for (const p of b.bodyPts) p.x = -p.x;
+  for (const j of b.joints) { j.ox = -j.ox; for (const p of j.pts) p.x = -p.x; j.a = -j.a; j.w = -j.w; }
+  b.th = -b.th; b.om = -b.om;
+  b.turnCd = TURN_CD; b.turns++;
+}
 function motors(S, b, o) {
+  // 相手が背中側に回ったら 振り向く（転んでいる間は しない）
+  if (b.turnCd > 0) b.turnCd -= DT;
+  else if (b.downT <= 0 && (o.x - b.x) * b.facing < -TURN_GAP) { turnAround(b); S.fx.push({ t: 'turn', who: b === S.A ? 'A' : 'B', x: b.x, y: b.y }); }
   // 足: 相手のほうへ回って歩く（転んでいる間は止まる）
   const lg = b.leg, dir = o.x > b.x ? 1 : -1;
   if (b.downT <= 0 && dir * (lg.w - b.om) < WLEG) {
