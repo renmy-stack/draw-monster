@@ -305,18 +305,35 @@ function step(S) {
 function fight(dA, dB) { const S = create(dA, dB); while (!S.over) { step(S); S.fx.length = 0; } return S; }
 
 // ---------- URL: 3 本の線を 2 バイトずつ ----------
+// からだは そのままの位置（x +128、y +235）。うで・あしは 描き始めからの ずれ（+128）。関節にくっつけるので位置はいらない
 function encodeDesign(d) {
   let s = '';
-  for (const k of ['body', 'arm', 'leg']) { s += String.fromCharCode(d[k].length); for (const [x, y] of d[k]) s += String.fromCharCode(x + 128, y + 128); }
+  for (const k of ['body', 'arm', 'leg']) {
+    const p = d[k], o = k === 'body' ? [-128, -235] : [p[0][0] - 128, p[0][1] - 128];
+    s += String.fromCharCode(p.length);
+    for (const [x, y] of p) s += String.fromCharCode(clamp(x - o[0], 0, 255), clamp(y - o[1], 0, 255));
+  }
   const b = typeof btoa === 'function' ? btoa(s) : Buffer.from(s, 'binary').toString('base64');
   return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function cleanLimb(raw, inkMax) {
+  const out = []; let ink = 0;
+  for (const p of raw) {
+    if (out.length) { const q = out[out.length - 1], dd = len2(p[0] - q[0], p[1] - q[1]); if (dd < 5) continue; if (ink + dd > inkMax) break; ink += dd; }
+    out.push([p[0], p[1]]);
+  }
+  return out;
 }
 function decodeDesign(str) {
   try {
     const b = str.replace(/-/g, '+').replace(/_/g, '/');
     const s = typeof atob === 'function' ? atob(b) : Buffer.from(b, 'base64').toString('binary');
     let i = 0; const out = {};
-    for (const k of ['body', 'arm', 'leg']) { const n = s.charCodeAt(i++); const a = []; for (let q = 0; q < n; q++) { a.push([s.charCodeAt(i) - 128, s.charCodeAt(i + 1) - 128]); i += 2; } out[k] = cleanStroke(a, INK[k]); }
+    for (const k of ['body', 'arm', 'leg']) {
+      const n = s.charCodeAt(i++), a = [], o = k === 'body' ? [-128, -235] : [-128, -128];
+      for (let q = 0; q < n; q++) { a.push([s.charCodeAt(i) + o[0], s.charCodeAt(i + 1) + o[1]]); i += 2; }
+      out[k] = k === 'body' ? cleanStroke(a, INK.body) : cleanLimb(a, INK[k] + 1);
+    }
     const d = design(out.body, out.arm, out.leg);
     return validDesign(d) ? d : null;
   } catch (e) { return null; }
@@ -331,7 +348,7 @@ const CPU_RAW = [
   { name: 'デカ', color: '#6d4c41', body: rect(-55, -170, 55, -70), arm: ln(0, 0, 50, 20, 5), leg: ln(0, 0, 10, 60, 5) },
   { name: 'ハコロボ', color: '#8d6e63', body: rect(-30, -150, 30, -80), arm: ln(0, 0, 50, 10, 5), leg: ln(0, 0, 0, 60, 5) },
   { name: 'チビ', color: '#00897b', body: rect(-25, -90, 25, -50), arm: ln(0, 0, 40, -10, 4), leg: ln(0, 0, 0, 45, 4) },
-  { name: 'ハンマー', color: '#c62828', body: rect(-30, -150, 30, -80), arm: ln(0, 0, 70, 0, 7).concat([[70, -20], [90, -20], [90, 20], [70, 20], [70, 0]]), leg: ln(0, 0, 0, 60, 5) },
+  { name: 'ハンマー', color: '#c62828', body: rect(-30, -150, 30, -80), arm: ln(0, 0, 60, 0, 6).concat([[60, -15], [75, -15], [75, 15], [60, 15], [60, 0]]), leg: ln(0, 0, 0, 60, 5) },
 ];
 const CPU = CPU_RAW.map(c => Object.assign({ name: c.name, color: c.color }, design(c.body, c.arm, c.leg)));
 
