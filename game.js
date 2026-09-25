@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '21';
+const VERSION = '22';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -30,10 +30,10 @@ let strokes = { body: null, arm: null, leg: null };
 let myRobot = null;
 { const w = lsGet('robot'); if (w) { const d = RB.decodeDesign(w); if (d) { myRobot = d; strokes = { body: d.body, arm: d.arm, leg: d.leg }; } } }
 // 勝ち抜きは おもて と うら（おもてを クリアすると 出る）。記録は べつべつ（うらは キーの頭に 'ura.'）
-// うら は まだ オーナーだけ（?uratest を いちど開いた端末だけ。友達には 出ない）
+// うら は おもてクリアで 出る（2026-09-26 に一般公開）。?uratest を開いた端末は クリア前でも 出る（オーナーのテスト用）
 if (/[?&]uratest(=|&|$)/.test(location.search)) lsSet('uratest', '1');
 let URA_TEST = lsGet('uratest') === '1';
-let uraOpen = URA_TEST;   // オーナーの端末では おもてクリア前でも 出す（テスト用）
+let uraOpen = URA_TEST || lsGet('cleared') === '1';   // おもてを クリアしたら 出る（オーナーの端末は テスト用に いつでも）
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : 'omote';
 const sk = n => (side === 'ura' ? 'ura.' : '') + n;
 function CPUS() { return side === 'ura' ? RB.URA : RB.CPU; }
@@ -76,7 +76,7 @@ function showTitle() {
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0);
   $('tprog').textContent = (ob > 0 ? 'おもて さいこう ' + ob + ' にんぬき' + (uraOpen ? '（たっせい！）' : '') : '') + (uraOpen ? '　うら さいこう ' + ub + ' にんぬき' + (lsGet('ura.cleared') === '1' ? '（たっせい！！）' : '') : '');
   $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
-  if (URA_TEST) $('tprog').textContent += '　［うら テスト中］';
+
   drawTitleBg();
 }
 function showDraw() {
@@ -435,7 +435,7 @@ function showResult() {
       else {
         cleared = true; lsSet(sk('cleared'), '1'); resetRun();
         if (side === 'ura') $('rsub').textContent += '　うら 5 たい かちぬき たっせい！！ すごすぎる！';
-        else { $('rsub').textContent += '　5 たい かちぬき たっせい！'; if (!uraOpen && URA_TEST) { uraOpen = true; $('rsub').textContent += '　…うら かちぬき が あらわれた！'; } }
+        else { $('rsub').textContent += '　5 たい かちぬき たっせい！'; if (!uraOpen) { uraOpen = true; $('rsub').textContent += '　…うら かちぬき が あらわれた！'; } }
       }
     } else {
       resetRun();
