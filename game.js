@@ -1,6 +1,6 @@
 // かいて！ロボファイト — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・ロボを送る
 'use strict';
-const VERSION = '7';
+const VERSION = '8';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-robot/';
@@ -42,7 +42,7 @@ function resize() {
   sizePad(); if (mode === 'draw') drawPad();
 }
 window.addEventListener('resize', resize);
-function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox']) $(k).hidden = k !== id; }
+function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; }
 
 let mode = 'title', part = 'body';
 function showTitle() {
@@ -418,6 +418,8 @@ onTap($('clearpart'), () => { strokes[part] = null; if (stage > 0) resetRun(); s
 onTap($('next'), () => startBattle(false));
 onTap($('again'), () => startBattle(isFriend));
 onTap($('redraw'), showDraw);
+// 戦いの途中で もどる（勝ち抜きの途中経過は そのまま。戦いは決定的なので やめても 得はしない）
+onTap($('quit'), () => { if (mode === 'battle' || mode === 'pause') showDraw(); });
 onTap($('closeshare'), () => { $('sharebox').hidden = true; });
 onTap($('copy'), () => {
   const ta = $('sharetext'); ta.select();
