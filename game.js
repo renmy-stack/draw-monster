@@ -1,6 +1,6 @@
 // かいて！ロボファイト — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・ロボを送る
 'use strict';
-const VERSION = '9';
+const VERSION = '10';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-robot/';
@@ -29,6 +29,10 @@ let myRobot = null;
 let stage = Math.min(RB.CPU.length - 1, +(lsGet('stage') || 0));
 let cleared = lsGet('cleared') === '1';
 let best = +(lsGet('best') || 0);   // さいこう 何人抜き
+// 一度でも倒した CPU（はやおくり が使える）
+let beaten = []; try { beaten = JSON.parse(lsGet('beaten') || '[]'); } catch (e) {}
+let fast = lsGet('fast') === '1';
+const FAST = 4;
 // 勝ち抜き: 途中でロボを変えたら 1 体目から。負けたら その挑戦は おわり
 function resetRun() { stage = 0; lsSet('stage', '0'); }
 let friendRobot = null;
@@ -42,7 +46,10 @@ function resize() {
   sizePad(); if (mode === 'draw') drawPad();
 }
 window.addEventListener('resize', resize);
-function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; }
+function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
+// はやおくり: 一度でも倒した CPU との戦いだけ
+function canFast() { return mode === 'battle' && !isFriend && !!beaten[S && S.stage != null ? S.stage : stage]; }
+function updateFastBtn() { $('fast').textContent = fast ? '▶ ふつう' : '▶▶ はやおくり'; $('fast').classList.toggle('on', fast); }
 
 let mode = 'title', part = 'body';
 function showTitle() {
@@ -249,9 +256,10 @@ function frame(now) {
   if (mode === 'battle') {
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
     if (!S.over) {
-      if (stop > 0) stop--;
-      else { acc += dt; let n = 0; while (acc >= RB.DT && n < 48) { stepBattle(); acc -= RB.DT; n++; if (S.over || stop > 0) break; } if (n >= 48) acc = 0; }
-    } else if (now - endAt > 1800) showResult();
+      const sp = canFast() && fast ? FAST : 1;
+      if (stop > 0) stop = sp > 1 ? 0 : stop - 1;   // はやおくり中は ヒットの止め を はぶく
+      else { acc += dt * sp; let n = 0; while (acc >= RB.DT && n < 48 * sp) { stepBattle(); acc -= RB.DT; n++; if (S.over || (stop > 0 && sp === 1)) break; } if (n >= 48 * sp) acc = 0; }
+    } else if (now - endAt > (canFast() && fast ? 600 : 1800)) showResult();
     renderBattle(dt);
   } else if (mode === 'draw') drawPad();
   else if (mode === 'pause') renderBattle(0);
@@ -383,6 +391,7 @@ function showResult() {
   if (!isFriend) {
     if (win) {
       wins = stage + 1;
+      if (!beaten[stage]) { beaten[stage] = true; lsSet('beaten', JSON.stringify(beaten)); }
       if (stage < RB.CPU.length - 1) { stage++; lsSet('stage', String(stage)); showNext = true; }
       else { cleared = true; lsSet('cleared', '1'); resetRun(); $('rsub').textContent += '　5 たい かちぬき たっせい！'; }
     } else {
@@ -418,6 +427,7 @@ onTap($('clearpart'), () => { strokes[part] = null; if (stage > 0) resetRun(); s
 onTap($('next'), () => startBattle(false));
 onTap($('again'), () => startBattle(isFriend));
 onTap($('redraw'), showDraw);
+onTap($('fast'), () => { fast = !fast; lsSet('fast', fast ? '1' : '0'); updateFastBtn(); });
 // 戦いの途中で もどる（勝ち抜きの途中経過は そのまま。戦いは決定的なので やめても 得はしない）
 onTap($('quit'), () => { if (mode === 'battle' || mode === 'pause') showDraw(); });
 onTap($('closeshare'), () => { $('sharebox').hidden = true; });
@@ -457,6 +467,7 @@ showTitle();
   const q = new URLSearchParams(location.search);
   const sample = () => { const c = RB.CPU[2]; myRobot = RB.design(c.body, c.arm, c.leg); strokes = { body: myRobot.body, arm: myRobot.arm, leg: myRobot.leg }; };
   if (q.has('stage') && !q.has('shot')) stage = +q.get('stage');
+  if (q.has('beaten')) beaten = [true, true, true, true, true];   // 開発用: 早送りボタンを見る
   if (q.has('draw')) { if (!myRobot) sample(); if (q.get('draw') === 'arm') { strokes.arm = null; strokes.leg = null; myRobot = null; } showDraw(); }
   if (q.has('shot')) {
     if (!myRobot) sample();

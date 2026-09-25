@@ -121,3 +121,5 @@ button:disabled { opacity: .45; }
 
 /* 戦いの途中で もどる（押しまちがえないよう 左上の HP バーの下に 小さく） */
 #quit { position: fixed; left: 10px; top: calc(env(safe-area-inset-top) + 60px); font-size: 12px; padding: 4px 10px; border-width: 2px; box-shadow: 0 2px 0 var(--ink); opacity: .85; }
+#fast { position: fixed; right: 10px; top: calc(env(safe-area-inset-top) + 60px); font-size: 12px; padding: 4px 10px; border-width: 2px; box-shadow: 0 2px 0 var(--ink); opacity: .85; }
+#fast.on { background: #ffd54f; }
