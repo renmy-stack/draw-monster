@@ -119,7 +119,5 @@ button:disabled { opacity: .45; }
 #stats em { font-style: normal; font-weight: 800; font-size: 12px; text-align: right; color: #ffd600; }
 #stats .bar { height: 9px; }
 
-/* 戦いの途中で もどる */
-#quit { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(max(14px, env(safe-area-inset-bottom)) + 6px); font-size: 14px; padding: 7px 18px; opacity: .9; }
-body.browser #quit { bottom: calc(max(14px, env(safe-area-inset-bottom)) + 70px); }
-#quit:active { transform: translateX(-50%) translateY(3px); }
+/* 戦いの途中で もどる（押しまちがえないよう 左上の HP バーの下に 小さく） */
+#quit { position: fixed; left: 10px; top: calc(env(safe-area-inset-top) + 60px); font-size: 12px; padding: 4px 10px; border-width: 2px; box-shadow: 0 2px 0 var(--ink); opacity: .85; }
