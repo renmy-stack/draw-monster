@@ -153,3 +153,12 @@ button:disabled { opacity: .45; }
 /* ふたりで たたかう */
 .vsbtn { margin-top: 10px; background: #fff3e0; }
 #handoff { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: #15173a; }
+
+/* 結果の説明は こちらで決めた場所（
+）で 改行、ボタンの 2 段目は 小さく */
+#rsub { white-space: pre-line; line-height: 1.5; }
+#result .main small { display: block; font-size: 12px; font-weight: 700; opacity: .9; }
+
+/* 5 体の名前の札を 1 行に */
+#rprog { gap: 3px; flex-wrap: nowrap; }
+#rprog .dot { padding: 3px 5px; font-size: 11px; white-space: nowrap; }

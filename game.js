@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '25';
+const VERSION = '27';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -431,9 +431,9 @@ function showResult() {
   if (S.side === 'vs') {
     $('rtitle').textContent = S.winner === 'A' ? '1P の かち！' : S.winner === 'B' ? '2P の かち！' : 'ひきわけ';
     $('rtitle').className = 'rtitle ' + (S.winner ? 'win' : '');
-    $('rsub').textContent = (S.reason === 'ko' ? 'KO（' + S.t.toFixed(1) + ' びょう）' : 'じかんぎれ') + '　のこり HP 1P ' + Math.ceil(S.A.hp) + ' / 2P ' + Math.ceil(S.B.hp);
+    $('rsub').textContent = (S.reason === 'ko' ? 'KO（' + S.t.toFixed(1) + ' びょう）' : 'じかんぎれ') + '\nのこり HP　1P ' + Math.ceil(S.A.hp) + '　2P ' + Math.ceil(S.B.hp);
     $('rprog').innerHTML = '';
-    $('next').hidden = false; $('next').textContent = 'もういちど（なおして たたかう）';
+    $('next').hidden = false; $('next').innerHTML = 'もういちど<small>なおして たたかう</small>';
     $('again').hidden = false; $('again').textContent = 'おなじ たたかいを みる'; $('again').className = 'sub';
     $('redraw').hidden = true; $('share').hidden = true; $('vstitle').hidden = false;
     return;
@@ -441,7 +441,7 @@ function showResult() {
   const win = S.winner === 'A', draw = S.winner == null;
   $('rtitle').textContent = win ? 'かち！' : draw ? 'ひきわけ' : 'まけ…';
   $('rtitle').className = 'rtitle ' + (win ? 'win' : draw ? '' : 'lose');
-  $('rsub').textContent = (S.reason === 'ko' ? 'KO（' + S.t.toFixed(1) + ' びょう）' : 'じかんぎれ（のこり HP ' + Math.ceil(S.A.hp) + ' たい ' + Math.ceil(S.B.hp) + '）') + '　パンチ ' + S.A.hits + ' はつ・ダメージ ' + Math.round(S.A.dealt);
+  $('rsub').textContent = (S.reason === 'ko' ? 'KO（' + S.t.toFixed(1) + ' びょう）' : 'じかんぎれ（のこり HP ' + Math.ceil(S.A.hp) + ' たい ' + Math.ceil(S.B.hp) + '）') + '\nパンチ ' + S.A.hits + ' はつ・ダメージ ' + Math.round(S.A.dealt);
   let showNext = false, wins = stage;
   if (!isFriend) {
     if (win) {
@@ -450,14 +450,14 @@ function showResult() {
       if (stage < CPUS().length - 1) { stage++; lsSet(sk('stage'), String(stage)); showNext = true; }
       else {
         cleared = true; lsSet(sk('cleared'), '1'); resetRun();
-        if (side === 'ura') $('rsub').textContent += '　うら 5 たい かちぬき たっせい！！ すごすぎる！';
-        else { $('rsub').textContent += '　5 たい かちぬき たっせい！'; if (!uraOpen) { uraOpen = true; $('rsub').textContent += '　…うら かちぬき が あらわれた！'; } }
+        if (side === 'ura') $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！ すごすぎる！';
+        else { $('rsub').textContent += '\n5 たい かちぬき たっせい！'; if (!uraOpen) { uraOpen = true; $('rsub').textContent += '\n…うら かちぬき が あらわれた！'; } }
       }
     } else {
       resetRun();
-      $('rsub').textContent += '　' + wins + ' にんぬき で おわり';
+      $('rsub').textContent += '\n' + wins + ' にんぬき で おわり';
     }
-    if (wins > best) { best = wins; lsSet(sk('best'), String(best)); $('rsub').textContent += '（さいこう きろく！）'; }
+    if (wins > best) { best = wins; lsSet(sk('best'), String(best)); $('rsub').textContent += '\nさいこう きろく！'; }
   }
   $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
   $('next').hidden = !showNext;
