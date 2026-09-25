@@ -79,8 +79,14 @@ button.sub { background: #fff; color: var(--ink); margin-top: 0; font-size: 16px
 .dhead b { color: #ffd600; }
 #pad { border-radius: 16px; border: 3px solid #7c83ff; touch-action: none; box-shadow: 0 0 20px rgba(124,131,255,.4); }
 #hint { min-height: 1.3em; font-weight: 800; font-size: 14px; line-height: 1.35; color: #ff8a80; text-align: center; }
-#draw { overflow-y: auto; }
-#draw > * { flex-shrink: 0; }   /* 縦が足りなくても 縮めて重ねない（スクロールする） */
+#draw { overflow-y: auto; justify-content: flex-start; gap: 8px; }
+#draw > * { flex-shrink: 0; }   /* 縦が足りなくても 縮めて重ねない */
+#draw > :first-child { margin-top: auto; }   /* まんなか寄せ。はみ出しても 上が切れない */
+#draw > :last-child { margin-bottom: auto; }
+/* Safari（ホーム画面から開いていない）: 下のバーが 画面に重なって浮くので あける */
+body.browser #draw { padding-bottom: calc(max(12px, env(safe-area-inset-bottom)) + 64px); }
+#draw .rbtns.small { flex-wrap: nowrap; gap: 6px; margin-top: 0; }
+#draw .rbtns.small button { font-size: 13px; padding: 7px 10px; white-space: nowrap; }
 .stats { width: min(100%, 340px); display: grid; gap: 6px; }
 .st { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: center; gap: 8px; font-weight: 800; font-size: 13px; }
 .bar { height: 12px; border-radius: 6px; background: rgba(255,255,255,.15); overflow: hidden; }

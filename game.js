@@ -1,6 +1,8 @@
 // かいて！ロボファイト — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・ロボを送る
 'use strict';
-const VERSION = '5';   // version.txt と合わせる。更新したら index.html の ?v= も上げる
+const VERSION = '6';
+// ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
+if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-robot/';
 
 const $ = id => document.getElementById(id);
@@ -56,8 +58,9 @@ function showDraw() {
   if (!strokes.body) part = 'body'; else if (!strokes.arm) part = 'arm'; else if (!strokes.leg) part = 'leg';
   $('fightfriend').hidden = !friendRobot;
   $('fight').textContent = 'たたかう（' + (stage + 1) + ' / ' + RB.CPU.length + ' ' + RB.CPU[stage].name + '）';
-  sizePad(); setPart(part);
+  setPart(part);
   if (stage > 0) setHint('かちぬき ちゅう：ロボを かえると 1 たいめから');
+  sizePad(); drawPad();   // 文字やボタンが決まってから 測る
 }
 function setPart(p) {
   part = p;
@@ -74,11 +77,19 @@ for (const t of document.querySelectorAll('.tab')) t.addEventListener('click', e
 const pad = $('pad'), pctx = pad.getContext('2d');
 const PW = RB.PAD.x1 - RB.PAD.x0, PH = RB.PAD.y1 - RB.PAD.y0;
 let PS = 300, raw = null;
-function sizePad() {
-  const h = Math.max(200, Math.min(H - 380, 420)), w = Math.min(W - 32, h * PW / PH);   // 下のボタンと ヒント 2 行ぶんを あける
+function setPadSize(w) {
   PS = w;
   pad.style.width = w + 'px'; pad.style.height = w * PH / PW + 'px';
   pad.width = Math.round(w * DPR); pad.height = Math.round(w * PH / PW * DPR);
+}
+// パッドを いちど大きめにして、描く画面が はみ出したぶんだけ 縮める（Safari のバー・強さのバー・ボタンの高さは 画面ごとに ちがうので 測る）
+function sizePad() {
+  let w = Math.min(W - 32, 420 * PW / PH);
+  setPadSize(w);
+  const d = $('draw');
+  if (d.hidden) return;
+  const over = d.scrollHeight - d.clientHeight;
+  if (over > 0) setPadSize(Math.max(150, w - over * PW / PH - 4));
 }
 function toWorld(e) { const r = pad.getBoundingClientRect(); const s = PW / r.width; return [(e.clientX - r.left) * s + RB.PAD.x0, (e.clientY - r.top) * s + RB.PAD.y0]; }
 function current() {
