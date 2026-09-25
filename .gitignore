@@ -3,5 +3,6 @@ _frame2.html
 _frame3.html
 _*.json
 _*.log
+_*.out
 .DS_Store
 Thumbs.db
