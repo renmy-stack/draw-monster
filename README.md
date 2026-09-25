@@ -16,6 +16,11 @@ https://renmy-stack.github.io/draw-monster/
 - `evolve.js [世代] [集団]` — 強いモンスターを進化で探す（うら 5 人抜き用、結果 `_elite.json`）
 - `evolve.js … '{"w":[16,60]}' _elite_nop.json` — 形の縛り（タイプ）つきで進化
 - `challenge.js [世代] [集団] [種] [並びの json]` — うら 5 人抜きを ぜんぶ抜ける形が あるかを 進化で探す（見つかれば `_challenger.json`）
+- `coevo.js [回数] [再開の並び]` — いたちごっこ（攻略者に勝つ敵を進化 ⇄ 攻略者の進化）
+- `squad.js [版数]` — 最強の部隊（止められる攻略者が いちばん多い 5 体の組み合わせ）＋ 攻略者の進化で選び直し
+- `wheel_round.js` — 輪の足を知った 敵の進化 → squad.js
+- `hardness.js 並び.json …` — 並びごとに 攻略者の進化（6 通り）が 5 人抜きを見つけるまでの世代を比べる
+- `report_rates.js` — おもて・うら の キャラごとの勝率と 何人抜き
 - `ura_rate.js [体数]` — うら 5 人抜きを ランダムなモンスター・おもてクリア組が どれだけ抜けるか
 - `sweep.js` / `tune.js` — 腕の長さ・体の大きさ・足の長さ別の勝率。`tune.js` はつまみ `K` を探す（`node tune.js 16 '{"lenP":[1.2,1.5]}'`）
 

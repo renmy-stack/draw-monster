@@ -3,10 +3,11 @@
 'use strict';
 const RB = require('./sim.js');
 const LIST = process.argv[5] ? require(process.argv[5]).map(c => RB.design(c.body, c.arm, c.leg)) : RB.URA;
+const OUTC = process.argv[6] || '_challenger.json';
 let seed = +(process.argv[4] || 4242); const r = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 const gauss = () => Math.sqrt(-2 * Math.log(r() + 1e-9)) * Math.cos(2 * Math.PI * r());
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
-const LIM = { w: [16, 130], h: [16, 150], cy: [-190, -40], round: [0, 1], armLen: [15, 150], armAng: [-1.4, 1.4], armZig: [0, 25], head: [0, 1], legLen: [15, 130], legAng: [-0.8, 0.8], legBend: [-1.2, 1.2] };
+const LIM = { w: [16, 200], h: [16, 150], cy: [-190, -40], round: [0, 1], armLen: [15, 150], armAng: [-1.4, 1.4], armZig: [0, 25], head: [0, 1], legLen: [15, 130], legAng: [-0.8, 0.8], legBend: [-1.2, 1.2] , loop: [0, 1], legR: [5, 19], loopX: [-12, 12], loopY: [-12, 12] };
 function randP() { const p = {}; for (const [k, [a, b]] of Object.entries(LIM)) p[k] = a + (b - a) * r(); return p; }
 function mutate(p, s) { const q = Object.assign({}, p); for (const [k, [a, b]] of Object.entries(LIM)) if (r() < 0.5) q[k] = clamp(q[k] + gauss() * (b - a) * s, a, b); return q; }
 function build(p) {
@@ -17,8 +18,15 @@ function build(p) {
   const arm = [], na = Math.max(3, Math.round(p.armLen / 10));
   for (let i = 0; i <= na; i++) { const d = p.armLen * i / na, z = p.armZig * (i % 2 ? 1 : -1) * (i > 0 && i < na ? 1 : 0); arm.push([j.shoulder[0] + Math.cos(p.armAng) * d - Math.sin(p.armAng) * z, j.shoulder[1] + Math.sin(p.armAng) * d + Math.cos(p.armAng) * z]); }
   if (p.head >= 0.5) { const e = arm[arm.length - 1], ux = Math.cos(p.armAng), uy = Math.sin(p.armAng); for (const [a, b] of [[0, -14], [14, -14], [14, 14], [0, 14], [0, 0]]) arm.push([e[0] + ux * a - uy * b, e[1] + uy * a + ux * b]); }
-  const leg = [[j.hip[0], j.hip[1]]]; let x = j.hip[0], y = j.hip[1], a = Math.PI / 2 + p.legAng; const nl = Math.max(3, Math.round(p.legLen / 10));
-  for (let i = 0; i < nl; i++) { a += p.legBend / nl; x += Math.cos(a) * p.legLen / nl; y += Math.sin(a) * p.legLen / nl; leg.push([x, y]); }
+  const leg = [[j.hip[0], j.hip[1]]];
+  if (p.loop >= 0.5) {
+    // 輪の足（車輪のように転がる）: 腰の近く（ずれ loopX, loopY）を中心に 半径 legR の丸
+    const cx = j.hip[0] + p.loopX, cy = j.hip[1] + p.loopY, a0 = Math.atan2(j.hip[1] - cy, j.hip[0] - cx);
+    for (let i = 1; i <= 16; i++) { const t = a0 + i / 16 * Math.PI * 2; leg.push([cx + Math.cos(t) * p.legR, cy + Math.sin(t) * p.legR]); }
+  } else {
+    let x = j.hip[0], y = j.hip[1], a = Math.PI / 2 + p.legAng; const nl = Math.max(3, Math.round(p.legLen / 10));
+    for (let i = 0; i < nl; i++) { a += p.legBend / nl; x += Math.cos(a) * p.legLen / nl; y += Math.sin(a) * p.legLen / nl; leg.push([x, y]); }
+  }
   const d = RB.design(bodyC, RB.cleanStroke(arm, RB.INK.arm), RB.cleanStroke(leg, RB.INK.leg));
   return RB.validDesign(d) ? d : null;
 }
@@ -40,5 +48,5 @@ for (let g = 0; g < G && !found; g++) {
   while (next.length < P) { const q = randP(), d = build(q); if (d) next.push({ p: q, d }); }
   pop = next;
 }
-if (found) { console.log('5 人抜き できる形 あり'); require('fs').writeFileSync('_challenger.json', JSON.stringify({ body: found.d.body, arm: found.d.arm, leg: found.d.leg, p: found.p })); }
+if (found) { console.log('5 人抜き できる形 あり'); require('fs').writeFileSync(OUTC, JSON.stringify({ body: found.d.body, arm: found.d.arm, leg: found.d.leg, p: found.p })); }
 else console.log('見つからず（さいこう ' + bestEver.toFixed(2) + ' 人ぶん）');

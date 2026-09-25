@@ -6,7 +6,7 @@ const { randomRobot } = require('./clear_rate.js');
 let seed = +(process.argv[6] || 777); const r = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 const gauss = () => Math.sqrt(-2 * Math.log(r() + 1e-9)) * Math.cos(2 * Math.PI * r());
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
-const LIM0 = { w: [16, 130], h: [16, 150], cy: [-190, -40], round: [0, 1], armLen: [15, 150], armAng: [-1.4, 1.4], armZig: [0, 25], head: [0, 1], legLen: [15, 130], legAng: [-0.8, 0.8], legBend: [-1.2, 1.2] };
+const LIM0 = { w: [16, 200], h: [16, 150], cy: [-190, -40], round: [0, 1], armLen: [15, 150], armAng: [-1.4, 1.4], armZig: [0, 25], head: [0, 1], legLen: [15, 130], legAng: [-0.8, 0.8], legBend: [-1.2, 1.2] , loop: [0, 1], legR: [5, 19], loopX: [-12, 12], loopY: [-12, 12] };
 // タイプの縛り（argv[4] の JSON で LIM の一部を上書き。例: '{"w":[16,45],"h":[90,150]}'）と 出力ファイル（argv[5]）
 const LIM = Object.assign({}, LIM0, JSON.parse(process.argv[4] || '{}'));
 const OUT = process.argv[5] || '_elite.json';
@@ -25,8 +25,15 @@ function build(p) {
   const arm = [], na = Math.max(3, Math.round(p.armLen / 10));
   for (let i = 0; i <= na; i++) { const d = p.armLen * i / na, z = p.armZig * (i % 2 ? 1 : -1) * (i > 0 && i < na ? 1 : 0); arm.push([j.shoulder[0] + Math.cos(p.armAng) * d - Math.sin(p.armAng) * z, j.shoulder[1] + Math.sin(p.armAng) * d + Math.cos(p.armAng) * z]); }
   if (p.head >= 0.5) { const e = arm[arm.length - 1], ux = Math.cos(p.armAng), uy = Math.sin(p.armAng); for (const [a, b] of [[0, -14], [14, -14], [14, 14], [0, 14], [0, 0]]) arm.push([e[0] + ux * a - uy * b, e[1] + uy * a + ux * b]); }
-  const leg = [[j.hip[0], j.hip[1]]]; let x = j.hip[0], y = j.hip[1], a = Math.PI / 2 + p.legAng; const nl = Math.max(3, Math.round(p.legLen / 10));
-  for (let i = 0; i < nl; i++) { a += p.legBend / nl; x += Math.cos(a) * p.legLen / nl; y += Math.sin(a) * p.legLen / nl; leg.push([x, y]); }
+  const leg = [[j.hip[0], j.hip[1]]];
+  if (p.loop >= 0.5) {
+    // 輪の足（車輪のように転がる）: 腰の近く（ずれ loopX, loopY）を中心に 半径 legR の丸
+    const cx = j.hip[0] + p.loopX, cy = j.hip[1] + p.loopY, a0 = Math.atan2(j.hip[1] - cy, j.hip[0] - cx);
+    for (let i = 1; i <= 16; i++) { const t = a0 + i / 16 * Math.PI * 2; leg.push([cx + Math.cos(t) * p.legR, cy + Math.sin(t) * p.legR]); }
+  } else {
+    let x = j.hip[0], y = j.hip[1], a = Math.PI / 2 + p.legAng; const nl = Math.max(3, Math.round(p.legLen / 10));
+    for (let i = 0; i < nl; i++) { a += p.legBend / nl; x += Math.cos(a) * p.legLen / nl; y += Math.sin(a) * p.legLen / nl; leg.push([x, y]); }
+  }
   const d = RB.design(bodyC, RB.cleanStroke(arm, RB.INK.arm), RB.cleanStroke(leg, RB.INK.leg));
   return RB.validDesign(d) ? d : null;
 }
@@ -34,12 +41,15 @@ function build(p) {
 const RANDOM = []; while (RANDOM.length < 40) { const d = randomRobot(); if (d) RANDOM.push(d); }
 // つよい相手も まぜる: おもてを クリアできた モンスター
 const STRONG = []; { let n = 0; while (STRONG.length < 14 && n < 3000) { const d = randomRobot(); n++; if (!d) continue; let k = 0; for (; k < RB.CPU.length; k++) if (RB.fight(d, RB.CPU[k]).winner !== 'A') break; if (k === RB.CPU.length) STRONG.push(d); } }
+const ATTACK = process.argv[7] ? require(require('path').resolve(process.argv[7])).map(c => RB.design(c.body, c.arm, c.leg)) : [];
+const URA_NOW = process.argv[8] ? require(require('path').resolve(process.argv[8])).map(c => RB.design(c.body, c.arm, c.leg)) : RB.URA;
 const G = +(process.argv[2] || 12), P = +(process.argv[3] || 24);
 let pop = [];
 while (pop.length < P) { const p = randP(), d = build(p); if (d) pop.push({ p, d }); }
 let hall = [];   // これまでの強者
 for (let g = 0; g < G; g++) {
-  const opp = RB.CPU.concat(RANDOM.slice(0, 12), STRONG, RB.URA, hall.slice(0, 5).map(h => h.d), pop.slice(0, 4).map(x => x.d));
+  // 攻略者（argv[7] の json。裏を 5 人抜きした形）は 3 回ぶん 重く数える
+  const opp = RB.CPU.concat(RANDOM.slice(0, 12), STRONG, URA_NOW, ATTACK, ATTACK, ATTACK, hall.slice(0, 5).map(h => h.d), pop.slice(0, 4).map(x => x.d));
   for (const x of pop) {
     let w = 0, t = 0;
     for (const o of opp) { if (o === x.d) continue; for (const [A, B, me] of [[x.d, o, 'A'], [o, x.d, 'B']]) { const S = RB.fight(A, B); if (S.winner === me) w++; t++; } }
