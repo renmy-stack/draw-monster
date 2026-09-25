@@ -3,7 +3,7 @@
 'use strict';
 (function (root) {
 
-const SIM_VERSION = 10;          // 物理・数値を変えたら上げる
+const SIM_VERSION = 11;          // 物理・数値を変えたら上げる
 const HZ = 240, DT = 1 / HZ;
 const G = 1400;                 // 重力
 const T = 3.5;                  // 線の太さ（半径）
@@ -353,7 +353,7 @@ function step(S) {
   }
   S.t += DT;
   if (A.hp <= 0 || B.hp <= 0) { S.over = true; S.reason = 'ko'; S.winner = A.hp <= 0 && B.hp <= 0 ? null : A.hp > 0 ? 'A' : 'B'; }
-  else if (S.t >= TIME - 1e-9) { S.over = true; S.reason = 'time'; S.winner = A.hp / A.maxHp > B.hp / B.maxHp ? 'A' : B.hp / B.maxHp > A.hp / A.maxHp ? 'B' : null; }   // 時間切れは のこり HP の割合
+  else if (S.t >= TIME - 1e-9) { S.over = true; S.reason = 'time'; S.winner = A.hp > B.hp ? 'A' : B.hp > A.hp ? 'B' : null; }   // 時間切れは のこり HP の数字が多いほう（画面の数字どおり）
   if (S.over) S.fx.push({ t: 'end' });
 }
 // 描く画面に出す つよさ（タフさ = HP、パンチ = 1 発の重さ、リーチ = 腕の長さ、はやさ = 1 秒に振る回数）
