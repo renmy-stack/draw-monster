@@ -123,3 +123,16 @@ button:disabled { opacity: .45; }
 #quit { position: fixed; left: 10px; top: calc(env(safe-area-inset-top) + 60px); font-size: 12px; padding: 4px 10px; border-width: 2px; box-shadow: 0 2px 0 var(--ink); opacity: .85; }
 #fast { position: fixed; right: 10px; top: calc(env(safe-area-inset-top) + 60px); font-size: 12px; padding: 4px 10px; border-width: 2px; box-shadow: 0 2px 0 var(--ink); opacity: .85; }
 #fast.on { background: #ffd54f; }
+
+/* たたかうボタンの行: おもて/うら・たたかう・ともだち を 横 1 行に（描く範囲を せまくしない） */
+.fightrow { display: flex; gap: 6px; width: min(100%, 380px); align-items: stretch; }
+.fightrow button { margin: 0; }
+.fightrow .main { flex: 1 1 auto; padding: 6px 10px; font-size: 18px; line-height: 1.15; }
+.fightrow .main small { display: block; font-size: 11px; font-weight: 700; opacity: .9; }
+.fightrow .friend { flex: 0 0 auto; font-size: 15px; }
+.fightrow .side { flex: 0 0 auto; border: 2px solid #7c83ff; background: transparent; color: #c5c8ff; border-radius: 14px; padding: 4px 10px; font-weight: 800; font-size: 13px; }
+.fightrow .side.ura { background: #b71c1c; border-color: #ff5252; color: #fff; }
+.main.ura { background: #7f0000; box-shadow: 0 4px 0 var(--ink), 0 0 16px rgba(255,60,60,.6); }
+/* 強さのバーは 2 列 × 2 段 */
+#stats { grid-template-columns: 1fr 1fr; column-gap: 14px; }
+#stats .st { grid-template-columns: 44px minmax(0, 1fr) 26px; gap: 5px; }

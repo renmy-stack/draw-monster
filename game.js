@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '13';
+const VERSION = '15';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -12,7 +12,7 @@ const ME = { name: 'じぶん', color: '#1e88e5' };
 const FRIEND = { name: 'ともだち', color: '#2e7d32' };
 const PARTS = { body: 'からだ', arm: 'うで', leg: 'あし' };
 const PART_HINT = {
-  body: 'モンスターの <b>からだ</b> を かこむように かいてね',
+  body: '<b>からだ</b> を かこむように かいてね',
   arm: '<b>かた</b>（きいろい ●）から <b>うで</b> を かいてね',
   leg: '<b>こし</b>（きいろい ●）から <b>あし</b> を かいてね',
 };
@@ -21,20 +21,31 @@ const PART_HINT = {
 const KEY = 'drawrobot.';
 function lsGet(k) { try { return localStorage.getItem(KEY + k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(KEY + k, v); } catch (e) {} }
-try { if (lsGet('simv') !== String(RB.SIM_VERSION)) { localStorage.removeItem(KEY + 'stage'); lsSet('simv', String(RB.SIM_VERSION)); } } catch (e) {}
+try { if (lsGet('simv') !== String(RB.SIM_VERSION)) { localStorage.removeItem(KEY + 'stage'); localStorage.removeItem(KEY + 'ura.stage'); lsSet('simv', String(RB.SIM_VERSION)); } } catch (e) {}
 // 描きかけの線（3 本）と、完成したモンスター
 let strokes = { body: null, arm: null, leg: null };
 let myRobot = null;
 { const w = lsGet('robot'); if (w) { const d = RB.decodeDesign(w); if (d) { myRobot = d; strokes = { body: d.body, arm: d.arm, leg: d.leg }; } } }
-let stage = Math.min(RB.CPU.length - 1, +(lsGet('stage') || 0));
-let cleared = lsGet('cleared') === '1';
-let best = +(lsGet('best') || 0);   // さいこう 何人抜き
-// 一度でも倒した CPU（はやおくり が使える）
-let beaten = []; try { beaten = JSON.parse(lsGet('beaten') || '[]'); } catch (e) {}
+// 勝ち抜きは おもて と うら（おもてを クリアすると 出る）。記録は べつべつ（うらは キーの頭に 'ura.'）
+let uraOpen = lsGet('cleared') === '1';
+let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : 'omote';
+const sk = n => (side === 'ura' ? 'ura.' : '') + n;
+function CPUS() { return side === 'ura' ? RB.URA : RB.CPU; }
+let stage = 0, cleared = false, best = 0, beaten = [];
+function loadSide() {
+  stage = Math.min(CPUS().length - 1, +(lsGet(sk('stage')) || 0));
+  cleared = lsGet(sk('cleared')) === '1';
+  best = +(lsGet(sk('best')) || 0);   // さいこう 何人抜き
+  try { beaten = JSON.parse(lsGet(sk('beaten')) || '[]'); } catch (e) { beaten = []; }
+}
+loadSide();
+// 一度でも倒した CPU（はやおくり が使える）は beaten
 let fast = lsGet('fast') === '1';
 const FAST = 4;
 // 勝ち抜き: 途中でモンスターを変えたら 1 体目から。負けたら その挑戦は おわり
-function resetRun() { stage = 0; lsSet('stage', '0'); }
+function resetRun() { stage = 0; lsSet(sk('stage'), '0'); }
+// モンスターを描きかえたら おもて・うら 両方の途中経過を 1 たいめに
+function resetAllRuns() { stage = 0; lsSet('stage', '0'); lsSet('ura.stage', '0'); }
 let friendRobot = null;
 { const m = /[#&]r=([A-Za-z0-9_-]+)/.exec(location.hash); if (m) friendRobot = RB.decodeDesign(m[1]); }
 
@@ -56,7 +67,8 @@ function showTitle() {
   mode = 'title'; show('title');
   $('friendbox').hidden = !friendRobot;
   if (friendRobot) drawPreview($('friendprev'), friendRobot, FRIEND.color);
-  $('tprog').textContent = (best > 0 ? 'さいこう ' + best + ' にんぬき' + (cleared ? '（かちぬき たっせい！）' : '') : '') + (stage > 0 ? '　いま ' + stage + ' にんぬき ちゅう' : '');
+  const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0);
+  $('tprog').textContent = (ob > 0 ? 'おもて さいこう ' + ob + ' にんぬき' + (uraOpen ? '（たっせい！）' : '') : '') + (uraOpen ? '　うら さいこう ' + ub + ' にんぬき' + (lsGet('ura.cleared') === '1' ? '（たっせい！！）' : '') : '');
   $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
   drawTitleBg();
 }
@@ -64,7 +76,7 @@ function showDraw() {
   mode = 'draw'; show('draw');
   if (!strokes.body) part = 'body'; else if (!strokes.arm) part = 'arm'; else if (!strokes.leg) part = 'leg';
   $('fightfriend').hidden = !friendRobot;
-  $('fight').textContent = 'たたかう（' + (stage + 1) + ' / ' + RB.CPU.length + ' ' + RB.CPU[stage].name + '）';
+  updateSideUi();
   setPart(part);
   if (stage > 0) setHint('かちぬき ちゅう：モンスターを かえると 1 たいめから');
   sizePad(); drawPad();   // 文字やボタンが決まってから 測る
@@ -217,7 +229,7 @@ const endStroke = () => {
   const need = part === 'body' ? 80 : 20;
   if (pts.length < 2 || RB.inkOf(pts) < need) { setHint('もうすこし おおきく かいてね'); drawPad(); return; }
   strokes[part] = pts;
-  if (stage > 0) { resetRun(); $('fight').textContent = 'たたかう（1 / ' + RB.CPU.length + ' ' + RB.CPU[0].name + '）'; }
+  if (stage > 0 || +(lsGet('stage') || 0) > 0 || +(lsGet('ura.stage') || 0) > 0) { resetAllRuns(); updateSideUi(); }
   if (part === 'body' && (strokes.arm || strokes.leg)) setHint('からだを かえたので、うで・あしも くっつけなおしたよ');
   else setHint('');
   saveRobot();
@@ -251,8 +263,8 @@ let S = null, opp = null, acc = 0, last = 0, stop = 0, shake = 0, parts = [], po
 function startBattle(friend) {
   if (!myRobot) return;
   isFriend = !!friend;
-  opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: RB.CPU[stage].name, color: RB.CPU[stage].color, d: RB.CPU[stage] };
-  S = RB.create(myRobot, opp.d); S.stage = stage;
+  opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: CPUS()[stage].name, color: CPUS()[stage].color, d: CPUS()[stage] };
+  S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side;
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
 }
@@ -298,7 +310,8 @@ function camera() {
 }
 function renderBattle(dt) {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#15173a'); sky.addColorStop(1, '#3a2a63');
+  const ura = S.side === 'ura';
+  const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, ura ? '#1a0610' : '#15173a'); sky.addColorStop(1, ura ? '#4a0f1f' : '#3a2a63');   // うらは 赤黒い
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
   const c = camera(), gy = H * 0.72;
   let sx = 0, sy = 0; if (shake > 0) { sx = (rnd() - .5) * shake; sy = (rnd() - .5) * shake; shake *= 0.86; if (shake < 0.3) shake = 0; }
@@ -349,7 +362,9 @@ function drawRobotWorld(b, color, flash) {
   limb(ctx, legB, '#37474f', 0.6);
   const poly = b.bodyPts.map(p => tf(p.x, p.y));
   const bodyCol = flash ? '#ffffff' : color;
+  if (S.side === 'ura' && b === S.B) { ctx.shadowColor = '#ff1744'; ctx.shadowBlur = 26; }   // うらの敵は 赤く光る
   pline(ctx, poly); ctx.closePath(); ctx.fillStyle = bodyCol; ctx.fill();
+  ctx.shadowBlur = 0;
   ctx.save(); pline(ctx, poly); ctx.closePath(); ctx.clip();
   ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.fillRect(b.x - 300, b.y - 300, 600, 300 + (-120));
   ctx.restore();
@@ -375,10 +390,10 @@ function drawHud() {
     ctx.fillText(Math.ceil(hp), right ? x + bw - 4 : x + 4, top + 35);
   };
   bar(12, S.A.hp, S.A.maxHp, ME.name, ME.color, false);
-  bar(W - 12 - bw, S.B.hp, S.B.maxHp, opp.name, opp.color, true);
+  bar(W - 12 - bw, S.B.hp, S.B.maxHp, opp.name, S.side === 'ura' ? '#ff5252' : opp.color, true);   // うらの敵は色が暗いので バーは赤
   ctx.textAlign = 'center'; ctx.font = '900 26px sans-serif'; ctx.fillStyle = S.t > RB.TIME - 5 ? '#ff8a80' : '#fff';
   ctx.fillText(Math.max(0, Math.ceil(RB.TIME - S.t)), W / 2, top + 34);
-  if (!isFriend) { ctx.font = '700 12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText('かちぬき ' + (S.stage + 1) + ' / ' + RB.CPU.length, W / 2, top + 54); }
+  if (!isFriend) { ctx.font = '700 12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText((S.side === 'ura' ? 'うら ' : '') + 'かちぬき ' + (S.stage + 1) + ' / ' + CPUS().length, W / 2, top + 54); }
   if (S.t < 1) big('ファイト！', '#ffd54f', 1 - S.t);
   if (S.over) big(S.reason === 'ko' ? 'KO！' : 'じかんぎれ', S.winner === 'A' ? '#ffd54f' : '#ff8a80', 1);
 }
@@ -408,16 +423,20 @@ function showResult() {
   if (!isFriend) {
     if (win) {
       wins = stage + 1;
-      if (!beaten[stage]) { beaten[stage] = true; lsSet('beaten', JSON.stringify(beaten)); }
-      if (stage < RB.CPU.length - 1) { stage++; lsSet('stage', String(stage)); showNext = true; }
-      else { cleared = true; lsSet('cleared', '1'); resetRun(); $('rsub').textContent += '　5 たい かちぬき たっせい！'; }
+      if (!beaten[stage]) { beaten[stage] = true; lsSet(sk('beaten'), JSON.stringify(beaten)); }
+      if (stage < CPUS().length - 1) { stage++; lsSet(sk('stage'), String(stage)); showNext = true; }
+      else {
+        cleared = true; lsSet(sk('cleared'), '1'); resetRun();
+        if (side === 'ura') $('rsub').textContent += '　うら 5 たい かちぬき たっせい！！ すごすぎる！';
+        else { $('rsub').textContent += '　5 たい かちぬき たっせい！'; if (!uraOpen) { uraOpen = true; $('rsub').textContent += '　…うら かちぬき が あらわれた！'; } }
+      }
     } else {
       resetRun();
       $('rsub').textContent += '　' + wins + ' にんぬき で おわり';
     }
-    if (wins > best) { best = wins; lsSet('best', String(best)); $('rsub').textContent += '（さいこう きろく！）'; }
+    if (wins > best) { best = wins; lsSet(sk('best'), String(best)); $('rsub').textContent += '（さいこう きろく！）'; }
   }
-  $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : RB.CPU.map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
+  $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
   $('next').hidden = !showNext;
   $('again').hidden = showNext;
   $('again').textContent = isFriend ? 'もういちど' : '1 たいめから もういちど';
@@ -440,10 +459,20 @@ onTap($('fight'), () => startBattle(false));
 onTap($('fightfriend'), () => startBattle(true));
 onTap($('send'), shareRobot);
 onTap($('share'), shareRobot);
-onTap($('clearpart'), () => { strokes[part] = null; if (stage > 0) resetRun(); saveRobot(); setPart(part); });
+onTap($('clearpart'), () => { strokes[part] = null; resetAllRuns(); saveRobot(); setPart(part); updateSideUi(); });
 onTap($('next'), () => startBattle(false));
 onTap($('again'), () => startBattle(isFriend));
 onTap($('redraw'), showDraw);
+// おもて / うら の切りかえ（おもてを クリアしたら 出る）
+function updateSideUi() {
+  $('sidebtn').hidden = !uraOpen;
+  $('sidebtn').textContent = side === 'ura' ? 'うら' : 'おもて';
+  $('sidebtn').classList.toggle('ura', side === 'ura');
+  $('fight').innerHTML = (side === 'ura' ? 'うら ' : '') + 'たたかう<small>' + (stage + 1) + ' / ' + CPUS().length + ' ' + CPUS()[stage].name + '</small>';
+  $('fight').classList.toggle('ura', side === 'ura');
+}
+// おもて ⇄ うら（押すたびに切りかえ）
+onTap($('sidebtn'), () => { side = side === 'ura' ? 'omote' : 'ura'; lsSet('side', side); loadSide(); updateSideUi(); setHint(side === 'ura' ? 'うら かちぬき：とんでもなく つよい 5 たい' : ''); });
 onTap($('fast'), () => { fast = !fast; lsSet('fast', fast ? '1' : '0'); updateFastBtn(); });
 // 戦いの途中で もどる（勝ち抜きの途中経過は そのまま。戦いは決定的なので やめても 得はしない）
 onTap($('quit'), () => { if (mode === 'battle' || mode === 'pause') showDraw(); });
@@ -485,6 +514,7 @@ showTitle();
   const sample = () => { const c = RB.CPU[2]; myRobot = RB.design(c.body, c.arm, c.leg); strokes = { body: myRobot.body, arm: myRobot.arm, leg: myRobot.leg }; };
   if (q.has('stage') && !q.has('shot')) stage = +q.get('stage');
   if (q.has('beaten')) beaten = [true, true, true, true, true];   // 開発用: 早送りボタンを見る
+  if (q.has('ura')) { uraOpen = true; side = 'ura'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: うら
   if (q.has('draw')) { if (!myRobot) sample(); if (q.get('draw') === 'arm') { strokes.arm = null; strokes.leg = null; myRobot = null; } showDraw(); }
   if (q.has('shot')) {
     if (!myRobot) sample();

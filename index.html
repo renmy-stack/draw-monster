@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=13">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=15">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=13">
+<link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -57,9 +57,10 @@
     <div class="st"><span>リーチ</span><div class="bar"><i id="b-reach"></i></div><em id="v-reach"></em></div>
     <div class="st"><span>はやさ</span><div class="bar"><i id="b-speed"></i></div><em id="v-speed"></em></div>
   </div>
-  <div class="rbtns">
+  <div class="fightrow">
+    <button id="sidebtn" class="side" hidden>おもて</button>
     <button id="fight" class="main">たたかう</button>
-    <button id="fightfriend" class="main friend" hidden>ともだちと たたかう</button>
+    <button id="fightfriend" class="main friend" hidden>ともだち<small>と たたかう</small></button>
   </div>
   <div class="rbtns small">
     <button id="clearpart" class="sub">この パーツを けす</button>
@@ -96,7 +97,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=13"></script>
-<script src="game.js?v=13"></script>
+<script src="sim.js?v=15"></script>
+<script src="game.js?v=15"></script>
 </body>
 </html>
