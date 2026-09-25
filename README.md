@@ -14,6 +14,8 @@ https://renmy-stack.github.io/draw-monster/
 - `clear_rate.js [体数]` — 人が描きそうなランダムなモンスターで 勝ち抜きの何人抜きの分布（5 人抜き ≈ 10.8%）
 - `tune_cpu.js [体数]` — CPU 5 体の 体・腕・足の倍率を、勝ち上がってきたモンスターの 90/80/65/50/40% が勝つように探す（結果は `_cpu.json`）
 - `evolve.js [世代] [集団]` — 強いモンスターを進化で探す（うら 5 人抜き用、結果 `_elite.json`）
+- `evolve.js … '{"w":[16,60]}' _elite_nop.json` — 形の縛り（タイプ）つきで進化
+- `challenge.js [世代] [集団] [種] [並びの json]` — うら 5 人抜きを ぜんぶ抜ける形が あるかを 進化で探す（見つかれば `_challenger.json`）
 - `ura_rate.js [体数]` — うら 5 人抜きを ランダムなモンスター・おもてクリア組が どれだけ抜けるか
 - `sweep.js` / `tune.js` — 腕の長さ・体の大きさ・足の長さ別の勝率。`tune.js` はつまみ `K` を探す（`node tune.js 16 '{"lenP":[1.2,1.5]}'`）
 

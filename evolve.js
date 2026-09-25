@@ -3,10 +3,14 @@
 'use strict';
 const RB = require('./sim.js');
 const { randomRobot } = require('./clear_rate.js');
-let seed = 777; const r = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
+let seed = +(process.argv[6] || 777); const r = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 const gauss = () => Math.sqrt(-2 * Math.log(r() + 1e-9)) * Math.cos(2 * Math.PI * r());
 const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
-const LIM = { w: [16, 130], h: [16, 150], cy: [-190, -40], round: [0, 1], armLen: [15, 150], armAng: [-1.4, 1.4], armZig: [0, 25], head: [0, 1], legLen: [15, 130], legAng: [-0.8, 0.8], legBend: [-1.2, 1.2] };
+const LIM0 = { w: [16, 130], h: [16, 150], cy: [-190, -40], round: [0, 1], armLen: [15, 150], armAng: [-1.4, 1.4], armZig: [0, 25], head: [0, 1], legLen: [15, 130], legAng: [-0.8, 0.8], legBend: [-1.2, 1.2] };
+// タイプの縛り（argv[4] の JSON で LIM の一部を上書き。例: '{"w":[16,45],"h":[90,150]}'）と 出力ファイル（argv[5]）
+const LIM = Object.assign({}, LIM0, JSON.parse(process.argv[4] || '{}'));
+const OUT = process.argv[5] || '_elite.json';
+let seed0 = +(process.argv[6] || 777);
 function randP() { const p = {}; for (const [k, [a, b]] of Object.entries(LIM)) p[k] = a + (b - a) * r(); return p; }
 function mutate(p, s) { const q = Object.assign({}, p); for (const [k, [a, b]] of Object.entries(LIM)) if (r() < 0.5) q[k] = clamp(q[k] + gauss() * (b - a) * s, a, b); return q; }
 function build(p) {
@@ -28,12 +32,14 @@ function build(p) {
 }
 // 相手: 表の CPU ＋ ランダムなモンスター ＋ いまの強いもの（世代ごとに入れかえ）
 const RANDOM = []; while (RANDOM.length < 40) { const d = randomRobot(); if (d) RANDOM.push(d); }
+// つよい相手も まぜる: おもてを クリアできた モンスター
+const STRONG = []; { let n = 0; while (STRONG.length < 14 && n < 3000) { const d = randomRobot(); n++; if (!d) continue; let k = 0; for (; k < RB.CPU.length; k++) if (RB.fight(d, RB.CPU[k]).winner !== 'A') break; if (k === RB.CPU.length) STRONG.push(d); } }
 const G = +(process.argv[2] || 12), P = +(process.argv[3] || 24);
 let pop = [];
 while (pop.length < P) { const p = randP(), d = build(p); if (d) pop.push({ p, d }); }
 let hall = [];   // これまでの強者
 for (let g = 0; g < G; g++) {
-  const opp = RB.CPU.concat(RANDOM.slice(0, 25), hall.slice(0, 8).map(h => h.d), pop.slice(0, 6).map(x => x.d));
+  const opp = RB.CPU.concat(RANDOM.slice(0, 12), STRONG, RB.URA, hall.slice(0, 5).map(h => h.d), pop.slice(0, 4).map(x => x.d));
   for (const x of pop) {
     let w = 0, t = 0;
     for (const o of opp) { if (o === x.d) continue; for (const [A, B, me] of [[x.d, o, 'A'], [o, x.d, 'B']]) { const S = RB.fight(A, B); if (S.winner === me) w++; t++; } }
@@ -49,5 +55,5 @@ for (let g = 0; g < G; g++) {
   while (next.length < P) { const q = randP(), d = build(q); if (d) next.push({ p: q, d }); }
   pop = next;
 }
-require('fs').writeFileSync('_elite.json', JSON.stringify(hall.map(h => ({ fit: h.fit, g: h.g, p: h.p, d: { body: h.d.body, arm: h.d.arm, leg: h.d.leg } }))));
+require('fs').writeFileSync(OUT, JSON.stringify(hall.map(h => ({ fit: h.fit, g: h.g, p: h.p, d: { body: h.d.body, arm: h.d.arm, leg: h.d.leg } }))));
 console.log('強者 ' + hall.length + ' 体を _elite.json に');
