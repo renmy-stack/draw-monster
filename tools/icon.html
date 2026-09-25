@@ -1,5 +1,5 @@
 <!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0;background:#000">
-<!-- アイコン: ゲーム画面と同じ描き方で、青いロボが赤いロボを殴る。headless Chrome で 512×512 を撮る -->
+<!-- アイコン: ゲーム画面と同じ描き方で、青いモンスターが赤いモンスターを殴る。headless Chrome で 512×512 を撮る -->
 <canvas id="c" width="512" height="512" style="display:block"></canvas>
 <script src="../sim.js"></script>
 <script>
@@ -19,6 +19,9 @@ function robot(ox, oy, s, face, color, armAng, tilt) {
   g.fillStyle = 'rgba(255,255,255,.18)'; g.fillRect(-32, -150, 64, 22);
   g.strokeStyle = '#0d1030'; g.lineWidth = 4.5; pl(body); g.closePath(); g.stroke();
   for (const dx of [-9, 9]) { g.fillStyle = '#fff'; g.beginPath(); g.arc(8 + dx, -126, 7, 0, 7); g.fill(); g.fillStyle = '#0d1030'; g.beginPath(); g.arc(11 + dx, -126, 3.5, 0, 7); g.fill(); }
+  // 口とキバ
+  g.fillStyle = '#0d1030'; g.beginPath(); g.moveTo(-4, -104); g.quadraticCurveTo(12, -88, 26, -104); g.closePath(); g.fill();
+  g.fillStyle = '#fff'; for (const fx of [2, 18]) { g.beginPath(); g.moveTo(fx - 3, -104); g.lineTo(fx + 3, -104); g.lineTo(fx, -98); g.closePath(); g.fill(); }
   lg([[0, -78], [18, -30], [20, 0]], '#455a64', 1);
   const ax = 32 + Math.cos(armAng) * 62, ay = -138 + Math.sin(armAng) * 62;
   g.strokeStyle = '#0d1030'; g.lineWidth = 11; g.beginPath(); g.moveTo(32, -138); g.lineTo(ax, ay); g.stroke();

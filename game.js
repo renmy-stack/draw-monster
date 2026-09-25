@@ -1,6 +1,6 @@
-// かいて！ロボファイト — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・ロボを送る
+// かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '11';
+const VERSION = '12';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-robot/';
@@ -12,7 +12,7 @@ const ME = { name: 'じぶん', color: '#1e88e5' };
 const FRIEND = { name: 'ともだち', color: '#2e7d32' };
 const PARTS = { body: 'からだ', arm: 'うで', leg: 'あし' };
 const PART_HINT = {
-  body: 'ロボの <b>からだ</b> を かこむように かいてね',
+  body: 'モンスターの <b>からだ</b> を かこむように かいてね',
   arm: '<b>かた</b>（きいろい ●）から <b>うで</b> を かいてね',
   leg: '<b>こし</b>（きいろい ●）から <b>あし</b> を かいてね',
 };
@@ -22,7 +22,7 @@ const KEY = 'drawrobot.';
 function lsGet(k) { try { return localStorage.getItem(KEY + k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(KEY + k, v); } catch (e) {} }
 try { if (lsGet('simv') !== String(RB.SIM_VERSION)) { localStorage.removeItem(KEY + 'stage'); lsSet('simv', String(RB.SIM_VERSION)); } } catch (e) {}
-// 描きかけの線（3 本）と、完成したロボ
+// 描きかけの線（3 本）と、完成したモンスター
 let strokes = { body: null, arm: null, leg: null };
 let myRobot = null;
 { const w = lsGet('robot'); if (w) { const d = RB.decodeDesign(w); if (d) { myRobot = d; strokes = { body: d.body, arm: d.arm, leg: d.leg }; } } }
@@ -33,7 +33,7 @@ let best = +(lsGet('best') || 0);   // さいこう 何人抜き
 let beaten = []; try { beaten = JSON.parse(lsGet('beaten') || '[]'); } catch (e) {}
 let fast = lsGet('fast') === '1';
 const FAST = 4;
-// 勝ち抜き: 途中でロボを変えたら 1 体目から。負けたら その挑戦は おわり
+// 勝ち抜き: 途中でモンスターを変えたら 1 体目から。負けたら その挑戦は おわり
 function resetRun() { stage = 0; lsSet('stage', '0'); }
 let friendRobot = null;
 { const m = /[#&]r=([A-Za-z0-9_-]+)/.exec(location.hash); if (m) friendRobot = RB.decodeDesign(m[1]); }
@@ -57,7 +57,7 @@ function showTitle() {
   $('friendbox').hidden = !friendRobot;
   if (friendRobot) drawPreview($('friendprev'), friendRobot, FRIEND.color);
   $('tprog').textContent = (best > 0 ? 'さいこう ' + best + ' にんぬき' + (cleared ? '（かちぬき たっせい！）' : '') : '') + (stage > 0 ? '　いま ' + stage + ' にんぬき ちゅう' : '');
-  $('start').textContent = myRobot ? 'ロボを えらぶ' : 'ロボを つくる';
+  $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
   drawTitleBg();
 }
 function showDraw() {
@@ -66,7 +66,7 @@ function showDraw() {
   $('fightfriend').hidden = !friendRobot;
   $('fight').textContent = 'たたかう（' + (stage + 1) + ' / ' + RB.CPU.length + ' ' + RB.CPU[stage].name + '）';
   setPart(part);
-  if (stage > 0) setHint('かちぬき ちゅう：ロボを かえると 1 たいめから');
+  if (stage > 0) setHint('かちぬき ちゅう：モンスターを かえると 1 たいめから');
   sizePad(); drawPad();   // 文字やボタンが決まってから 測る
 }
 function setPart(p) {
@@ -100,7 +100,7 @@ function sizePad() {
 }
 function toWorld(e) { const r = pad.getBoundingClientRect(); const s = PW / r.width; return [(e.clientX - r.left) * s + RB.PAD.x0, (e.clientY - r.top) * s + RB.PAD.y0]; }
 function current() {
-  // いま見せるロボ（描いている途中の線も反映）
+  // いま見せるモンスター（描いている途中の線も反映）
   const s = Object.assign({}, strokes);
   if (raw) s[part] = RB.cleanStroke(raw, RB.INK[part]);
   if (!s.body || s.body.length < 3) return { body: s.body, arm: null, leg: null };
@@ -126,7 +126,7 @@ function drawPad() {
     }
   } else if (raw) { g.strokeStyle = ME.color; g.lineWidth = 4; pline(g, RB.cleanStroke(raw, RB.INK.body)); g.stroke(); }
 }
-// ロボをパッド座標のまま描く（まっすぐ立った姿）
+// モンスターをパッド座標のまま描く（まっすぐ立った姿）
 function drawRobotLocal(g, d, color, alpha, open) {
   g.globalAlpha = alpha; g.lineCap = 'round'; g.lineJoin = 'round';
   // うしろの足（180° 反対）
@@ -154,9 +154,31 @@ function eyes(g, pts, sh) {
   let y0 = Infinity, x0 = Infinity, x1 = -Infinity;
   for (const p of pts) { y0 = Math.min(y0, p[1]); x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); }
   const w = x1 - x0, ex = x0 + w * 0.62, ey = y0 + Math.min(22, w * 0.3 + 8), r = Math.max(3.5, Math.min(8, w * 0.1));
+  face(g, (x, y) => [x, y], ex, ey, r, 1, false);
+}
+// モンスターの顔: 目 2 つ ＋ キバの見える口。down（ダウン中）は バッテン目と あいた口
+// tf = 体の座標 → 描く座標（体が傾いていても顔が一緒に回る）
+function face(g, tf, ex, ey, r, facing, down) {
+  const pt = (x, y) => tf(ex + x, ey + y);
   for (const dx of [-r * 1.4, r * 1.4]) {
-    g.fillStyle = '#fff'; g.beginPath(); g.arc(ex + dx, ey, r, 0, 7); g.fill();
-    g.fillStyle = '#0d1030'; g.beginPath(); g.arc(ex + dx + r * 0.35, ey, r * 0.5, 0, 7); g.fill();
+    if (down) {
+      g.strokeStyle = '#0d1030'; g.lineWidth = Math.max(1.5, r * 0.4); g.lineCap = 'round';
+      const a = pt(dx - r * 0.7, -r * 0.7), b = pt(dx + r * 0.7, r * 0.7), c = pt(dx - r * 0.7, r * 0.7), d = pt(dx + r * 0.7, -r * 0.7);
+      g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.moveTo(c[0], c[1]); g.lineTo(d[0], d[1]); g.stroke();
+      continue;
+    }
+    const e = pt(dx, 0), q = pt(dx + facing * r * 0.35, 0);
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(e[0], e[1], r, 0, 7); g.fill();
+    g.fillStyle = '#0d1030'; g.beginPath(); g.arc(q[0], q[1], r * 0.5, 0, 7); g.fill();
+  }
+  // 口（前寄り）とキバ
+  const mx = facing * r * 0.4, my = r * 2.2, mw = r * 1.6;
+  const L = pt(mx - mw, my), R = pt(mx + mw, my), C = pt(mx, my + (down ? r * 1.4 : r * 0.9));
+  g.fillStyle = '#0d1030'; g.beginPath(); g.moveTo(L[0], L[1]); g.quadraticCurveTo(C[0], C[1] + (C[1] - L[1]) * 0.6, R[0], R[1]); g.closePath(); g.fill();
+  g.fillStyle = '#fff';
+  for (const fx of [-0.55, 0.55]) {
+    const a = pt(mx + mw * fx - r * 0.3, my), b = pt(mx + mw * fx + r * 0.3, my), c = pt(mx + mw * fx, my + r * 0.55);
+    g.beginPath(); g.moveTo(a[0], a[1]); g.lineTo(b[0], b[1]); g.lineTo(c[0], c[1]); g.closePath(); g.fill();
   }
 }
 function limb(g, pts, color, alpha) {
@@ -214,7 +236,7 @@ function saveRobot() {
 }
 function setHint(t) { $('hint').textContent = t; }
 function updateButtons() { $('fight').disabled = !myRobot; $('fightfriend').disabled = !myRobot; $('send').disabled = !myRobot; updateStats(); }
-// つよさのバー（ロボができているときだけ）
+// つよさのバー（モンスターができているときだけ）
 function updateStats() {
   const st = myRobot ? RB.robotStats(myRobot) : null;
   const set = (k, v, max, txt) => { $('b-' + k).style.width = (st ? Math.min(100, v / max * 100) : 0) + '%'; $('v-' + k).textContent = st ? txt : ''; };
@@ -311,7 +333,7 @@ function renderBattle(dt) {
   ctx.restore();
   drawHud();
 }
-// ロボを ワールドに（シミュレーションの点を そのまま使う）
+// モンスターを ワールドに（シミュレーションの点を そのまま使う）
 function drawRobotWorld(b, color, flash) {
   const co = Math.cos(b.th), si = Math.sin(b.th);
   const tf = (lx, ly) => [b.x + lx * co - ly * si, b.y + lx * si + ly * co];
@@ -337,12 +359,7 @@ function drawRobotWorld(b, color, flash) {
   let x0 = Infinity, x1 = -Infinity; for (const p of b.bodyPts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); }
   const w = x1 - x0, r = Math.max(3.5, Math.min(8, w * 0.1));
   const ex = (x0 + x1) / 2 + b.facing * w * 0.12, ey = top.y + Math.min(22, w * 0.3 + 8);
-  for (const dx of [-r * 1.4, r * 1.4]) {
-    const e = tf(ex + dx, ey);
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(e[0], e[1], r, 0, 7); ctx.fill();
-    const q = tf(ex + dx + b.facing * r * 0.35, ey);
-    ctx.fillStyle = '#0d1030'; ctx.beginPath(); ctx.arc(q[0], q[1], r * (b.downT > 0 ? 0.25 : 0.5), 0, 7); ctx.fill();
-  }
+  face(ctx, tf, ex, ey, r, b.facing, b.downT > 0 || b.hp <= 0);
   limb(ctx, legA, '#455a64', 1);
   arm(ctx, joint(b.arm), color);
 }
@@ -372,7 +389,7 @@ function big(t, c, a) {
   ctx.fillStyle = c; ctx.fillText(t, W / 2, H * 0.32); ctx.globalAlpha = 1;
 }
 function round(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
-// タイトルの後ろ: CPU ロボを並べる
+// タイトルの後ろ: CPU モンスターを並べる
 function drawTitleBg() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#15173a'); sky.addColorStop(1, '#3a2a63');
@@ -400,16 +417,16 @@ function showResult() {
     }
     if (wins > best) { best = wins; lsSet('best', String(best)); $('rsub').textContent += '（さいこう きろく！）'; }
   }
-  $('rprog').innerHTML = isFriend ? 'ともだちの ロボ と しょうぶ' : RB.CPU.map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
+  $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : RB.CPU.map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
   $('next').hidden = !showNext;
   $('again').hidden = showNext;
   $('again').textContent = isFriend ? 'もういちど' : '1 たいめから もういちど';
-  $('redraw').textContent = !isFriend && stage > 0 ? 'ロボを なおす（1 たいめから）' : 'ロボを なおす';
+  $('redraw').textContent = !isFriend && stage > 0 ? 'モンスターを なおす（1 たいめから）' : 'モンスターを なおす';
 }
 function shareRobot() {
   if (!myRobot) return;
   const url = SITE_URL + '#r=' + RB.encodeDesign(myRobot);
-  const text = 'ぼくの ロボ と たたかってみて！（かいて！ロボファイト）\n' + url;
+  const text = 'ぼくの モンスター と たたかってみて！（かいて！モンスターバトル）\n' + url;
   if (navigator.share) navigator.share({ text }).catch(err => { if (!err || err.name !== 'AbortError') showShareBox(text); });
   else showShareBox(text);
 }

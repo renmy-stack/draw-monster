@@ -1,6 +1,6 @@
 {
-  "name": "かいて！ロボファイト",
-  "short_name": "ロボファイト",
+  "name": "かいて！モンスターバトル",
+  "short_name": "モンスターバトル",
   "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",

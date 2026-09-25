@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=11">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=12">
 <link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-title" content="ロボファイト">
-<meta property="og:title" content="かいて！ロボファイト">
-<meta property="og:description" content="からだ・うで・あし を かいて ロボを つくろう！ロボが あるいて パンチで たたかうよ。ともだちに ロボを おくって しょうぶ！">
-<title>かいて！ロボファイト</title>
-<link rel="stylesheet" href="style.css?v=11">
+<meta name="apple-mobile-web-app-title" content="モンスターバトル">
+<meta property="og:title" content="かいて！モンスターバトル">
+<meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
+<title>かいて！モンスターバトル</title>
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -21,10 +21,10 @@
 
 <div id="title">
   <div class="panel">
-    <div class="logo">かいて！<br>ロボファイト</div>
-    <div class="lead">からだ・うで・あし を かくと、ロボが あるいて パンチで たたかうよ！</div>
+    <div class="logo">かいて！<br>モンスターバトル</div>
+    <div class="lead">からだ・うで・あし を かくと、モンスターが あるいて パンチで たたかうよ！</div>
     <div id="friendbox" hidden>
-      <div class="fb-title">ともだちの ロボ が とどいた！</div>
+      <div class="fb-title">ともだちの モンスター が とどいた！</div>
       <canvas id="friendprev" width="240" height="240"></canvas>
     </div>
     <div id="tprog"></div>
@@ -35,10 +35,10 @@
       <li>からだが <b>大きい</b>ほど タフ、<b>おもい</b>ほど パンチが おもい</li>
       <li><b>ながい うで</b>は とどくけど 大ぶりで かるい。<b>みじかい うで</b>は れんだで ズドン</li>
       <li>つよく なぐられると ころぶ。HP が 0 で KO！</li>
-      <li>CPU の 5 たいと かちぬき！まけたら 1 たいめから。とちゅうで ロボを かえても 1 たいめから</li>
-      <li>ロボを ともだちに おくって しょうぶ！</li>
+      <li>CPU の 5 たいと かちぬき！まけたら 1 たいめから。とちゅうで モンスターを かえても 1 たいめから</li>
+      <li>モンスターを ともだちに おくって しょうぶ！</li>
     </ul>
-    <button id="start" class="main">ロボを つくる</button>
+    <button id="start" class="main">モンスターを つくる</button>
   </div>
 </div>
 
@@ -63,7 +63,7 @@
   </div>
   <div class="rbtns small">
     <button id="clearpart" class="sub">この パーツを けす</button>
-    <button id="send" class="sub">ロボを おくる</button>
+    <button id="send" class="sub">おくる</button>
     <button id="back" class="sub">もどる</button>
   </div>
 </div>
@@ -78,15 +78,15 @@
       <button id="again" class="main">もういちど</button>
     </div>
     <div class="rbtns small">
-      <button id="redraw" class="sub">ロボを なおす</button>
-      <button id="share" class="sub">ロボを おくる</button>
+      <button id="redraw" class="sub">モンスターを なおす</button>
+      <button id="share" class="sub">モンスターを おくる</button>
     </div>
   </div>
 </div>
 
 <div id="sharebox" hidden>
   <div class="panel">
-    <div class="rtitle">ロボを おくる</div>
+    <div class="rtitle">モンスターを おくる</div>
     <div class="note">この文を LINE などで ともだちに おくってね</div>
     <textarea id="sharetext" readonly></textarea>
     <div class="rbtns">
@@ -96,7 +96,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=11"></script>
-<script src="game.js?v=11"></script>
+<script src="sim.js?v=12"></script>
+<script src="game.js?v=12"></script>
 </body>
 </html>
