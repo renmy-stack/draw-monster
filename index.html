@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=23">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=24">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=23">
+<link rel="stylesheet" href="style.css?v=24">
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -40,6 +40,7 @@
       <li>モンスターを ともだちに おくって しょうぶ！</li>
     </ul>
     <button id="start" class="main">モンスターを つくる</button>
+    <div><button id="vs" class="sub vsbtn">ふたりで たたかう</button></div>
   </div>
 </div>
 
@@ -83,7 +84,16 @@
     <div class="rbtns small">
       <button id="redraw" class="sub">モンスターを なおす</button>
       <button id="share" class="sub">モンスターを おくる</button>
+      <button id="vstitle" class="sub" hidden>タイトルへ</button>
     </div>
+  </div>
+</div>
+
+<div id="handoff" hidden>
+  <div class="panel">
+    <div class="rtitle">2P に わたしてね</div>
+    <div class="note">1P の モンスターは かくしてあるよ。2P は みないで かいてね！</div>
+    <div class="rbtns"><button id="handoffgo" class="main">2P が かく</button></div>
   </div>
 </div>
 
@@ -109,7 +119,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=23"></script>
-<script src="game.js?v=23"></script>
+<script src="sim.js?v=24"></script>
+<script src="game.js?v=24"></script>
 </body>
 </html>
