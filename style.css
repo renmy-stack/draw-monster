@@ -136,3 +136,5 @@ button:disabled { opacity: .45; }
 /* 強さのバーは 2 列 × 2 段 */
 #stats { grid-template-columns: 1fr 1fr; column-gap: 14px; }
 #stats .st { grid-template-columns: 44px minmax(0, 1fr) 26px; gap: 5px; }
+
+.logo { font-size: min(38px, 9.5vw); }   /* かいて！／モンスターバトル を 2 行に */

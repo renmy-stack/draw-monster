@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '16';
+const VERSION = '18';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -28,9 +28,9 @@ let myRobot = null;
 { const w = lsGet('robot'); if (w) { const d = RB.decodeDesign(w); if (d) { myRobot = d; strokes = { body: d.body, arm: d.arm, leg: d.leg }; } } }
 // 勝ち抜きは おもて と うら（おもてを クリアすると 出る）。記録は べつべつ（うらは キーの頭に 'ura.'）
 // うら は まだ オーナーだけ（?uratest を いちど開いた端末だけ。友達には 出ない）
-if (/[?&]uratest/.test(location.search)) lsSet('uratest', '1');
-const URA_TEST = lsGet('uratest') === '1';
-let uraOpen = URA_TEST && lsGet('cleared') === '1';
+if (/[?&]uratest(=|&|$)/.test(location.search)) lsSet('uratest', '1');
+let URA_TEST = lsGet('uratest') === '1';
+let uraOpen = URA_TEST;   // オーナーの端末では おもてクリア前でも 出す（テスト用）
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : 'omote';
 const sk = n => (side === 'ura' ? 'ura.' : '') + n;
 function CPUS() { return side === 'ura' ? RB.URA : RB.CPU; }
@@ -73,6 +73,7 @@ function showTitle() {
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0);
   $('tprog').textContent = (ob > 0 ? 'おもて さいこう ' + ob + ' にんぬき' + (uraOpen ? '（たっせい！）' : '') : '') + (uraOpen ? '　うら さいこう ' + ub + ' にんぬき' + (lsGet('ura.cleared') === '1' ? '（たっせい！！）' : '') : '');
   $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
+  if (URA_TEST) $('tprog').textContent += '　［うら テスト中］';
   drawTitleBg();
 }
 function showDraw() {
@@ -457,6 +458,8 @@ function showShareBox(text) { $('sharetext').value = text; $('sharebox').hidden 
 // ---------- ボタン ----------
 function onTap(el, fn) { el.addEventListener('click', e => { e.preventDefault(); fn(); }); }
 onTap($('start'), showDraw);
+// タイトルの文字を 5 回つづけてタップ → うら テストの印（ホーム画面のアプリは Safari と保存場所が別なので）
+{ let n = 0, t0 = 0; $('title').querySelector('.logo').addEventListener('click', () => { const now = Date.now(); n = now - t0 < 800 ? n + 1 : 1; t0 = now; if (n >= 5) { n = 0; lsSet('uratest', '1'); URA_TEST = true; uraOpen = true; showTitle(); } }); }
 onTap($('back'), showTitle);
 onTap($('fight'), () => startBattle(false));
 onTap($('fightfriend'), () => startBattle(true));
