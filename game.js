@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '24';
+const VERSION = '25';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -88,7 +88,7 @@ function showDraw() {
   $('fightfriend').hidden = !friendRobot;
   updateSideUi();
   setPart(part);
-  if (vs) setHint((vs.step === 1 ? '1P' : '2P') + ' の モンスターを かいてね');
+  if (vs) setHint((vs.step === 1 ? '1P' : '2P') + ' の モンスターを かいてね' + (myRobot ? '（まえの モンスターが はいってるよ）' : ''));
   else if (stage > 0) setHint('かちぬき ちゅう：モンスターを かえると 1 たいめから');
   sizePad(); drawPad();   // 文字やボタンが決まってから 測る
 }
@@ -426,14 +426,16 @@ function drawTitleBg() {
 // ---------- 結果 ----------
 function showResult() {
   mode = 'result'; show('result');
-  $('share').hidden = false; $('vstitle').hidden = true; $('redraw').textContent = 'モンスターを なおす';
+  $('share').hidden = false; $('vstitle').hidden = true; $('redraw').hidden = false; $('redraw').textContent = 'モンスターを なおす';
+  $('next').textContent = 'つぎの あいてへ'; $('again').className = 'main';
   if (S.side === 'vs') {
     $('rtitle').textContent = S.winner === 'A' ? '1P の かち！' : S.winner === 'B' ? '2P の かち！' : 'ひきわけ';
     $('rtitle').className = 'rtitle ' + (S.winner ? 'win' : '');
     $('rsub').textContent = (S.reason === 'ko' ? 'KO（' + S.t.toFixed(1) + ' びょう）' : 'じかんぎれ') + '　のこり HP 1P ' + Math.ceil(S.A.hp) + ' / 2P ' + Math.ceil(S.B.hp);
     $('rprog').innerHTML = '';
-    $('next').hidden = true; $('again').hidden = false; $('again').textContent = 'もういちど';
-    $('redraw').textContent = 'かきなおす（1P から）'; $('share').hidden = true; $('vstitle').hidden = false;
+    $('next').hidden = false; $('next').textContent = 'もういちど（なおして たたかう）';
+    $('again').hidden = false; $('again').textContent = 'おなじ たたかいを みる'; $('again').className = 'sub';
+    $('redraw').hidden = true; $('share').hidden = true; $('vstitle').hidden = false;
     return;
   }
   const win = S.winner === 'A', draw = S.winner == null;
@@ -483,18 +485,21 @@ onTap($('fightfriend'), () => startBattle(true));
 onTap($('send'), shareRobot);
 onTap($('share'), shareRobot);
 onTap($('clearpart'), () => { strokes[part] = null; if (!vs) resetAllRuns(); saveRobot(); setPart(part); updateSideUi(); });
-onTap($('next'), () => startBattle(false));
+onTap($('next'), () => { if (vs) startVsMode(); else startBattle(false); });
 onTap($('again'), () => { if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 onTap($('vs'), startVsMode);
 onTap($('vstitle'), exitVs);
-onTap($('handoffgo'), () => { vs.step = 2; strokes = { body: null, arm: null, leg: null }; myRobot = null; showDraw(); });
+onTap($('handoffgo'), () => { vs.step = 2; loadInto(vsLast(2)); showDraw(); });
 // ---------- ふたりで たたかう ----------
 function padColor() { return vs && vs.step === 2 ? P2.color : ME.color; }
+// 直前の 1P・2P の モンスター（端末に 覚えておく。次の ふたりで たたかう は これが 入った状態で 始まる）
+function vsLast(n) { const w = lsGet('vs.d' + n); return w ? RB.decodeDesign(w) : null; }
+function loadInto(d) { if (d) { strokes = { body: d.body, arm: d.arm, leg: d.leg }; myRobot = d; } else { strokes = { body: null, arm: null, leg: null }; myRobot = null; } }
 function startVsMode() {
   const backup = vs ? vs.backup : { strokes, myRobot };
   vs = { step: 1, d1: null, d2: null, backup };
-  strokes = { body: null, arm: null, leg: null }; myRobot = null;
+  loadInto(vsLast(1));
   showDraw();
 }
 function exitVs() {
@@ -510,8 +515,8 @@ function applyVsUi() {
 }
 function vsNext() {
   if (!myRobot) return;
-  if (vs.step === 1) { vs.d1 = myRobot; mode = 'handoff'; show('handoff'); }
-  else { vs.d2 = myRobot; startVsBattle(); }
+  if (vs.step === 1) { vs.d1 = myRobot; lsSet('vs.d1', RB.encodeDesign(myRobot)); mode = 'handoff'; show('handoff'); }
+  else { vs.d2 = myRobot; lsSet('vs.d2', RB.encodeDesign(myRobot)); startVsBattle(); }
 }
 function startVsBattle() {
   isFriend = true;   // 勝ち抜きの記録には 入れない
