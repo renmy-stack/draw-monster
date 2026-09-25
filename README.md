@@ -11,6 +11,8 @@ https://renmy-stack.github.io/draw-robot/
 - `test_sim.js` — CPU ロボの総当たり、決定的か、URL の往復
 - `trace.js A B` — CPU ロボどうしの 1 戦を 1 秒ごとに
 - `test_exploit.js` — ずるい形（ちび体＋長い腕 など）が CPU・ふつうのロボにどれだけ勝つか
+- `clear_rate.js [体数]` — 人が描きそうなランダムなロボで 勝ち抜きの何人抜きの分布（5 人抜き ≈ 10.8%）
+- `tune_cpu.js [体数]` — CPU 5 体の 体・腕・足の倍率を、勝ち上がってきたロボの 90/80/65/50/40% が勝つように探す（結果は `_cpu.json`）
 - `sweep.js` / `tune.js` — 腕の長さ・体の大きさ・足の長さ別の勝率。`tune.js` はつまみ `K` を探す（`node tune.js 16 '{"lenP":[1.2,1.5]}'`）
 
 ## 損得のしくみ（v0.5）
