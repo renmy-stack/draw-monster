@@ -1,9 +1,9 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '12';
+const VERSION = '13';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
-const SITE_URL = 'https://renmy-stack.github.io/draw-robot/';
+const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
 
 const $ = id => document.getElementById(id);
 const cv = $('game'), ctx = cv.getContext('2d');
