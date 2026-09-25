@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '20';
+const VERSION = '21';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -21,6 +21,9 @@ const PART_HINT = {
 const KEY = 'drawrobot.';
 function lsGet(k) { try { return localStorage.getItem(KEY + k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(KEY + k, v); } catch (e) {} }
+// うら の並びを 変えたときは うら の途中経過と「倒したことがある」を 消す
+const URA_VER = '2';
+try { if (lsGet('uraver') !== URA_VER) { localStorage.removeItem(KEY + 'ura.stage'); localStorage.removeItem(KEY + 'ura.beaten'); lsSet('uraver', URA_VER); } } catch (e) {}
 try { if (lsGet('simv') !== String(RB.SIM_VERSION)) { localStorage.removeItem(KEY + 'stage'); localStorage.removeItem(KEY + 'ura.stage'); lsSet('simv', String(RB.SIM_VERSION)); } } catch (e) {}
 // 描きかけの線（3 本）と、完成したモンスター
 let strokes = { body: null, arm: null, leg: null };
