@@ -2,5 +2,6 @@ _frame.html
 _frame2.html
 _frame3.html
 _*.json
+_*.log
 .DS_Store
 Thumbs.db
