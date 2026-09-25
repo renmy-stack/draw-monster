@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '22';
+const VERSION = '23';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -63,7 +63,7 @@ function resize() {
   sizePad(); if (mode === 'draw') drawPad();
 }
 window.addEventListener('resize', resize);
-function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
+function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
 // はやおくり: 一度でも倒した CPU との戦いだけ
 function canFast() { return mode === 'battle' && !isFriend && !!beaten[S && S.stage != null ? S.stage : stage]; }
 function updateFastBtn() { $('fast').textContent = fast ? '▶ ふつう' : '▶▶ はやおくり'; $('fast').classList.toggle('on', fast); }
@@ -472,6 +472,39 @@ onTap($('clearpart'), () => { strokes[part] = null; resetAllRuns(); saveRobot();
 onTap($('next'), () => startBattle(false));
 onTap($('again'), () => startBattle(isFriend));
 onTap($('redraw'), showDraw);
+// ---------- モンスターの ほぞん（3 つ）----------
+function slotDesign(i) { const w = lsGet('slot' + i); return w ? RB.decodeDesign(w) : null; }
+function renderSlots(msg) {
+  const list = $('slotlist'); list.innerHTML = '';
+  for (let i = 1; i <= 3; i++) {
+    const d = slotDesign(i), row = document.createElement('div');
+    row.className = 'slot';
+    row.innerHTML = '<b>' + i + '</b><canvas width="152" height="152"></canvas><div class="sbtns"><button class="main" data-a="save">ほぞん</button><button class="sub" data-a="load"' + (d ? '' : ' disabled') + '>よびだす</button></div>';
+    list.appendChild(row);
+    const c = row.querySelector('canvas');
+    if (d) drawPreview(c, d, ME.color);
+    else { const g = c.getContext('2d'); g.fillStyle = 'rgba(255,255,255,.5)'; g.font = 'bold 22px sans-serif'; g.textAlign = 'center'; g.fillText('から', 76, 84); }
+    row.querySelector('[data-a="save"]').addEventListener('click', e => {
+      e.preventDefault();
+      if (!myRobot) { renderSlots('からだ・うで・あし を ぜんぶ かいてから ほぞん してね'); return; }
+      lsSet('slot' + i, RB.encodeDesign(myRobot)); renderSlots(i + ' に ほぞん しました');
+    });
+    row.querySelector('[data-a="load"]').addEventListener('click', e => {
+      e.preventDefault();
+      if (!d) return;
+      const same = myRobot && RB.encodeDesign(myRobot) === RB.encodeDesign(d);
+      myRobot = d; strokes = { body: d.body, arm: d.arm, leg: d.leg }; lsSet('robot', RB.encodeDesign(d));
+      const reset = !same && (+(lsGet('stage') || 0) > 0 || +(lsGet('ura.stage') || 0) > 0);
+      if (reset) resetAllRuns();
+      $('slotbox').hidden = true; setPart('leg'); updateSideUi();
+      setHint(reset ? i + ' を よびだしたので かちぬきは 1 たいめから' : i + ' を よびだしました');
+      sizePad(); drawPad();
+    });
+  }
+  $('slotmsg').textContent = msg || '';
+}
+onTap($('slots'), () => { renderSlots(''); $('slotbox').hidden = false; });
+onTap($('closeslots'), () => { $('slotbox').hidden = true; });
 // おもて / うら の切りかえ（おもてを クリアしたら 出る）
 function updateSideUi() {
   $('sidebtn').hidden = !uraOpen;

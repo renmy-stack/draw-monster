@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=22">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=23">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=22">
+<link rel="stylesheet" href="style.css?v=23">
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -65,6 +65,7 @@
   </div>
   <div class="rbtns small">
     <button id="clearpart" class="sub">この パーツを けす</button>
+    <button id="slots" class="sub">ほぞん</button>
     <button id="send" class="sub">おくる</button>
     <button id="back" class="sub">もどる</button>
   </div>
@@ -86,6 +87,16 @@
   </div>
 </div>
 
+<div id="slotbox" hidden>
+  <div class="panel">
+    <div class="rtitle">モンスターの ほぞん</div>
+    <div class="note">いまの モンスターを ほぞん・ほぞんした モンスターを よびだす</div>
+    <div id="slotlist"></div>
+    <div id="slotmsg"></div>
+    <div class="rbtns"><button id="closeslots" class="sub">とじる</button></div>
+  </div>
+</div>
+
 <div id="sharebox" hidden>
   <div class="panel">
     <div class="rtitle">モンスターを おくる</div>
@@ -98,7 +109,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=22"></script>
-<script src="game.js?v=22"></script>
+<script src="sim.js?v=23"></script>
+<script src="game.js?v=23"></script>
 </body>
 </html>
