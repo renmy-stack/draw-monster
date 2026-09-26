@@ -1,6 +1,6 @@
 {
-  "name": "かいて！モンスターバトル",
-  "short_name": "モンスターバトル",
+  "name": "그려라! 몬스터 배틀",
+  "short_name": "몬스터 배틀",
   "start_url": "./",
   "display": "standalone",
   "orientation": "portrait",
