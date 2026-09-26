@@ -1,139 +1,139 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ko">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=38">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=39">
 <link rel="manifest" href="manifest.json">
-<meta name="apple-mobile-web-app-title" content="モンスターバトル">
-<meta property="og:title" content="かいて！モンスターバトル">
-<meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
-<title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=38">
+<meta name="apple-mobile-web-app-title" content="몬스터 배틀">
+<meta property="og:title" content="그려라! 몬스터 배틀">
+<meta property="og:description" content="몸·팔·다리를 그려서 몬스터를 만들자! 몬스터가 걸어가서 펀치로 싸워. 친구에게 몬스터를 보내서 한판 붙자!">
+<title>그려라! 몬스터 배틀</title>
+<link rel="stylesheet" href="style.css?v=39">
 <script src="/t.js?v=1"></script>
 </head>
 <body>
 <canvas id="game"></canvas>
-<button id="quit" class="sub" hidden>← もどる</button>
-<button id="fast" class="sub" hidden>▶▶ はやおくり</button>
+<button id="quit" class="sub" hidden>← 돌아가기</button>
+<button id="fast" class="sub" hidden>▶▶ 빨리 감기</button>
 
 <div id="title">
   <div class="panel">
-    <div class="logo">かいて！<br>モンスターバトル</div>
-    <div class="lead">からだ・うで・あし を かくと<br>モンスターが たたかうよ！</div>
+    <div class="logo">그려라!<br>몬스터 배틀</div>
+    <div class="lead">몸·팔·다리를 그리면<br>몬스터가 싸워!</div>
     <div id="friendbox" hidden>
-      <div class="fb-title">ともだちの モンスター が とどいた！</div>
+      <div class="fb-title">친구의 몬스터가 도착했어!</div>
       <canvas id="friendprev" width="240" height="240"></canvas>
     </div>
     <div id="tprog"></div>
     <div class="tbtns">
-      <button id="start" class="main">モンスターを つくる</button>
-      <button id="vs" class="sub vsbtn">ふたりで たたかう</button>
+      <button id="start" class="main">몬스터 만들기</button>
+      <button id="vs" class="sub vsbtn">둘이서 대결</button>
     </div>
     <div id="hallbox" hidden>
-      <div class="hall-title">👑 でんどういり</div>
+      <div class="hall-title">👑 명예의 전당</div>
       <div id="halllist"></div>
     </div>
     <div class="howto">
-      <h3>つくりかた</h3>
-      <p><b>からだ</b> → <b>うで</b> → <b>あし</b> の じゅんに<br>1 本ずつ かく</p>
-      <p>うでは <b>かた</b>、あしは <b>こし</b> に つく</p>
-      <p>あしは ぐるぐる まわって あるく</p>
-      <h3>つよさ</h3>
+      <h3>만드는 법</h3>
+      <p><b>몸</b> → <b>팔</b> → <b>다리</b> 순서로<br>한 줄씩 그려</p>
+      <p>팔은 <b>어깨</b>, 다리는 <b>허리</b>에 붙어</p>
+      <p>다리는 빙글빙글 돌면서 걸어</p>
+      <h3>강함</h3>
       <dl class="rules">
-        <dt>大きくて おもい<br>からだ</dt><dd>タフ・パンチが おもい<br>ころびにくい</dd>
-        <dt>小さくて かるい<br>からだ</dt><dd>あたりにくい・すばやい<br>てかずが おおい</dd>
-        <dt>ながい うで</dt><dd>とどく けど かるい</dd>
-        <dt>みじかい うで</dt><dd>れんだで ズドン</dd>
+        <dt>크고 무거운<br>몸</dt><dd>튼튼하고 펀치가 묵직<br>잘 안 넘어짐</dd>
+        <dt>작고 가벼운<br>몸</dt><dd>잘 안 맞고 재빠름<br>공격 횟수가 많음</dd>
+        <dt>긴 팔</dt><dd>멀리 닿지만 가벼움</dd>
+        <dt>짧은 팔</dt><dd>연타로 쾅쾅</dd>
       </dl>
-      <h3>あそびかた</h3>
-      <p>CPU 5 たいと <b>かちぬき</b><br>（まけたら 1 たいめから）</p>
-      <p>5 たい かちぬくと… <b>なにかが おこる！？</b></p>
-      <p><b>ふたりで たたかう</b> で<br>ひとつの スマホで たいせん</p>
-      <p>モンスターを <b>ともだちに おくって</b><br>しょうぶ</p>
+      <h3>노는 법</h3>
+      <p>CPU 5마리와 <b>연승전</b><br>(지면 첫 번째 상대부터)</p>
+      <p>5마리를 다 이기면… <b>무슨 일이 생길까!?</b></p>
+      <p><b>둘이서 대결</b>로<br>폰 하나로 대결</p>
+      <p>몬스터를 <b>친구에게 보내서</b><br>한판 승부</p>
     </div>
   </div>
 </div>
 
 <div id="draw" hidden>
   <div class="tabs">
-    <button class="tab" data-part="body">からだ</button>
-    <button class="tab" data-part="arm">うで</button>
-    <button class="tab" data-part="leg">あし</button>
+    <button class="tab" data-part="body">몸</button>
+    <button class="tab" data-part="arm">팔</button>
+    <button class="tab" data-part="leg">다리</button>
   </div>
   <div class="dhead" id="dhead"></div>
   <canvas id="pad"></canvas>
   <div id="hint"></div>
   <div class="stats" id="stats">
-    <div class="st"><span>タフさ</span><div class="bar"><i id="b-hp"></i></div><em id="v-hp"></em></div>
-    <div class="st"><span>パンチ</span><div class="bar"><i id="b-punch"></i></div><em id="v-punch"></em></div>
-    <div class="st"><span>リーチ</span><div class="bar"><i id="b-reach"></i></div><em id="v-reach"></em></div>
-    <div class="st"><span>はやさ</span><div class="bar"><i id="b-speed"></i></div><em id="v-speed"></em></div>
+    <div class="st"><span>튼튼함</span><div class="bar"><i id="b-hp"></i></div><em id="v-hp"></em></div>
+    <div class="st"><span>펀치</span><div class="bar"><i id="b-punch"></i></div><em id="v-punch"></em></div>
+    <div class="st"><span>리치</span><div class="bar"><i id="b-reach"></i></div><em id="v-reach"></em></div>
+    <div class="st"><span>빠르기</span><div class="bar"><i id="b-speed"></i></div><em id="v-speed"></em></div>
   </div>
   <div class="fightrow">
-    <button id="sidebtn" class="side" hidden>おもて</button>
-    <button id="fight" class="main">たたかう</button>
-    <button id="fightfriend" class="main friend" hidden>ともだち<small>と たたかう</small></button>
+    <button id="sidebtn" class="side" hidden>기본</button>
+    <button id="fight" class="main">싸우기</button>
+    <button id="fightfriend" class="main friend" hidden>친구<small>와 싸우기</small></button>
   </div>
   <div class="rbtns small">
-    <button id="clearpart" class="sub">この パーツを けす</button>
-    <button id="slots" class="sub">ほぞん</button>
-    <button id="send" class="sub">おくる</button>
-    <button id="back" class="sub">もどる</button>
+    <button id="clearpart" class="sub">이 부분 지우기</button>
+    <button id="slots" class="sub">저장</button>
+    <button id="send" class="sub">보내기</button>
+    <button id="back" class="sub">돌아가기</button>
   </div>
 </div>
 
 <div id="result" hidden>
   <div class="panel">
-    <div class="rtitle" id="rtitle">かち！</div>
+    <div class="rtitle" id="rtitle">이겼다!</div>
     <div class="rsub" id="rsub"></div>
     <div id="rprog"></div>
     <div class="rbtns">
-      <button id="next" class="main">つぎの あいてへ</button>
-      <button id="again" class="main">もういちど</button>
+      <button id="next" class="main">다음 상대로</button>
+      <button id="again" class="main">한 번 더</button>
     </div>
     <div class="rbtns small">
-      <button id="redraw" class="sub">モンスターを なおす</button>
-      <button id="share" class="sub">モンスターを おくる</button>
-      <button id="vstitle" class="sub" hidden>タイトルへ</button>
+      <button id="redraw" class="sub">몬스터 고치기</button>
+      <button id="share" class="sub">몬스터 보내기</button>
+      <button id="vstitle" class="sub" hidden>처음 화면으로</button>
     </div>
   </div>
 </div>
 
 <div id="handoff" hidden>
   <div class="panel">
-    <div class="rtitle">2P に わたしてね</div>
-    <div class="note">1P の モンスターは かくしてあるよ。2P は みないで かいてね！</div>
-    <div class="rbtns"><button id="handoffgo" class="main">2P が かく</button></div>
+    <div class="rtitle">2P에게 넘겨 줘</div>
+    <div class="note">1P의 몬스터는 숨겨 놨어. 2P는 보지 말고 그려 줘!</div>
+    <div class="rbtns"><button id="handoffgo" class="main">2P가 그리기</button></div>
   </div>
 </div>
 
 <div id="slotbox" hidden>
   <div class="panel">
-    <div class="rtitle">モンスターの ほぞん</div>
-    <div class="note">いまの モンスターを ほぞん・ほぞんした モンスターを よびだす</div>
+    <div class="rtitle">몬스터 저장</div>
+    <div class="note">지금 몬스터를 저장하거나, 저장한 몬스터를 불러와</div>
     <div id="slotlist"></div>
     <div id="slotmsg"></div>
-    <div class="rbtns"><button id="closeslots" class="sub">とじる</button></div>
+    <div class="rbtns"><button id="closeslots" class="sub">닫기</button></div>
   </div>
 </div>
 
 <div id="sharebox" hidden>
   <div class="panel">
-    <div class="rtitle">モンスターを おくる</div>
-    <div class="note">この文を LINE などで ともだちに おくってね</div>
+    <div class="rtitle">몬스터 보내기</div>
+    <div class="note">이 글을 카카오톡 등으로 친구에게 보내 줘</div>
     <textarea id="sharetext" readonly></textarea>
     <div class="rbtns">
-      <button id="copy" class="main">文をコピー</button>
-      <button id="closeshare" class="sub">とじる</button>
+      <button id="copy" class="main">글 복사</button>
+      <button id="closeshare" class="sub">닫기</button>
     </div>
   </div>
 </div>
 
-<script src="sim.js?v=38"></script>
-<script src="game.js?v=38"></script>
+<script src="sim.js?v=39"></script>
+<script src="game.js?v=39"></script>
 </body>
 </html>

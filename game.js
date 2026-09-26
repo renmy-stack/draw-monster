@@ -1,19 +1,19 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '38';
+const VERSION = '39';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
 function stat4(d) { const st = RB.robotStats(d); return [st.hp, Math.round(st.punch * 10) / 10, Math.round(st.reach), Math.round(st.speed * 10) / 10]; }
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
-const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
+const SITE_URL = location.origin + location.pathname;   // 배포한 주소를 그대로 공유 링크로 사용
 
 const $ = id => document.getElementById(id);
 const cv = $('game'), ctx = cv.getContext('2d');
 let W = 0, H = 0, DPR = 1;
-const ME = { name: 'じぶん', color: '#1e88e5' };
-const FRIEND = { name: 'ともだち', color: '#2e7d32' };
+const ME = { name: '나', color: '#1e88e5' };
+const FRIEND = { name: '친구', color: '#2e7d32' };
 const P2 = { name: '2P', color: '#e53935' };
 // ふたりで たたかう（ひとつの端末で 1P → 2P の順に描く）。vs = { step: 1|2, d1, d2, backup }。この間は 勝ち抜き・保存中のモンスターに さわらない
 let vs = null;
@@ -22,11 +22,11 @@ function plainCode(d) { return RB.encodeDesign({ body: d.body, arm: d.arm, leg: 
 function crownedList() { try { return JSON.parse(lsGet('crowned') || '[]'); } catch (e) { return []; } }
 function isCrowned(d) { return !!d && crownedList().includes(plainCode(d)); }
 function withCrown(d) { if (d) d.crown = d.crown || isCrowned(d); return d; }
-const PARTS = { body: 'からだ', arm: 'うで', leg: 'あし' };
+const PARTS = { body: '몸', arm: '팔', leg: '다리' };
 const PART_HINT = {
-  body: '<b>からだ</b> を かこむように かいてね',
-  arm: '<b>かた</b>（きいろい ●）から <b>うで</b> を かいてね',
-  leg: '<b>こし</b>（きいろい ●）から <b>あし</b> を かいてね',
+  body: '<b>몸</b>을 동그랗게 둘러서 그려 줘',
+  arm: '<b>어깨</b>(노란 ●)에서 <b>팔</b>을 그려 줘',
+  leg: '<b>허리</b>(노란 ●)에서 <b>다리</b>를 그려 줘',
 };
 
 // ---------- 記録 ----------
@@ -78,7 +78,7 @@ window.addEventListener('resize', resize);
 function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
 // はやおくり: 一度でも倒した CPU との戦いだけ
 function canFast() { return mode === 'battle' && !isFriend && !!beaten[S && S.stage != null ? S.stage : stage]; }
-function updateFastBtn() { $('fast').textContent = fast ? '▶ ふつう' : '▶▶ はやおくり'; $('fast').classList.toggle('on', fast); }
+function updateFastBtn() { $('fast').textContent = fast ? '▶ 보통 속도' : '▶▶ 빨리 감기'; $('fast').classList.toggle('on', fast); }
 
 let mode = 'title', part = 'body';
 function showTitle() {
@@ -87,8 +87,8 @@ function showTitle() {
   if (friendRobot) drawPreview($('friendprev'), friendRobot, FRIEND.color);
   renderHall();
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0);
-  $('tprog').textContent = (ob > 0 ? 'おもて さいこう ' + ob + ' にんぬき' + (uraOpen ? '（たっせい！）' : '') : '') + (uraOpen ? '　うら さいこう ' + ub + ' にんぬき' + (lsGet('ura.cleared') === '1' ? '（たっせい！！）' : '') : '');
-  $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
+  $('tprog').textContent = (ob > 0 ? '기본 최고 ' + ob + '연승' + (uraOpen ? '(달성!)' : '') : '') + (uraOpen ? '　히든 최고 ' + ub + '연승' + (lsGet('ura.cleared') === '1' ? '(달성!!)' : '') : '');
+  $('start').textContent = myRobot ? '몬스터 고르기' : '몬스터 만들기';
 
   drawTitleBg();
 }
@@ -99,8 +99,8 @@ function showDraw() {
   $('fightfriend').hidden = !friendRobot;
   updateSideUi();
   setPart(part);
-  if (vs) setHint((vs.step === 1 ? '1P' : '2P') + ' の モンスターを かいてね' + (myRobot ? '（まえの モンスターが はいってるよ）' : ''));
-  else if (stage > 0) setHint('かちぬき ちゅう：モンスターを かえると 1 たいめから');
+  if (vs) setHint((vs.step === 1 ? '1P' : '2P') + ' 몬스터를 그려 줘' + (myRobot ? '(전에 그린 몬스터가 들어 있어)' : ''));
+  else if (stage > 0) setHint('연승전 중: 몬스터를 바꾸면 첫 번째 상대부터 다시');
   sizePad(); drawPad();   // 文字やボタンが決まってから 測る
 }
 function setPart(p) {
@@ -271,10 +271,10 @@ const endStroke = () => {
   if (!raw) return;
   const pts = RB.cleanStroke(raw, RB.INK[part]); raw = null;
   const need = part === 'body' ? 80 : 20;
-  if (pts.length < 2 || RB.inkOf(pts) < need) { setHint('もうすこし おおきく かいてね'); drawPad(); return; }
+  if (pts.length < 2 || RB.inkOf(pts) < need) { setHint('조금 더 크게 그려 줘'); drawPad(); return; }
   strokes[part] = pts;
   if (!vs && (stage > 0 || +(lsGet('stage') || 0) > 0 || +(lsGet('ura.stage') || 0) > 0)) { resetAllRuns(); updateSideUi(); }
-  if (part === 'body' && (strokes.arm || strokes.leg)) setHint('からだを かえたので、うで・あしも くっつけなおしたよ');
+  if (part === 'body' && (strokes.arm || strokes.leg)) setHint('몸을 바꿔서 팔·다리도 다시 붙였어');
   else setHint('');
   saveRobot();
   // つぎのパーツへ
@@ -322,7 +322,7 @@ function stepBattle() {
       burst(e.x, e.y, '#ffd54f', 10 + Math.round(e.dmg * 1.5), 320);
       pops.push({ x: e.x, y: e.y - 10, t: e.dmg.toFixed(0), c: e.who === 'A' ? '#ffd54f' : '#ff8a80', life: 55, size: 20 + Math.min(20, e.dmg * 1.2) });
     } else if (e.t === 'down') {
-      pops.push({ x: e.x, y: e.y - 90, t: 'ダウン！', c: '#ffffff', life: 60, size: 26 });
+      pops.push({ x: e.x, y: e.y - 90, t: '다운!', c: '#ffffff', life: 60, size: 26 });
     } else if (e.t === 'end') { endAt = performance.now(); if (S.reason === 'ko') { stop = 40; shake = 14; } }
   }
   S.fx.length = 0;
@@ -440,9 +440,9 @@ function drawHud() {
   bar(W - 12 - bw, S.B.hp, S.B.maxHp, opp.name, S.side === 'ura' ? '#ff5252' : opp.color, true);   // うらの敵は色が暗いので バーは赤
   ctx.textAlign = 'center'; ctx.font = '900 26px sans-serif'; ctx.fillStyle = S.t > RB.TIME - 5 ? '#ff8a80' : '#fff';
   ctx.fillText(Math.max(0, Math.ceil(RB.TIME - S.t)), W / 2, top + 34);
-  if (!isFriend) { ctx.font = '700 12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText((S.side === 'ura' ? 'うら ' : '') + 'かちぬき ' + (S.stage + 1) + ' / ' + CPUS().length, W / 2, top + 54); }
-  if (S.t < 1) big('ファイト！', '#ffd54f', 1 - S.t);
-  if (S.over) big(S.reason === 'ko' ? 'KO！' : 'じかんぎれ', S.winner === 'A' ? '#ffd54f' : '#ff8a80', 1);
+  if (!isFriend) { ctx.font = '700 12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText((S.side === 'ura' ? '히든 ' : '') + '연승전 ' + (S.stage + 1) + ' / ' + CPUS().length, W / 2, top + 54); }
+  if (S.t < 1) big('파이트!', '#ffd54f', 1 - S.t);
+  if (S.over) big(S.reason === 'ko' ? 'KO!' : '시간 끝', S.winner === 'A' ? '#ffd54f' : '#ff8a80', 1);
 }
 function big(t, c, a) {
   ctx.globalAlpha = Math.max(0, Math.min(1, a));
@@ -463,22 +463,22 @@ function drawTitleBg() {
 function showResult() {
   mode = 'result'; show('result');
   TR('result', { side: S.side, stage: S.stage, opp: opp && opp.name, win: S.winner === 'A' ? 'win' : S.winner === 'B' ? 'lose' : 'draw', reason: S.reason, t: Math.round(S.t * 10) / 10, hp: [Math.ceil(S.A.hp), Math.ceil(S.B.hp)], hits: [S.A.hits, S.B.hits], dmg: [Math.round(S.A.dealt), Math.round(S.B.dealt)], fast: fast });
-  $('share').hidden = false; $('vstitle').hidden = true; $('redraw').hidden = false; $('redraw').textContent = 'モンスターを なおす';
-  $('next').textContent = 'つぎの あいてへ'; $('next').classList.remove('ura'); $('again').className = 'main'; goUra = false;
+  $('share').hidden = false; $('vstitle').hidden = true; $('redraw').hidden = false; $('redraw').textContent = '몬스터 고치기';
+  $('next').textContent = '다음 상대로'; $('next').classList.remove('ura'); $('again').className = 'main'; goUra = false;
   if (S.side === 'vs') {
-    $('rtitle').textContent = S.winner === 'A' ? '1P の かち！' : S.winner === 'B' ? '2P の かち！' : 'ひきわけ';
+    $('rtitle').textContent = S.winner === 'A' ? '1P 승리!' : S.winner === 'B' ? '2P 승리!' : '무승부';
     $('rtitle').className = 'rtitle ' + (S.winner ? 'win' : '');
-    $('rsub').textContent = (S.reason === 'ko' ? 'KO（' + S.t.toFixed(1) + ' びょう）' : 'じかんぎれ') + '\nのこり HP　1P ' + Math.ceil(S.A.hp) + '　2P ' + Math.ceil(S.B.hp);
+    $('rsub').textContent = (S.reason === 'ko' ? 'KO(' + S.t.toFixed(1) + '초)' : '시간 끝') + '\n남은 HP　1P ' + Math.ceil(S.A.hp) + '　2P ' + Math.ceil(S.B.hp);
     $('rprog').innerHTML = '';
-    $('next').hidden = false; $('next').innerHTML = 'もういちど<small>なおして たたかう</small>';
-    $('again').hidden = false; $('again').textContent = 'おなじ たたかいを みる'; $('again').className = 'sub';
+    $('next').hidden = false; $('next').innerHTML = '한 번 더<small>고쳐서 싸우기</small>';
+    $('again').hidden = false; $('again').textContent = '같은 싸움 다시 보기'; $('again').className = 'sub';
     $('redraw').hidden = true; $('share').hidden = true; $('vstitle').hidden = false;
     return;
   }
   const win = S.winner === 'A', draw = S.winner == null;
-  $('rtitle').textContent = win ? 'かち！' : draw ? 'ひきわけ' : 'まけ…';
+  $('rtitle').textContent = win ? '이겼다!' : draw ? '무승부' : '졌다…';
   $('rtitle').className = 'rtitle ' + (win ? 'win' : draw ? '' : 'lose');
-  $('rsub').textContent = (S.reason === 'ko' ? 'KO（' + S.t.toFixed(1) + ' びょう）' : 'じかんぎれ（のこり HP ' + Math.ceil(S.A.hp) + ' たい ' + Math.ceil(S.B.hp) + '）') + '\nパンチ ' + S.A.hits + ' はつ・ダメージ ' + Math.round(S.A.dealt);
+  $('rsub').textContent = (S.reason === 'ko' ? 'KO(' + S.t.toFixed(1) + '초)' : '시간 끝(남은 HP ' + Math.ceil(S.A.hp) + ' 대 ' + Math.ceil(S.B.hp) + ')') + '\n펀치 ' + S.A.hits + '방 · 대미지 ' + Math.round(S.A.dealt);
   let showNext = false, wins = stage;
   if (!isFriend) {
     if (win) {
@@ -488,28 +488,28 @@ function showResult() {
       else {
         cleared = true; lsSet(sk('cleared'), '1'); resetRun();
         if (side === 'ura') { onUraClear(); }
-        if (side === 'ura') $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！ すごすぎる！';
-        else { $('rsub').textContent += '\n5 たい かちぬき たっせい！'; const firstUra = !uraOpen; uraOpen = true; $('rsub').textContent += firstUra ? '\n…うら かちぬき が あらわれた！' : '\nうら かちぬき が まってるぞ…！'; goUra = true; }
+        if (side === 'ura') $('rsub').textContent += '\n히든 5연승 달성!! 진짜 대단해!';
+        else { $('rsub').textContent += '\n5연승 달성!'; const firstUra = !uraOpen; uraOpen = true; $('rsub').textContent += firstUra ? '\n…히든 연승전이 나타났다!' : '\n히든 연승전이 기다리고 있어…!'; goUra = true; }
       }
     } else {
       resetRun();
-      $('rsub').textContent += '\n' + wins + ' にんぬき で おわり';
+      $('rsub').textContent += '\n' + wins + '연승으로 끝';
     }
-    if (wins > best) { best = wins; lsSet(sk('best'), String(best)); $('rsub').textContent += '\nさいこう きろく！'; }
+    if (wins > best) { best = wins; lsSet(sk('best'), String(best)); $('rsub').textContent += '\n최고 기록!'; }
   }
-  $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
+  $('rprog').innerHTML = isFriend ? '친구 몬스터와 승부' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
   $('next').hidden = !showNext && !goUra;
   $('again').hidden = showNext;
-  if (goUra) { $('next').innerHTML = 'うら かちぬき へ！<small>とんでもなく つよい 5 たい</small>'; $('next').classList.add('ura'); $('again').className = 'sub'; $('again').textContent = 'おもてを もういちど'; }
-  $('again').textContent = isFriend ? 'もういちど' : goUra ? 'おもてを もういちど' : '1 たいめから もういちど';
-  $('redraw').textContent = !isFriend && stage > 0 ? 'モンスターを なおす（1 たいめから）' : 'モンスターを なおす';
+  if (goUra) { $('next').innerHTML = '히든 연승전으로!<small>엄청나게 센 5마리</small>'; $('next').classList.add('ura'); $('again').className = 'sub'; $('again').textContent = '기본 한 번 더'; }
+  $('again').textContent = isFriend ? '한 번 더' : goUra ? '기본 한 번 더' : '첫 상대부터 한 번 더';
+  $('redraw').textContent = !isFriend && stage > 0 ? '몬스터 고치기(첫 상대부터)' : '몬스터 고치기';
   if (endingPending) startEnding();
 }
 function shareRobot() {
   if (!myRobot) return;
   TR('share', { me: RB.encodeDesign(myRobot) });
   const url = SITE_URL + '#r=' + RB.encodeDesign(myRobot);
-  const text = 'ぼくの モンスター と たたかってみて！（かいて！モンスターバトル）\n' + url;
+  const text = '내 몬스터랑 싸워 봐! (그려라! 몬스터 배틀)\n' + url;
   if (navigator.share) navigator.share({ text }).catch(err => { if (!err || err.name !== 'AbortError') showShareBox(text); });
   else showShareBox(text);
 }
@@ -581,7 +581,7 @@ function renderEnding(now) {
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   if (t < parade) {
     ctx.font = '900 ' + Math.min(26, W * 0.06) + 'px sans-serif'; ctx.fillStyle = '#fff';
-    ctx.fillText('たおした 10 たい', W / 2, H * 0.18);
+    ctx.fillText('쓰러뜨린 10마리', W / 2, H * 0.18);
     list.forEach((c, i) => {
       const x = W + 60 + gap * i - sp * t; if (x < -80 || x > W + 80) return;
       const hop = Math.abs(Math.sin(t * 8 + i)) * 6;
@@ -596,11 +596,11 @@ function renderEnding(now) {
     let mx0 = Infinity, mx1 = -Infinity; for (const k of ['body', 'arm', 'leg']) for (const p of myRobot[k]) { mx0 = Math.min(mx0, p[0]); mx1 = Math.max(mx1, p[0]); }
     ctx.save(); ctx.translate(W / 2 - (mx0 + mx1) / 2 * sc, gy - lowY(myRobot) * sc); ctx.scale(sc, sc); drawRobotLocal(ctx, myRobot, ME.color, 1, false); ctx.restore();   // 手足も入れて まんなかに
     ctx.font = '900 ' + Math.min(44, W * 0.11) + 'px sans-serif'; ctx.lineWidth = 8; ctx.strokeStyle = '#1b1d3a';
-    ctx.strokeText('おめでとう！', W / 2, H * 0.14); ctx.fillStyle = '#ffd54f'; ctx.fillText('おめでとう！', W / 2, H * 0.14);
+    ctx.strokeText('축하해!', W / 2, H * 0.14); ctx.fillStyle = '#ffd54f'; ctx.fillText('축하해!', W / 2, H * 0.14);
     ctx.font = '800 ' + Math.min(18, W * 0.045) + 'px sans-serif'; ctx.fillStyle = '#fff';
-    ctx.fillText('うら 5 にんぬき たっせい！', W / 2, H * 0.22); ctx.fillText('おうかんを もらった！', W / 2, H * 0.27);
+    ctx.fillText('히든 5연승 달성!', W / 2, H * 0.22); ctx.fillText('왕관을 받았다!', W / 2, H * 0.27);
   }
-  if (t > 1.2) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = '700 14px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('タップで つぎへ', W / 2, H - 40); ctx.globalAlpha = 1; }
+  if (t > 1.2) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = '700 14px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('터치해서 다음으로', W / 2, H - 40); ctx.globalAlpha = 1; }
 }
 onTap($('vs'), startVsMode);
 onTap($('vstitle'), exitVs);
@@ -626,7 +626,7 @@ function applyVsUi() {
   if (!vs) { $('send').hidden = false; return; }
   $('sidebtn').hidden = true; $('fightfriend').hidden = true; $('send').hidden = true;
   $('fight').classList.remove('ura');
-  $('fight').innerHTML = vs.step === 1 ? 'できた！<small>2P に わたす</small>' : 'たたかう！<small>1P たい 2P</small>';
+  $('fight').innerHTML = vs.step === 1 ? '다 그렸다!<small>2P에게 넘기기</small>' : '싸우자!<small>1P 대 2P</small>';
 }
 function vsNext() {
   if (!myRobot) return;
@@ -648,15 +648,15 @@ function renderSlots(msg) {
   for (let i = 1; i <= 3; i++) {
     const d = slotDesign(i), row = document.createElement('div');
     row.className = 'slot';
-    row.innerHTML = '<b>' + i + '</b><canvas width="152" height="152"></canvas><div class="sbtns"><button class="main" data-a="save">ほぞん</button><button class="sub" data-a="load"' + (d ? '' : ' disabled') + '>よびだす</button></div>';
+    row.innerHTML = '<b>' + i + '</b><canvas width="152" height="152"></canvas><div class="sbtns"><button class="main" data-a="save">저장</button><button class="sub" data-a="load"' + (d ? '' : ' disabled') + '>불러오기</button></div>';
     list.appendChild(row);
     const c = row.querySelector('canvas');
     if (d) drawPreview(c, d, ME.color);
-    else { const g = c.getContext('2d'); g.fillStyle = 'rgba(255,255,255,.5)'; g.font = 'bold 22px sans-serif'; g.textAlign = 'center'; g.fillText('から', 76, 84); }
+    else { const g = c.getContext('2d'); g.fillStyle = 'rgba(255,255,255,.5)'; g.font = 'bold 22px sans-serif'; g.textAlign = 'center'; g.fillText('비어 있음', 76, 84); }
     row.querySelector('[data-a="save"]').addEventListener('click', e => {
       e.preventDefault();
-      if (!myRobot) { renderSlots('からだ・うで・あし を ぜんぶ かいてから ほぞん してね'); return; }
-      lsSet('slot' + i, RB.encodeDesign(myRobot)); renderSlots(i + ' に ほぞん しました');
+      if (!myRobot) { renderSlots('몸·팔·다리를 다 그리고 나서 저장해 줘'); return; }
+      lsSet('slot' + i, RB.encodeDesign(myRobot)); renderSlots(i + '번에 저장했어');
     });
     row.querySelector('[data-a="load"]').addEventListener('click', e => {
       e.preventDefault();
@@ -666,7 +666,7 @@ function renderSlots(msg) {
       const reset = !vs && !same && (+(lsGet('stage') || 0) > 0 || +(lsGet('ura.stage') || 0) > 0);
       if (reset) resetAllRuns();
       $('slotbox').hidden = true; setPart('leg'); updateSideUi();
-      setHint(reset ? i + ' を よびだしたので かちぬきは 1 たいめから' : i + ' を よびだしました');
+      setHint(reset ? i + '번을 불러와서 연승전은 첫 상대부터 다시' : i + '번을 불러왔어');
       sizePad(); drawPad();
     });
   }
@@ -677,14 +677,14 @@ onTap($('closeslots'), () => { $('slotbox').hidden = true; });
 // おもて / うら の切りかえ（おもてを クリアしたら 出る）
 function updateSideUi() {
   $('sidebtn').hidden = !uraOpen;
-  $('sidebtn').textContent = side === 'ura' ? 'うら' : 'おもて';
+  $('sidebtn').textContent = side === 'ura' ? '히든' : '기본';
   $('sidebtn').classList.toggle('ura', side === 'ura');
-  $('fight').innerHTML = (side === 'ura' ? 'うら ' : '') + 'たたかう<small>' + (stage + 1) + ' / ' + CPUS().length + ' ' + CPUS()[stage].name + '</small>';
+  $('fight').innerHTML = (side === 'ura' ? '히든 ' : '') + '싸우기<small>' + (stage + 1) + ' / ' + CPUS().length + ' ' + CPUS()[stage].name + '</small>';
   $('fight').classList.toggle('ura', side === 'ura');
   applyVsUi();
 }
 // おもて ⇄ うら（押すたびに切りかえ）
-onTap($('sidebtn'), () => { side = side === 'ura' ? 'omote' : 'ura'; lsSet('side', side); loadSide(); updateSideUi(); setHint(side === 'ura' ? 'うら かちぬき：とんでもなく つよい 5 たい' : ''); });
+onTap($('sidebtn'), () => { side = side === 'ura' ? 'omote' : 'ura'; lsSet('side', side); loadSide(); updateSideUi(); setHint(side === 'ura' ? '히든 연승전: 엄청나게 센 5마리' : ''); });
 onTap($('fast'), () => { fast = !fast; TR('fast', { on: fast }); lsSet('fast', fast ? '1' : '0'); updateFastBtn(); });
 // 戦いの途中で もどる（勝ち抜きの途中経過は そのまま。戦いは決定的なので やめても 得はしない）
 onTap($('quit'), () => { if (mode === 'battle' || mode === 'pause') { TR('quit', { side: S && S.side, stage: S && S.stage, t: S && Math.round(S.t * 10) / 10 }); showDraw(); } });
@@ -693,8 +693,8 @@ onTap($('copy'), () => {
   const ta = $('sharetext'); ta.select();
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).catch(() => {});
   else document.execCommand('copy');
-  $('copy').textContent = 'コピーしました';
-  setTimeout(() => { $('copy').textContent = '文をコピー'; }, 1500);
+  $('copy').textContent = '복사했어';
+  setTimeout(() => { $('copy').textContent = '글 복사'; }, 1500);
 });
 
 // ---------- 開発用 ----------
