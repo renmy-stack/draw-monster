@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '37';
+const VERSION = '38';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -464,7 +464,7 @@ function showResult() {
   mode = 'result'; show('result');
   TR('result', { side: S.side, stage: S.stage, opp: opp && opp.name, win: S.winner === 'A' ? 'win' : S.winner === 'B' ? 'lose' : 'draw', reason: S.reason, t: Math.round(S.t * 10) / 10, hp: [Math.ceil(S.A.hp), Math.ceil(S.B.hp)], hits: [S.A.hits, S.B.hits], dmg: [Math.round(S.A.dealt), Math.round(S.B.dealt)], fast: fast });
   $('share').hidden = false; $('vstitle').hidden = true; $('redraw').hidden = false; $('redraw').textContent = 'モンスターを なおす';
-  $('next').textContent = 'つぎの あいてへ'; $('again').className = 'main';
+  $('next').textContent = 'つぎの あいてへ'; $('next').classList.remove('ura'); $('again').className = 'main'; goUra = false;
   if (S.side === 'vs') {
     $('rtitle').textContent = S.winner === 'A' ? '1P の かち！' : S.winner === 'B' ? '2P の かち！' : 'ひきわけ';
     $('rtitle').className = 'rtitle ' + (S.winner ? 'win' : '');
@@ -489,7 +489,7 @@ function showResult() {
         cleared = true; lsSet(sk('cleared'), '1'); resetRun();
         if (side === 'ura') { onUraClear(); }
         if (side === 'ura') $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！ すごすぎる！';
-        else { $('rsub').textContent += '\n5 たい かちぬき たっせい！'; if (!uraOpen) { uraOpen = true; $('rsub').textContent += '\n…うら かちぬき が あらわれた！'; } }
+        else { $('rsub').textContent += '\n5 たい かちぬき たっせい！'; const firstUra = !uraOpen; uraOpen = true; $('rsub').textContent += firstUra ? '\n…うら かちぬき が あらわれた！' : '\nうら かちぬき が まってるぞ…！'; goUra = true; }
       }
     } else {
       resetRun();
@@ -498,9 +498,10 @@ function showResult() {
     if (wins > best) { best = wins; lsSet(sk('best'), String(best)); $('rsub').textContent += '\nさいこう きろく！'; }
   }
   $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
-  $('next').hidden = !showNext;
+  $('next').hidden = !showNext && !goUra;
   $('again').hidden = showNext;
-  $('again').textContent = isFriend ? 'もういちど' : '1 たいめから もういちど';
+  if (goUra) { $('next').innerHTML = 'うら かちぬき へ！<small>とんでもなく つよい 5 たい</small>'; $('next').classList.add('ura'); $('again').className = 'sub'; $('again').textContent = 'おもてを もういちど'; }
+  $('again').textContent = isFriend ? 'もういちど' : goUra ? 'おもてを もういちど' : '1 たいめから もういちど';
   $('redraw').textContent = !isFriend && stage > 0 ? 'モンスターを なおす（1 たいめから）' : 'モンスターを なおす';
   if (endingPending) startEnding();
 }
@@ -525,7 +526,8 @@ onTap($('fightfriend'), () => startBattle(true));
 onTap($('send'), shareRobot);
 onTap($('share'), shareRobot);
 onTap($('clearpart'), () => { strokes[part] = null; if (!vs) resetAllRuns(); saveRobot(); setPart(part); updateSideUi(); });
-onTap($('next'), () => { if (vs) startVsMode(); else startBattle(false); });
+let goUra = false;   // おもてを クリアした 直後: つぎへ ボタンが「うらへ」
+onTap($('next'), () => { if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
 onTap($('again'), () => { if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 // ---------- うら 5 人抜き: 王冠・でんどういり・エンディング ----------
