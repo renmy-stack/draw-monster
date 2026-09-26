@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '33';
+const VERSION = '34';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -550,6 +550,14 @@ function finishEnding() {
 }
 window.endingAt = sec => { endT0 = performance.now() - sec * 1000; };   // 開発用: エンディングの その秒を 見る
 cv.addEventListener('pointerdown', () => { if (mode === 'ending' && performance.now() - endT0 > 1200) finishEnding(); });
+// 絵の いちばん下（反対がわの足も ふくむ）。地面に 立たせるのに 使う
+function lowY(d) {
+  let y = -Infinity;
+  for (const p of d.body) y = Math.max(y, p[1]);
+  if (d.arm) for (const p of d.arm) y = Math.max(y, p[1]);
+  if (d.leg) for (const p of d.leg) { y = Math.max(y, p[1], 2 * d.hip[1] - p[1]); }
+  return y + 4;   // 線の太さぶん
+}
 // エンディング: 倒した 10 体が 行進 → 王冠の じぶんの モンスター
 function renderEnding(now) {
   const t = (now - endT0) / 1000;
@@ -566,7 +574,7 @@ function renderEnding(now) {
     list.forEach((c, i) => {
       const x = W + 60 + gap * i - sp * t; if (x < -80 || x > W + 80) return;
       const hop = Math.abs(Math.sin(t * 8 + i)) * 6;
-      ctx.save(); ctx.translate(x, gy - hop); ctx.scale(-0.55, 0.55); drawRobotLocal(ctx, c, c.color, 1, false); ctx.restore();
+      ctx.save(); ctx.translate(x, gy - hop - lowY(c) * 0.55); ctx.scale(-0.55, 0.55); drawRobotLocal(ctx, c, c.color, 1, false); ctx.restore();   // 足を 地面に
       ctx.font = '800 12px sans-serif'; ctx.fillStyle = i < 5 ? '#fff' : '#ff8a80'; ctx.fillText(c.name, x, gy + 22);
     });
   } else {
@@ -575,7 +583,7 @@ function renderEnding(now) {
     for (const p of confetti) { p.y += p.vy / 60; p.x += p.vx / 60; if (p.y > H) { p.y = -10; p.x = Math.random() * W; } ctx.fillStyle = p.c; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r + u * 3); ctx.fillRect(-4, -3, 8, 6); ctx.restore(); }
     const k = Math.min(1, u / 0.6), sc = Math.min(W / 260, H / 480) * (0.6 + 0.4 * k);
     let mx0 = Infinity, mx1 = -Infinity; for (const k of ['body', 'arm', 'leg']) for (const p of myRobot[k]) { mx0 = Math.min(mx0, p[0]); mx1 = Math.max(mx1, p[0]); }
-    ctx.save(); ctx.translate(W / 2 - (mx0 + mx1) / 2 * sc, gy); ctx.scale(sc, sc); drawRobotLocal(ctx, myRobot, ME.color, 1, false); ctx.restore();   // 手足も入れて まんなかに
+    ctx.save(); ctx.translate(W / 2 - (mx0 + mx1) / 2 * sc, gy - lowY(myRobot) * sc); ctx.scale(sc, sc); drawRobotLocal(ctx, myRobot, ME.color, 1, false); ctx.restore();   // 手足も入れて まんなかに
     ctx.font = '900 ' + Math.min(44, W * 0.11) + 'px sans-serif'; ctx.lineWidth = 8; ctx.strokeStyle = '#1b1d3a';
     ctx.strokeText('おめでとう！', W / 2, H * 0.14); ctx.fillStyle = '#ffd54f'; ctx.fillText('おめでとう！', W / 2, H * 0.14);
     ctx.font = '800 ' + Math.min(18, W * 0.045) + 'px sans-serif'; ctx.fillStyle = '#fff';
