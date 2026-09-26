@@ -162,3 +162,16 @@ button:disabled { opacity: .45; }
 /* 5 体の名前の札を 1 行に */
 #rprog { gap: 3px; flex-wrap: nowrap; }
 #rprog .dot { padding: 3px 5px; font-size: 11px; white-space: nowrap; }
+
+/* タイトル: ボタンを上に、説明は 3 つの まとまり。ことばの 途中で 折れない（スペースの ところで 改行） */
+.panel { word-break: keep-all; overflow-wrap: anywhere; }
+.tbtns { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 12px 0 4px; }
+.tbtns .vsbtn { margin-top: 0; }
+#title .howto { text-align: left; margin: 14px 0 0; padding: 10px 12px; border-radius: 12px; background: rgba(27, 29, 58, .05); font-size: 13px; line-height: 1.6; }
+#title .howto h3 { margin: 8px 0 2px; font-size: 14px; color: var(--hot); }
+#title .howto h3:first-child { margin-top: 0; }
+#title .howto p { margin: 0; }
+#title .howto b { color: #1e88e5; }
+#title .rules { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; margin: 0; }
+#title .rules dt { font-weight: 800; color: #1e88e5; white-space: nowrap; }
+#title .rules dd { margin: 0; }

@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=27">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=28">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=27">
+<link rel="stylesheet" href="style.css?v=28">
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -22,25 +22,34 @@
 <div id="title">
   <div class="panel">
     <div class="logo">かいて！<br>モンスターバトル</div>
-    <div class="lead">からだ・うで・あし を かくと、モンスターが あるいて パンチで たたかうよ！</div>
+    <div class="lead">からだ・うで・あし を かくと<br>モンスターが たたかうよ！</div>
     <div id="friendbox" hidden>
       <div class="fb-title">ともだちの モンスター が とどいた！</div>
       <canvas id="friendprev" width="240" height="240"></canvas>
     </div>
     <div id="tprog"></div>
-    <ul class="howto">
-      <li><b>からだ</b> → <b>うで</b> → <b>あし</b> の じゅんに 1 本ずつ かく</li>
-      <li>うでは <b>かた</b>、あしは <b>こし</b> に くっつくよ</li>
-      <li>あしは ぐるぐる まわって あるく。うでは ぶんぶん パンチ</li>
-      <li>からだが <b>大きい</b>ほど タフ、<b>おもい</b>ほど パンチが おもい</li>
-      <li><b>ながい うで</b>は とどくけど 大ぶりで かるい。<b>みじかい うで</b>は れんだで ズドン</li>
-      <li>つよく なぐられると ころぶ。HP が 0 で KO！</li>
-      <li>CPU の 5 たいと かちぬき！まけたら 1 たいめから。とちゅうで モンスターを かえても 1 たいめから</li>
-      <li>5 たい かちぬくと… <b>うら かちぬき</b> が あらわれる！</li>
-      <li>モンスターを ともだちに おくって しょうぶ！</li>
-    </ul>
-    <button id="start" class="main">モンスターを つくる</button>
-    <div><button id="vs" class="sub vsbtn">ふたりで たたかう</button></div>
+    <div class="tbtns">
+      <button id="start" class="main">モンスターを つくる</button>
+      <button id="vs" class="sub vsbtn">ふたりで たたかう</button>
+    </div>
+    <div class="howto">
+      <h3>つくりかた</h3>
+      <p><b>からだ</b> → <b>うで</b> → <b>あし</b> の じゅんに 1 本ずつ かく</p>
+      <p>うでは <b>かた</b>、あしは <b>こし</b> に つく</p>
+      <p>あしは ぐるぐる まわって あるく</p>
+      <h3>つよさ</h3>
+      <dl class="rules">
+        <dt>大きい からだ</dt><dd>タフ（HP が おおい）</dd>
+        <dt>おもい からだ</dt><dd>パンチが おもい</dd>
+        <dt>ながい うで</dt><dd>とどく けど かるい</dd>
+        <dt>みじかい うで</dt><dd>れんだで ズドン</dd>
+      </dl>
+      <h3>あそびかた</h3>
+      <p>CPU 5 たいと <b>かちぬき</b>（まけたら 1 たいめから）</p>
+      <p>5 たい かちぬくと… <b>うら かちぬき</b>！</p>
+      <p><b>ふたりで たたかう</b> で ひとつの スマホで たいせん</p>
+      <p>モンスターを <b>ともだちに おくって</b> しょうぶ</p>
+    </div>
   </div>
 </div>
 
@@ -119,7 +128,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=27"></script>
-<script src="game.js?v=27"></script>
+<script src="sim.js?v=28"></script>
+<script src="game.js?v=28"></script>
 </body>
 </html>
