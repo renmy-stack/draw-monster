@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '47';
+const VERSION = '48';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -629,6 +629,7 @@ onTap($('certshare'), () => {
   const text = 'みんなの さいきょう ぐんだん を たおして でんせつ に なった！（かいて！モンスターバトル）' + String.fromCharCode(10) + SITE_URL;
   navigator.share({ files: [certFile], text }).catch(() => {});
 });
+onTap($('cert'), () => { if (certFor) showCert(certFor.c, certFor.d); });
 onTap($('certclose'), () => { $('certbox').hidden = true; });
 function renderLegend() {
   let lh = []; try { lh = JSON.parse(lsGet('legendhall') || '[]'); } catch (e) {}
