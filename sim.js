@@ -373,6 +373,7 @@ function encodeDesign(d) {
     s += String.fromCharCode(p.length);
     for (const [x, y] of p) s += String.fromCharCode(clamp(x - o[0], 0, 255), clamp(y - o[1], 0, 255));
   }
+  if (d.crown) s += String.fromCharCode(1);   // 王冠（うら 5 人抜きした モンスター。見た目だけ）
   const b = typeof btoa === 'function' ? btoa(s) : Buffer.from(s, 'binary').toString('base64');
   return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -395,6 +396,7 @@ function decodeDesign(str) {
       out[k] = k === 'body' ? cleanStroke(a, INK.body) : cleanLimb(a, INK[k] + 1);
     }
     const d = design(out.body, out.arm, out.leg);
+    if (i < s.length && s.charCodeAt(i) === 1) d.crown = true;
     return validDesign(d) ? d : null;
   } catch (e) { return null; }
 }

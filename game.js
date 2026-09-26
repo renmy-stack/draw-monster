@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '31';
+const VERSION = '32';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -13,6 +13,11 @@ const FRIEND = { name: 'ともだち', color: '#2e7d32' };
 const P2 = { name: '2P', color: '#e53935' };
 // ふたりで たたかう（ひとつの端末で 1P → 2P の順に描く）。vs = { step: 1|2, d1, d2, backup }。この間は 勝ち抜き・保存中のモンスターに さわらない
 let vs = null;
+// 王冠: うら 5 人抜きした モンスター（形そのもの）。1 本でも 描きなおすと べつの モンスター
+function plainCode(d) { return RB.encodeDesign({ body: d.body, arm: d.arm, leg: d.leg }); }
+function crownedList() { try { return JSON.parse(lsGet('crowned') || '[]'); } catch (e) { return []; } }
+function isCrowned(d) { return !!d && crownedList().includes(plainCode(d)); }
+function withCrown(d) { if (d) d.crown = d.crown || isCrowned(d); return d; }
 const PARTS = { body: 'からだ', arm: 'うで', leg: 'あし' };
 const PART_HINT = {
   body: '<b>からだ</b> を かこむように かいてね',
@@ -76,6 +81,7 @@ function showTitle() {
   mode = 'title'; show('title');
   $('friendbox').hidden = !friendRobot;
   if (friendRobot) drawPreview($('friendprev'), friendRobot, FRIEND.color);
+  renderHall();
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0);
   $('tprog').textContent = (ob > 0 ? 'おもて さいこう ' + ob + ' にんぬき' + (uraOpen ? '（たっせい！）' : '') : '') + (uraOpen ? '　うら さいこう ' + ub + ' にんぬき' + (lsGet('ura.cleared') === '1' ? '（たっせい！！）' : '') : '');
   $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
@@ -157,7 +163,29 @@ function drawRobotLocal(g, d, color, alpha, open) {
   body(g, d.body, color, open, d);
   if (d.leg && d.leg.length > 1) limb(g, d.leg, '#455a64', 1);
   if (d.arm && d.arm.length > 1) arm(g, d.arm, color);
+  if (d.crown && d.body && d.body.length > 2) {
+    const c = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] })));
+    drawCrown(g, c.x, c.y - 1, c.s);
+  }
   g.globalAlpha = 1;
+}
+// 王冠を のせる所: 体の いちばん上の あたり（上から 8 以内の 点）の まんなか
+function crownSpot(pts) {
+  let y0 = Infinity, x0 = Infinity, x1 = -Infinity;
+  for (const p of pts) { y0 = Math.min(y0, p.y); x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); }
+  let sx = 0, n = 0; for (const p of pts) if (p.y <= y0 + 8) { sx += p.x; n++; }
+  return { x: sx / n, y: y0, s: Math.max(18, Math.min(40, (x1 - x0) * 0.5)) };
+}
+// 王冠（見た目だけ）: x, y が 下のまんなか、s が はば
+function drawCrown(g, x, y, s) {
+  const h = s * 0.75;
+  g.beginPath();
+  g.moveTo(x - s / 2, y); g.lineTo(x + s / 2, y); g.lineTo(x + s / 2, y - h); g.lineTo(x + s / 4, y - h * 0.45);
+  g.lineTo(x, y - h * 1.05); g.lineTo(x - s / 4, y - h * 0.45); g.lineTo(x - s / 2, y - h); g.closePath();
+  g.fillStyle = '#ffd54f'; g.fill(); g.lineWidth = Math.max(2, s * 0.08); g.strokeStyle = '#7a5c00'; g.stroke();
+  g.fillStyle = '#e53935';
+  for (const [px, py] of [[x - s / 2, y - h], [x, y - h * 1.05], [x + s / 2, y - h]]) { g.beginPath(); g.arc(px, py, s * 0.09, 0, 7); g.fill(); }
+  g.fillStyle = '#42a5f5'; g.beginPath(); g.arc(x, y - h * 0.3, s * 0.1, 0, 7); g.fill();
 }
 function body(g, pts, color, open, d) {
   pline(g, pts); if (!open) g.closePath();
@@ -253,7 +281,7 @@ function saveRobot() {
   myRobot = null;
   if (strokes.body && strokes.arm && strokes.leg) {
     const d = RB.design(strokes.body, strokes.arm, strokes.leg);
-    if (RB.validDesign(d)) { myRobot = d; if (!vs) lsSet('robot', RB.encodeDesign(d)); }
+    if (RB.validDesign(d)) { myRobot = withCrown(d); if (!vs) lsSet('robot', RB.encodeDesign(d)); }
   }
   updateButtons();
 }
@@ -275,7 +303,7 @@ function startBattle(friend) {
   if (!myRobot) return;
   isFriend = !!friend;
   opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: CPUS()[stage].name, color: CPUS()[stage].color, d: CPUS()[stage] };
-  S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side;
+  S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown;
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
 }
@@ -308,6 +336,7 @@ function frame(now) {
     renderBattle(dt);
   } else if (mode === 'draw') drawPad();
   else if (mode === 'pause') renderBattle(0);
+  else if (mode === 'ending') renderEnding(now);
   requestAnimationFrame(frame);
 }
 
@@ -338,7 +367,7 @@ function renderBattle(dt) {
   ctx.fillStyle = '#7c83ff'; ctx.fillRect(-RB.HW, 0, 2 * RB.HW, 5);
   ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 2;
   for (let x = -RB.HW; x <= RB.HW; x += 60) { ctx.beginPath(); ctx.moveTo(x, 5); ctx.lineTo(x * 1.3, 120); ctx.stroke(); }
-  for (const k of ['B', 'A']) drawRobotWorld(S[k], k === 'A' ? ME.color : opp.color, hurt[k] > 0);
+  for (const k of ['B', 'A']) drawRobotWorld(S[k], k === 'A' ? ME.color : opp.color, hurt[k] > 0, k === 'A' ? S.crownA : S.crownB);
   for (const k of ['A', 'B']) if (hurt[k] > 0) hurt[k]--;
   // かけら・数字
   for (let i = parts.length - 1; i >= 0; i--) {
@@ -358,7 +387,7 @@ function renderBattle(dt) {
   drawHud();
 }
 // モンスターを ワールドに（シミュレーションの点を そのまま使う）
-function drawRobotWorld(b, color, flash) {
+function drawRobotWorld(b, color, flash, crown) {
   const co = Math.cos(b.th), si = Math.sin(b.th);
   const tf = (lx, ly) => [b.x + lx * co - ly * si, b.y + lx * si + ly * co];
   // 影
@@ -386,6 +415,7 @@ function drawRobotWorld(b, color, flash) {
   const w = x1 - x0, r = Math.max(3.5, Math.min(8, w * 0.1));
   const ex = (x0 + x1) / 2 + b.facing * w * 0.12, ey = top.y + Math.min(22, w * 0.3 + 8);
   face(ctx, tf, ex, ey, r, b.facing, b.downT > 0 || b.hp <= 0);
+  if (crown) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawCrown(ctx, 0, -1, cs.s); ctx.restore(); }
   limb(ctx, legA, '#455a64', 1);
   arm(ctx, joint(b.arm), color);
 }
@@ -450,6 +480,7 @@ function showResult() {
       if (stage < CPUS().length - 1) { stage++; lsSet(sk('stage'), String(stage)); showNext = true; }
       else {
         cleared = true; lsSet(sk('cleared'), '1'); resetRun();
+        if (side === 'ura') { onUraClear(); }
         if (side === 'ura') $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！ すごすぎる！';
         else { $('rsub').textContent += '\n5 たい かちぬき たっせい！'; if (!uraOpen) { uraOpen = true; $('rsub').textContent += '\n…うら かちぬき が あらわれた！'; } }
       }
@@ -464,6 +495,7 @@ function showResult() {
   $('again').hidden = showNext;
   $('again').textContent = isFriend ? 'もういちど' : '1 たいめから もういちど';
   $('redraw').textContent = !isFriend && stage > 0 ? 'モンスターを なおす（1 たいめから）' : 'モンスターを なおす';
+  if (endingPending) startEnding();
 }
 function shareRobot() {
   if (!myRobot) return;
@@ -488,6 +520,65 @@ onTap($('clearpart'), () => { strokes[part] = null; if (!vs) resetAllRuns(); sav
 onTap($('next'), () => { if (vs) startVsMode(); else startBattle(false); });
 onTap($('again'), () => { if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
+// ---------- うら 5 人抜き: 王冠・でんどういり・エンディング ----------
+let endT0 = 0, confetti = [];
+function onUraClear() {
+  const code = plainCode(myRobot), list = crownedList();
+  if (!list.includes(code)) { list.push(code); lsSet('crowned', JSON.stringify(list)); }
+  myRobot.crown = true; lsSet('robot', RB.encodeDesign(myRobot)); S.crownA = true;
+  let hall = []; try { hall = JSON.parse(lsGet('hall') || '[]'); } catch (e) {}
+  if (!hall.some(h => h.c === code)) { const t = new Date(); hall.push({ c: code, d: (t.getMonth() + 1) + '/' + t.getDate() }); lsSet('hall', JSON.stringify(hall)); }
+  endingPending = true;
+}
+let endingPending = false;
+function renderHall() {
+  let hall = []; try { hall = JSON.parse(lsGet('hall') || '[]'); } catch (e) {}
+  $('hallbox').hidden = !hall.length;
+  const list = $('halllist'); list.innerHTML = '';
+  for (const h of hall.slice(-12)) {
+    const d = RB.decodeDesign(h.c); if (!d) continue; d.crown = true;
+    const el = document.createElement('div'); el.className = 'hall';
+    el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + h.d + '</span>';
+    list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color);
+  }
+}
+function startEnding() { endingPending = false; mode = 'ending'; show('none'); $('quit').hidden = true; $('fast').hidden = true; endT0 = performance.now(); confetti = []; }
+function finishEnding() { mode = 'result'; show('result'); }
+window.endingAt = sec => { endT0 = performance.now() - sec * 1000; };   // 開発用: エンディングの その秒を 見る
+cv.addEventListener('pointerdown', () => { if (mode === 'ending' && performance.now() - endT0 > 1200) finishEnding(); });
+// エンディング: 倒した 10 体が 行進 → 王冠の じぶんの モンスター
+function renderEnding(now) {
+  const t = (now - endT0) / 1000;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#2a1a4f'); sky.addColorStop(1, '#6b3a1f');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  const gy = H * 0.66;
+  ctx.fillStyle = '#4b3f8f'; ctx.fillRect(0, gy, W, H - gy); ctx.fillStyle = '#ffd54f'; ctx.fillRect(0, gy, W, 4);
+  const list = RB.CPU.concat(RB.URA), sp = Math.max(160, W * 0.45), gap = 110, parade = (W + gap * list.length + 120) / sp;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (t < parade) {
+    ctx.font = '900 ' + Math.min(26, W * 0.06) + 'px sans-serif'; ctx.fillStyle = '#fff';
+    ctx.fillText('たおした 10 たい', W / 2, H * 0.18);
+    list.forEach((c, i) => {
+      const x = W + 60 + gap * i - sp * t; if (x < -80 || x > W + 80) return;
+      const hop = Math.abs(Math.sin(t * 8 + i)) * 6;
+      ctx.save(); ctx.translate(x, gy - hop); ctx.scale(-0.55, 0.55); drawRobotLocal(ctx, c, c.color, 1, false); ctx.restore();
+      ctx.font = '800 12px sans-serif'; ctx.fillStyle = i < 5 ? '#fff' : '#ff8a80'; ctx.fillText(c.name, x, gy + 22);
+    });
+  } else {
+    const u = t - parade;
+    if (confetti.length < 160) for (let i = 0; i < 4; i++) confetti.push({ x: Math.random() * W, y: -10, vy: 60 + Math.random() * 90, vx: (Math.random() - .5) * 40, c: ['#ffd54f', '#ff5252', '#40c4ff', '#69f0ae', '#e040fb'][i % 5], r: Math.random() * 6 });
+    for (const p of confetti) { p.y += p.vy / 60; p.x += p.vx / 60; if (p.y > H) { p.y = -10; p.x = Math.random() * W; } ctx.fillStyle = p.c; ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r + u * 3); ctx.fillRect(-4, -3, 8, 6); ctx.restore(); }
+    const k = Math.min(1, u / 0.6), sc = Math.min(W / 260, H / 480) * (0.6 + 0.4 * k);
+    let mx0 = Infinity, mx1 = -Infinity; for (const k of ['body', 'arm', 'leg']) for (const p of myRobot[k]) { mx0 = Math.min(mx0, p[0]); mx1 = Math.max(mx1, p[0]); }
+    ctx.save(); ctx.translate(W / 2 - (mx0 + mx1) / 2 * sc, gy); ctx.scale(sc, sc); drawRobotLocal(ctx, myRobot, ME.color, 1, false); ctx.restore();   // 手足も入れて まんなかに
+    ctx.font = '900 ' + Math.min(44, W * 0.11) + 'px sans-serif'; ctx.lineWidth = 8; ctx.strokeStyle = '#1b1d3a';
+    ctx.strokeText('おめでとう！', W / 2, H * 0.14); ctx.fillStyle = '#ffd54f'; ctx.fillText('おめでとう！', W / 2, H * 0.14);
+    ctx.font = '800 ' + Math.min(18, W * 0.045) + 'px sans-serif'; ctx.fillStyle = '#fff';
+    ctx.fillText('うら 5 にんぬき たっせい！', W / 2, H * 0.22); ctx.fillText('おうかんを もらった！', W / 2, H * 0.27);
+  }
+  if (t > 1.2) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = '700 14px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('タップで つぎへ', W / 2, H - 40); ctx.globalAlpha = 1; }
+}
 onTap($('vs'), startVsMode);
 onTap($('vstitle'), exitVs);
 onTap($('handoffgo'), () => { vs.step = 2; loadInto(vsLast(2)); showDraw(); });
@@ -521,7 +612,7 @@ function vsNext() {
 function startVsBattle() {
   isFriend = true;   // 勝ち抜きの記録には 入れない
   opp = { name: P2.name, color: P2.color, d: vs.d2 };
-  S = RB.create(vs.d1, vs.d2); S.stage = 0; S.side = 'vs';
+  S = RB.create(vs.d1, vs.d2); S.stage = 0; S.side = 'vs'; S.crownA = !!vs.d1.crown; S.crownB = !!vs.d2.crown;
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
 }
