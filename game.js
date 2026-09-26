@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '48';
+const VERSION = '49';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -96,6 +96,7 @@ function showTitle() {
   $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
   $('minnabtn').hidden = !MINNA_OPEN || lsGet('minna.cleared') === '1';
   $('minnaabout').hidden = !MINNA_OPEN;
+  $('minnaabout').textContent = $('minnabtn').hidden ? 'みんなの さいきょう ぐんだん って？' : 'どんな 5 たい？';   // 大きな ボタンが ない（クリアした）ときは 名前ごと
 
   drawTitleBg();
 }
