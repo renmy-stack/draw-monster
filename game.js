@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '46';
+const VERSION = '47';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -95,6 +95,7 @@ function showTitle() {
   $('tprog').textContent = (ob > 0 ? 'おもて さいこう ' + ob + ' にんぬき' + (uraOpen ? '（たっせい！）' : '') : '') + (uraOpen ? '　うら さいこう ' + ub + ' にんぬき' + (lsGet('ura.cleared') === '1' ? '（たっせい！！）' : '') : '') + (MINNA_OPEN ? '　みんな さいこう ' + mb + ' にんぬき' + (lsGet('minna.cleared') === '1' ? '（たっせい！！！）' : '') : '');
   $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
   $('minnabtn').hidden = !MINNA_OPEN || lsGet('minna.cleared') === '1';
+  $('minnaabout').hidden = !MINNA_OPEN;
 
   drawTitleBg();
 }
@@ -536,6 +537,7 @@ function showShareBox(text) { $('sharetext').value = text; $('sharebox').hidden 
 // ---------- ボタン ----------
 function onTap(el, fn) { el.addEventListener('click', e => { e.preventDefault(); fn(); }); }
 onTap($('start'), showDraw);
+onTap($('minnaabout'), showMinnaInfo);
 onTap($('minnabtn'), () => { toMinna('title'); showDraw(); setHint('みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい'); });
 // タイトルの文字を 5 回つづけてタップ → うら テストの印（ホーム画面のアプリは Safari と保存場所が別なので）
 { let n = 0, t0 = 0; $('title').querySelector('.logo').addEventListener('click', () => { const now = Date.now(); n = now - t0 < 800 ? n + 1 : 1; t0 = now; if (n >= 5) { n = 0; lsSet('uratest', '1'); URA_TEST = true; uraOpen = true; showTitle(); } }); }
@@ -547,7 +549,18 @@ onTap($('share'), shareRobot);
 onTap($('clearpart'), () => { strokes[part] = null; if (!vs) resetAllRuns(); saveRobot(); setPart(part); updateSideUi(); });
 let goUra = false;   // おもてを クリアした 直後: つぎへ ボタンが「うらへ」
 let goMinna = false;   // うらを クリアした 直後: つぎへ ボタンが「みんなの さいきょう ぐんだん へ」
-function toMinna(from) { goMinna = false; side = 'minna'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotominna', { from }); }
+// みんなの さいきょう ぐんだん の しょうかい（はじめて「みんな」に したときと、タイトルの「どんな 5 たい？」）
+function showMinnaInfo() {
+  const list = $('minnalist'); list.innerHTML = '';
+  RB.MINNA.forEach((m, i) => {
+    const el = document.createElement('div'); el.className = 'hall';
+    el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + (i + 1) + '. ' + m.name + '</span>';
+    list.appendChild(el); drawPreview(el.querySelector('canvas'), m, m.color);
+  });
+  $('minnainfo').hidden = false; lsSet('minna.intro', '1'); TR('minnainfo', null);
+}
+onTap($('minnaclose'), () => { $('minnainfo').hidden = true; });
+function toMinna(from) { goMinna = false; side = 'minna'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotominna', { from }); if (lsGet('minna.intro') !== '1') showMinnaInfo(); }
 onTap($('next'), () => { if (!vs && goMinna) { toMinna('result'); startBattle(false); return; } if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
 onTap($('again'), () => { if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
@@ -772,7 +785,7 @@ function updateSideUi() {
   applyVsUi();
 }
 // おもて ⇄ うら（押すたびに切りかえ）
-onTap($('sidebtn'), () => { const order = ['omote'].concat(uraOpen ? ['ura'] : [], MINNA_OPEN ? ['minna'] : []); side = order[(order.indexOf(side) + 1) % order.length]; lsSet('side', side); loadSide(); updateSideUi(); setHint(side === 'ura' ? 'うら かちぬき：とんでもなく つよい 5 たい' : side === 'minna' ? 'みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい' : ''); });
+onTap($('sidebtn'), () => { const order = ['omote'].concat(uraOpen ? ['ura'] : [], MINNA_OPEN ? ['minna'] : []); side = order[(order.indexOf(side) + 1) % order.length]; lsSet('side', side); loadSide(); updateSideUi(); if (side === 'minna' && lsGet('minna.intro') !== '1') showMinnaInfo(); setHint(side === 'ura' ? 'うら かちぬき：とんでもなく つよい 5 たい' : side === 'minna' ? 'みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい' : ''); });
 onTap($('fast'), () => { fast = !fast; TR('fast', { on: fast }); lsSet('fast', fast ? '1' : '0'); updateFastBtn(); });
 // 戦いの途中で もどる（勝ち抜きの途中経過は そのまま。戦いは決定的なので やめても 得はしない）
 onTap($('quit'), () => { if (mode === 'battle' || mode === 'pause') { TR('quit', { side: S && S.side, stage: S && S.stage, t: S && Math.round(S.t * 10) / 10 }); showDraw(); } });
@@ -816,6 +829,7 @@ showTitle();
   if (q.has('beaten')) beaten = [true, true, true, true, true];   // 開発用: 早送りボタンを見る
   if (q.get('use')) { const d = RB.decodeDesign(q.get('use')); if (d) { myRobot = withCrown(d); strokes = { body: d.body, arm: d.arm, leg: d.leg }; lsSet('robot', RB.encodeDesign(myRobot)); resetAllRuns(); showTitle(); } }   // オーナーの 確認用: その モンスターを じぶんの モンスターに
   if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
+  if (q.has('minnainfo')) showMinnaInfo();   // 開発用: しょうかい 画面
   if (q.has('certpreview')) { if (!myRobot) sample(); openCertBox(makeCert(plainCode(myRobot), '2026/9/27')); }   // オーナーの 確認用: でんせつ しょうめいしょ
   if (q.has('minna') && MINNA_OPEN) { side = 'minna'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: みんな
   if (q.has('ura')) { uraOpen = true; side = 'ura'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: うら
