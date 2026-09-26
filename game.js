@@ -1,6 +1,10 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '36';
+const VERSION = '37';
+// あそびの きろく（/t.js。なくても うごく）
+window.T_VER = VERSION;
+function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
+function stat4(d) { const st = RB.robotStats(d); return [st.hp, Math.round(st.punch * 10) / 10, Math.round(st.reach), Math.round(st.speed * 10) / 10]; }
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -89,6 +93,7 @@ function showTitle() {
   drawTitleBg();
 }
 function showDraw() {
+  TR('draw', null);
   mode = 'draw'; show('draw');
   if (!strokes.body) part = 'body'; else if (!strokes.arm) part = 'arm'; else if (!strokes.leg) part = 'leg';
   $('fightfriend').hidden = !friendRobot;
@@ -304,6 +309,7 @@ function startBattle(friend) {
   isFriend = !!friend;
   opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: CPUS()[stage].name, color: CPUS()[stage].color, d: CPUS()[stage] };
   S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown;
+  TR('battle', { side: S.side, stage: stage, opp: opp.name, me: RB.encodeDesign(myRobot), st: stat4(myRobot), crown: !!myRobot.crown, fast: fast });
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
 }
@@ -456,6 +462,7 @@ function drawTitleBg() {
 // ---------- 結果 ----------
 function showResult() {
   mode = 'result'; show('result');
+  TR('result', { side: S.side, stage: S.stage, opp: opp && opp.name, win: S.winner === 'A' ? 'win' : S.winner === 'B' ? 'lose' : 'draw', reason: S.reason, t: Math.round(S.t * 10) / 10, hp: [Math.ceil(S.A.hp), Math.ceil(S.B.hp)], hits: [S.A.hits, S.B.hits], dmg: [Math.round(S.A.dealt), Math.round(S.B.dealt)], fast: fast });
   $('share').hidden = false; $('vstitle').hidden = true; $('redraw').hidden = false; $('redraw').textContent = 'モンスターを なおす';
   $('next').textContent = 'つぎの あいてへ'; $('again').className = 'main';
   if (S.side === 'vs') {
@@ -499,6 +506,7 @@ function showResult() {
 }
 function shareRobot() {
   if (!myRobot) return;
+  TR('share', { me: RB.encodeDesign(myRobot) });
   const url = SITE_URL + '#r=' + RB.encodeDesign(myRobot);
   const text = 'ぼくの モンスター と たたかってみて！（かいて！モンスターバトル）\n' + url;
   if (navigator.share) navigator.share({ text }).catch(err => { if (!err || err.name !== 'AbortError') showShareBox(text); });
@@ -523,6 +531,7 @@ onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 // ---------- うら 5 人抜き: 王冠・でんどういり・エンディング ----------
 let endT0 = 0, confetti = [];
 function onUraClear() {
+  TR('uraclear', { me: plainCode(myRobot) });
   const code = plainCode(myRobot), list = crownedList();
   if (!list.includes(code)) { list.push(code); lsSet('crowned', JSON.stringify(list)); }
   myRobot.crown = true; lsSet('robot', RB.encodeDesign(myRobot)); S.crownA = true;
@@ -600,6 +609,7 @@ function padColor() { return vs && vs.step === 2 ? P2.color : ME.color; }
 function vsLast(n) { const w = lsGet('vs.d' + n); return w ? RB.decodeDesign(w) : null; }
 function loadInto(d) { if (d) { strokes = { body: d.body, arm: d.arm, leg: d.leg }; myRobot = d; } else { strokes = { body: null, arm: null, leg: null }; myRobot = null; } }
 function startVsMode() {
+  TR('vsmode', null);
   const backup = vs ? vs.backup : { strokes, myRobot };
   vs = { step: 1, d1: null, d2: null, backup };
   loadInto(vsLast(1));
@@ -625,6 +635,7 @@ function startVsBattle() {
   isFriend = true;   // 勝ち抜きの記録には 入れない
   opp = { name: P2.name, color: P2.color, d: vs.d2 };
   S = RB.create(vs.d1, vs.d2); S.stage = 0; S.side = 'vs'; S.crownA = !!vs.d1.crown; S.crownB = !!vs.d2.crown;
+  TR('battle', { side: 'vs', p1: RB.encodeDesign(vs.d1), p2: RB.encodeDesign(vs.d2), st1: stat4(vs.d1), st2: stat4(vs.d2) });
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
 }
@@ -672,9 +683,9 @@ function updateSideUi() {
 }
 // おもて ⇄ うら（押すたびに切りかえ）
 onTap($('sidebtn'), () => { side = side === 'ura' ? 'omote' : 'ura'; lsSet('side', side); loadSide(); updateSideUi(); setHint(side === 'ura' ? 'うら かちぬき：とんでもなく つよい 5 たい' : ''); });
-onTap($('fast'), () => { fast = !fast; lsSet('fast', fast ? '1' : '0'); updateFastBtn(); });
+onTap($('fast'), () => { fast = !fast; TR('fast', { on: fast }); lsSet('fast', fast ? '1' : '0'); updateFastBtn(); });
 // 戦いの途中で もどる（勝ち抜きの途中経過は そのまま。戦いは決定的なので やめても 得はしない）
-onTap($('quit'), () => { if (mode === 'battle' || mode === 'pause') showDraw(); });
+onTap($('quit'), () => { if (mode === 'battle' || mode === 'pause') { TR('quit', { side: S && S.side, stage: S && S.stage, t: S && Math.round(S.t * 10) / 10 }); showDraw(); } });
 onTap($('closeshare'), () => { $('sharebox').hidden = true; });
 onTap($('copy'), () => {
   const ta = $('sharetext'); ta.select();
