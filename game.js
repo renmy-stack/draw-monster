@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '50';
+const VERSION = '51';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -275,6 +275,8 @@ function drawPreview(c, d, color) {
   const g = c.getContext('2d');
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (const k of ['body', 'arm', 'leg']) for (const p of d[k]) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
+  // 王冠と でんせつの 星の ぶんも 上に 入れる（はみ出さない ように）
+  if ((d.crown || d.legend) && d.body && d.body.length > 2) { const cs = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); y0 = Math.min(y0, cs.y - (d.crown ? cs.s * 0.8 : 0) - (d.legend ? cs.s * 0.95 : 0)); }
   const s = Math.min(c.width / (x1 - x0 + 40), c.height / (y1 - y0 + 40));
   g.setTransform(s, 0, 0, s, c.width / 2 - (x0 + x1) / 2 * s, c.height / 2 - (y0 + y1) / 2 * s);
   g.clearRect(x0 - 100, y0 - 100, x1 - x0 + 200, y1 - y0 + 200);
