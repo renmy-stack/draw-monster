@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '39';
+const VERSION = '40';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -75,14 +75,14 @@ function resize() {
   sizePad(); if (mode === 'draw') drawPad();
 }
 window.addEventListener('resize', resize);
-function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
+function show(id) { document.body.classList.toggle('inbattle', id === 'none'); for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
 // はやおくり: 一度でも倒した CPU との戦いだけ
 function canFast() { return mode === 'battle' && !isFriend && !!beaten[S && S.stage != null ? S.stage : stage]; }
 function updateFastBtn() { $('fast').textContent = fast ? '▶ 보통 속도' : '▶▶ 빨리 감기'; $('fast').classList.toggle('on', fast); }
 
 let mode = 'title', part = 'body';
 function showTitle() {
-  mode = 'title'; show('title');
+  mode = 'title'; show('title'); SFX.music('title');
   $('friendbox').hidden = !friendRobot;
   if (friendRobot) drawPreview($('friendprev'), friendRobot, FRIEND.color);
   renderHall();
@@ -94,7 +94,7 @@ function showTitle() {
 }
 function showDraw() {
   TR('draw', null);
-  mode = 'draw'; show('draw');
+  mode = 'draw'; show('draw'); SFX.music('title');
   if (!strokes.body) part = 'body'; else if (!strokes.arm) part = 'arm'; else if (!strokes.leg) part = 'leg';
   $('fightfriend').hidden = !friendRobot;
   updateSideUi();
@@ -277,6 +277,7 @@ const endStroke = () => {
   if (part === 'body' && (strokes.arm || strokes.leg)) setHint('몸을 바꿔서 팔·다리도 다시 붙였어');
   else setHint('');
   saveRobot();
+  SFX.play(myRobot ? 'done' : 'pop');
   // つぎのパーツへ
   const next = !strokes.body ? 'body' : !strokes.arm ? 'arm' : !strokes.leg ? 'leg' : part;
   setPart(next === part && part !== 'leg' && !strokes[next] ? part : next);
@@ -304,6 +305,9 @@ function updateStats() {
 
 // ---------- バトル ----------
 let S = null, opp = null, acc = 0, last = 0, stop = 0, shake = 0, parts = [], pops = [], hurt = { A: 0, B: 0 }, endAt = 0, isFriend = false, cam = null;
+// 연출(격투 게임풍): 히트 스파크·충격파·흙먼지·화면 번쩍임·콤보·라운드 인트로·K.O. — 물리와 무관, 보기만
+let fxs = [], flash = 0, combo = { who: null, n: 0, t: -9 }, comboShow = null, introUntil = 0, fightSaid = true, koT = 0;
+const INTRO = 1500, INTRO_FIGHT = 700;
 function startBattle(friend) {
   if (!myRobot) return;
   isFriend = !!friend;
@@ -311,19 +315,38 @@ function startBattle(friend) {
   S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown;
   TR('battle', { side: S.side, stage: stage, opp: opp.name, me: RB.encodeDesign(myRobot), st: stat4(myRobot), crown: !!myRobot.crown, fast: fast });
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
-  mode = 'battle'; show('none');
+  mode = 'battle'; show('none'); beginBattleFx();
+}
+function beginBattleFx() {
+  fxs = []; flash = 0; combo = { who: null, n: 0, t: -9 }; comboShow = null; koT = 0;
+  SFX.music(S.side === 'ura' ? 'ura' : 'battle');
+  if (canFast() && fast) { introUntil = 0; fightSaid = true; SFX.play('fight'); } else { introUntil = performance.now() + INTRO; fightSaid = false; SFX.play('round'); }
 }
 function stepBattle() {
   RB.step(S);
   for (const e of S.fx) {
     if (e.t === 'hit') {
       hurt[e.who === 'A' ? 'B' : 'A'] = 10;
+      const att = S[e.who], def = S[e.who === 'A' ? 'B' : 'A'], dir = def.x >= att.x ? 1 : -1;
+      const pw = e.dmg >= 24 ? 2 : e.dmg >= 15 ? 1 : 0;   // 0 보통 · 1 강타 · 2 필살급
+      fxs.push({ k: 'spark', x: e.x, y: e.y, dir, s: 0.7 + Math.min(1.6, e.dmg / 12), rot: rnd() * 6.28, life: 12 + pw * 4, max: 12 + pw * 4, c: e.who === 'A' ? '#ffe082' : '#ff8a80' });
+      fxs.push({ k: 'ring', x: e.x, y: e.y, s: 1 + pw * 0.6, life: 16 + pw * 4, max: 16 + pw * 4, c: pw ? '#ffffff' : '#ffd54f' });
+      if (pw) { fxs.push({ k: 'lines', x: e.x, y: e.y, dir, life: 12, max: 12 }); flash = Math.max(flash, pw === 2 ? 0.55 : 0.3); pops.push({ x: e.x, y: e.y - 55, t: pw === 2 ? '필살!' : '강타!', c: pw === 2 ? '#ff5252' : '#ffffff', life: 50, size: pw === 2 ? 30 : 24 }); }
+      if (combo.who === e.who && S.t - combo.t < 1.4) combo.n++; else combo = { who: e.who, n: 1 };
+      combo.t = S.t; if (combo.n >= 2) comboShow = { who: e.who, n: combo.n, life: 80 };
+      SFX.play('hit', e.dmg);
       stop = Math.min(10, 3 + Math.round(e.dmg / 2)); shake = Math.max(shake, 3 + e.dmg * 0.6);
       burst(e.x, e.y, '#ffd54f', 10 + Math.round(e.dmg * 1.5), 320);
       pops.push({ x: e.x, y: e.y - 10, t: e.dmg.toFixed(0), c: e.who === 'A' ? '#ffd54f' : '#ff8a80', life: 55, size: 20 + Math.min(20, e.dmg * 1.2) });
     } else if (e.t === 'down') {
       pops.push({ x: e.x, y: e.y - 90, t: '다운!', c: '#ffffff', life: 60, size: 26 });
-    } else if (e.t === 'end') { endAt = performance.now(); if (S.reason === 'ko') { stop = 40; shake = 14; } }
+      for (let i = 0; i < 9; i++) fxs.push({ k: 'dust', x: e.x + (rnd() - .5) * 90, y: -6 - rnd() * 10, vx: (rnd() - .5) * 3, r: 8 + rnd() * 10, life: 30 + rnd() * 15, max: 45 });
+      SFX.play('down');
+    } else if (e.t === 'end') {
+      endAt = performance.now(); SFX.music(null);
+      if (S.reason === 'ko') { stop = 40; shake = 18; flash = 1; koT = endAt; if (cam) cam.k *= 1.15; SFX.play('ko'); }
+      else SFX.play('timeup');
+    }
   }
   S.fx.length = 0;
 }
@@ -334,7 +357,9 @@ function burst(x, y, c, n, sp) { for (let i = 0; i < n; i++) { const a = rnd() *
 function frame(now) {
   if (mode === 'battle') {
     const dt = Math.min(0.1, (now - last) / 1000); last = now;
-    if (!S.over) {
+    if (introUntil && now < introUntil) {
+      if (!fightSaid && now > introUntil - INTRO_FIGHT) { fightSaid = true; SFX.play('fight'); }
+    } else if (!S.over) {
       const sp = canFast() && fast ? FAST : 1;
       if (stop > 0) stop = sp > 1 ? 0 : stop - 1;   // はやおくり中は ヒットの止め を はぶく
       else { acc += dt * sp; let n = 0; while (acc >= RB.DT && n < 48 * sp) { stepBattle(); acc -= RB.DT; n++; if (S.over || (stop > 0 && sp === 1)) break; } if (n >= 48 * sp) acc = 0; }
@@ -375,6 +400,7 @@ function renderBattle(dt) {
   for (let x = -RB.HW; x <= RB.HW; x += 60) { ctx.beginPath(); ctx.moveTo(x, 5); ctx.lineTo(x * 1.3, 120); ctx.stroke(); }
   for (const k of ['B', 'A']) drawRobotWorld(S[k], k === 'A' ? ME.color : opp.color, hurt[k] > 0, k === 'A' ? S.crownA : S.crownB);
   for (const k of ['A', 'B']) if (hurt[k] > 0) hurt[k]--;
+  drawFx();
   // かけら・数字
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = parts[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 900 * dt; p.vx *= 0.96;
@@ -390,6 +416,7 @@ function renderBattle(dt) {
   }
   ctx.globalAlpha = 1;
   ctx.restore();
+  drawScreenFx();
   drawHud();
 }
 // モンスターを ワールドに（シミュレーションの点を そのまま使う）
@@ -441,14 +468,72 @@ function drawHud() {
   ctx.textAlign = 'center'; ctx.font = '900 26px sans-serif'; ctx.fillStyle = S.t > RB.TIME - 5 ? '#ff8a80' : '#fff';
   ctx.fillText(Math.max(0, Math.ceil(RB.TIME - S.t)), W / 2, top + 34);
   if (!isFriend) { ctx.font = '700 12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText((S.side === 'ura' ? '히든 ' : '') + '연승전 ' + (S.stage + 1) + ' / ' + CPUS().length, W / 2, top + 54); }
-  if (S.t < 1) big('파이트!', '#ffd54f', 1 - S.t);
-  if (S.over) big(S.reason === 'ko' ? 'KO!' : '시간 끝', S.winner === 'A' ? '#ffd54f' : '#ff8a80', 1);
+  const now = performance.now(), ease = k => 1 - Math.pow(1 - Math.max(0, Math.min(1, k)), 3);
+  if (introUntil && now < introUntil) {
+    const t = INTRO - (introUntil - now);
+    if (t < INTRO - INTRO_FIGHT) big(isFriend || S.side === 'vs' ? '준비!' : (S.side === 'ura' ? '히든 ' : '') + '라운드 ' + (S.stage + 1), '#ffffff', Math.min(1, t / 150), 1.5 - 0.5 * ease(t / 250));
+    else { const k = (t - (INTRO - INTRO_FIGHT)) / 180; big('파이트!', '#ffd54f', 1, 2.2 - 1.2 * ease(k)); }
+  } else if (S.t < 0.5) big('파이트!', '#ffd54f', 1 - S.t / 0.5);
+  if (S.over) {
+    const wc = S.side === 'vs' || S.winner === 'A' ? '#ffd54f' : '#ff5252';
+    if (S.reason === 'ko') {
+      const k = koT ? (now - koT) / 260 : 9;
+      big('K.O.', wc, 1, 2.6 - 1.6 * ease(k));
+      const w = S.winner ? S[S.winner] : null;
+      if (w && w.hp >= w.maxHp && k > 1.5) big('퍼펙트!', '#80d8ff', Math.min(1, (k - 1.5) * 2), 0.55, H * 0.44);
+    } else big('시간 끝', wc, 1);
+  }
+  if (comboShow && !S.over) {
+    const c = comboShow, a = Math.min(1, c.life / 20), pop = 1 + Math.max(0, (c.life - 70) / 10) * 0.4, left = c.who === 'A';
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(left ? 16 : W - 16, 178); ctx.scale(pop, pop);
+    ctx.textAlign = left ? 'left' : 'right'; ctx.textBaseline = 'alphabetic';
+    ctx.font = 'italic 900 34px sans-serif'; ctx.lineWidth = 7; ctx.lineJoin = 'round'; ctx.strokeStyle = '#15173a';
+    ctx.strokeText(c.n + ' HIT', 0, 0); ctx.fillStyle = c.n >= 5 ? '#ff5252' : '#ffd54f'; ctx.fillText(c.n + ' HIT', 0, 0);
+    ctx.font = '900 15px sans-serif'; ctx.lineWidth = 5; ctx.strokeText('콤보!', left ? 2 : -2, 20); ctx.fillStyle = '#fff'; ctx.fillText('콤보!', left ? 2 : -2, 20);
+    ctx.restore();
+    if (--c.life <= 0) comboShow = null;
+  }
 }
-function big(t, c, a) {
-  ctx.globalAlpha = Math.max(0, Math.min(1, a));
-  ctx.font = '900 ' + Math.min(72, W * 0.16) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.lineWidth = 10; ctx.strokeStyle = '#15173a'; ctx.strokeText(t, W / 2, H * 0.32);
-  ctx.fillStyle = c; ctx.fillText(t, W / 2, H * 0.32); ctx.globalAlpha = 1;
+function big(t, c, a, sc, y) {
+  sc = sc || 1; y = y || H * 0.32;
+  ctx.save(); ctx.globalAlpha = Math.max(0, Math.min(1, a)); ctx.translate(W / 2, y); ctx.scale(sc, sc);
+  const fs = Math.min(72, W * 0.16); ctx.font = 'italic 900 ' + fs + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.lineWidth = 12; ctx.lineJoin = 'round'; ctx.strokeStyle = '#15173a'; ctx.strokeText(t, 0, 0);
+  const g = ctx.createLinearGradient(0, -fs / 2, 0, fs / 2); g.addColorStop(0, '#ffffff'); g.addColorStop(0.45, c); g.addColorStop(1, c);
+  ctx.fillStyle = g; ctx.fillText(t, 0, 0); ctx.restore();
+}
+// 월드 좌표 이펙트
+function drawFx() {
+  for (let i = fxs.length - 1; i >= 0; i--) {
+    const f = fxs[i], k = 1 - f.life / f.max;   // 0 → 1
+    ctx.save(); ctx.globalAlpha = Math.max(0, 1 - k);
+    if (f.k === 'spark') {   // 별 모양 히트 스파크
+      ctx.translate(f.x, f.y); ctx.rotate(f.rot); const R = (26 + 30 * k) * f.s, r = R * 0.35;
+      ctx.beginPath(); for (let j = 0; j < 16; j++) { const a = j / 16 * 6.283, rr = j % 2 ? r : R * (j % 4 ? 0.7 : 1); ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); } ctx.closePath();
+      ctx.fillStyle = f.c; ctx.fill(); ctx.scale(0.5, 0.5); ctx.fillStyle = '#ffffff'; ctx.fill();
+    } else if (f.k === 'ring') {   // 충격파
+      ctx.strokeStyle = f.c; ctx.lineWidth = 6 * (1 - k) + 1; ctx.beginPath(); ctx.arc(f.x, f.y, (14 + 70 * k) * f.s, 0, 6.283); ctx.stroke();
+    } else if (f.k === 'lines') {   // 맞은 쪽으로 뻗는 집중선
+      ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3; ctx.beginPath();
+      for (let j = 0; j < 9; j++) { const a = (j - 4) * 0.16, len = 60 + 50 * k; const ca = Math.cos(a) * f.dir, sa = Math.sin(a); ctx.moveTo(f.x + ca * 20, f.y + sa * 20); ctx.lineTo(f.x + ca * (20 + len), f.y + sa * (20 + len)); }
+      ctx.stroke();
+    } else if (f.k === 'dust') {   // 흙먼지
+      f.x += f.vx; f.y -= 0.5; ctx.fillStyle = 'rgba(220,215,240,.8)'; ctx.beginPath(); ctx.arc(f.x, f.y, f.r * (0.6 + k), 0, 6.283); ctx.fill();
+    }
+    ctx.restore();
+    if (--f.life <= 0) fxs.splice(i, 1);
+  }
+}
+// 화면 전체 이펙트: K.O. 집중선 · 번쩍임
+function drawScreenFx() {
+  const now = performance.now();
+  if (koT && now - koT < 1100) {
+    const k = (now - koT) / 1100; ctx.save(); ctx.globalAlpha = 0.55 * (1 - k); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+    const cx = W / 2, cy = H * 0.45, R = Math.hypot(W, H);
+    ctx.beginPath(); for (let j = 0; j < 48; j++) { const a = j / 48 * 6.283 + (j % 3) * 0.02, r0 = R * (0.28 + ((j * 37) % 11) / 40); ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R); }
+    ctx.stroke(); ctx.restore();
+  }
+  if (flash > 0.01) { ctx.fillStyle = 'rgba(255,255,255,' + Math.min(0.85, flash) + ')'; ctx.fillRect(0, 0, W, H); flash *= 0.8; } else flash = 0;
 }
 function round(x, y, w, h, r) { r = Math.min(r, w / 2, h / 2); ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r); ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath(); }
 // タイトルの後ろ: CPU モンスターを並べる
@@ -473,6 +558,7 @@ function showResult() {
     $('next').hidden = false; $('next').innerHTML = '한 번 더<small>고쳐서 싸우기</small>';
     $('again').hidden = false; $('again').textContent = '같은 싸움 다시 보기'; $('again').className = 'sub';
     $('redraw').hidden = true; $('share').hidden = true; $('vstitle').hidden = false;
+    SFX.play(S.winner ? 'win' : 'draw');
     return;
   }
   const win = S.winner === 'A', draw = S.winner == null;
@@ -497,6 +583,7 @@ function showResult() {
     }
     if (wins > best) { best = wins; lsSet(sk('best'), String(best)); $('rsub').textContent += '\n최고 기록!'; }
   }
+  SFX.play(win ? (!isFriend && wins === CPUS().length ? 'clear' : 'win') : draw ? 'draw' : 'lose');
   $('rprog').innerHTML = isFriend ? '친구 몬스터와 승부' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
   $('next').hidden = !showNext && !goUra;
   $('again').hidden = showNext;
@@ -516,6 +603,11 @@ function shareRobot() {
 function showShareBox(text) { $('sharetext').value = text; $('sharebox').hidden = false; }
 
 // ---------- ボタン ----------
+// 버튼 누르는 소리 · 소리 켜고 끄기
+document.addEventListener('click', e => { if (e.target.closest && e.target.closest('button') && e.target.id !== 'snd') SFX.play('tap'); }, true);
+function updateSndBtn() { $('snd').textContent = SFX.muted ? '🔇' : '🔊'; $('snd').classList.toggle('off', SFX.muted); }
+$('snd').addEventListener('click', e => { e.preventDefault(); SFX.toggle(); updateSndBtn(); if (!SFX.muted) SFX.play('tap'); });
+updateSndBtn();
 function onTap(el, fn) { el.addEventListener('click', e => { e.preventDefault(); fn(); }); }
 onTap($('start'), showDraw);
 // タイトルの文字を 5 回つづけてタップ → うら テストの印（ホーム画面のアプリは Safari と保存場所が別なので）
@@ -525,7 +617,7 @@ onTap($('fight'), () => { if (vs) vsNext(); else startBattle(false); });
 onTap($('fightfriend'), () => startBattle(true));
 onTap($('send'), shareRobot);
 onTap($('share'), shareRobot);
-onTap($('clearpart'), () => { strokes[part] = null; if (!vs) resetAllRuns(); saveRobot(); setPart(part); updateSideUi(); });
+onTap($('clearpart'), () => { SFX.play('erase'); strokes[part] = null; if (!vs) resetAllRuns(); saveRobot(); setPart(part); updateSideUi(); });
 let goUra = false;   // おもてを クリアした 直後: つぎへ ボタンが「うらへ」
 onTap($('next'), () => { if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
 onTap($('again'), () => { if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
@@ -553,7 +645,7 @@ function renderHall() {
     list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color);
   }
 }
-function startEnding() { endingPending = false; mode = 'ending'; show('none'); $('quit').hidden = true; $('fast').hidden = true; endT0 = performance.now(); confetti = []; }
+function startEnding() { endingPending = false; SFX.music(null); SFX.play('fanfare'); mode = 'ending'; show('none'); $('quit').hidden = true; $('fast').hidden = true; endT0 = performance.now(); confetti = []; }
 let endingPreview = false;   // ?endingpreview の 見本（王冠・でんどういりの 記録は 付けない）
 function finishEnding() {
   if (endingPreview) { endingPreview = false; myRobot.crown = isCrowned(myRobot); showTitle(); return; }
@@ -639,7 +731,7 @@ function startVsBattle() {
   S = RB.create(vs.d1, vs.d2); S.stage = 0; S.side = 'vs'; S.crownA = !!vs.d1.crown; S.crownB = !!vs.d2.crown;
   TR('battle', { side: 'vs', p1: RB.encodeDesign(vs.d1), p2: RB.encodeDesign(vs.d2), st1: stat4(vs.d1), st2: stat4(vs.d2) });
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
-  mode = 'battle'; show('none');
+  mode = 'battle'; show('none'); beginBattleFx();
 }
 // ---------- モンスターの ほぞん（3 つ）----------
 function slotDesign(i) { const w = lsGet('slot' + i); return w ? RB.decodeDesign(w) : null; }

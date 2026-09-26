@@ -6,19 +6,20 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=39">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=40">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="몬스터 배틀">
 <meta property="og:title" content="그려라! 몬스터 배틀">
 <meta property="og:description" content="몸·팔·다리를 그려서 몬스터를 만들자! 몬스터가 걸어가서 펀치로 싸워. 친구에게 몬스터를 보내서 한판 붙자!">
 <title>그려라! 몬스터 배틀</title>
-<link rel="stylesheet" href="style.css?v=39">
+<link rel="stylesheet" href="style.css?v=40">
 <script src="/t.js?v=1"></script>
 </head>
 <body>
 <canvas id="game"></canvas>
 <button id="quit" class="sub" hidden>← 돌아가기</button>
 <button id="fast" class="sub" hidden>▶▶ 빨리 감기</button>
+<button id="snd" class="sub" aria-label="소리 켜기/끄기">🔊</button>
 
 <div id="title">
   <div class="panel">
@@ -133,7 +134,8 @@
   </div>
 </div>
 
-<script src="sim.js?v=39"></script>
-<script src="game.js?v=39"></script>
+<script src="sim.js?v=40"></script>
+<script src="sfx.js?v=40"></script>
+<script src="game.js?v=40"></script>
 </body>
 </html>
