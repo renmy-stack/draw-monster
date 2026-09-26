@@ -18,11 +18,11 @@ button { font: inherit; }
 #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 
 /* パネル */
-#title, #result, #sharebox, #arena {
+#title, #result, #sharebox {
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 16px; background: rgba(10, 12, 30, .55);
 }
-#hallbox[hidden], #arena[hidden], #arenaprev[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
+#hallbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
 .panel {
   width: min(92vw, 400px); max-height: calc(100% - 20px); overflow-y: auto;
   background: var(--paper); border: 4px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow);
@@ -185,12 +185,3 @@ button:disabled { opacity: .45; }
 #halllist { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
 #halllist .hall { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 700; color: #7a5c00; }
 #halllist canvas { width: 64px; height: 64px; border-radius: 8px; background: #1f2250; }
-
-/* アリーナ */
-#arenaprev { width: 110px; height: 110px; display: block; margin: 4px auto 0; }
-#arenamsg { min-height: 1.4em; font-size: 13px; font-weight: 700; color: #8e24aa; margin-top: 4px; }
-#arenainfo { margin-top: 12px; text-align: left; font-size: 13px; line-height: 1.5; }
-#arenainfo .ar-sub { color: #555; margin-bottom: 4px; }
-#arenainfo .ar-h { margin: 8px 0 4px; font-weight: 800; color: #8e24aa; }
-#arenainfo .ar-row { display: flex; align-items: center; gap: 10px; padding: 2px 0; }
-#arenainfo .ar-row canvas { width: 56px; height: 56px; flex: none; }

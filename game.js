@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '41';
+const VERSION = '40';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -75,7 +75,7 @@ function resize() {
   sizePad(); if (mode === 'draw') drawPad();
 }
 window.addEventListener('resize', resize);
-function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff', 'arena']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
+function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
 // はやおくり: 一度でも倒した CPU との戦いだけ
 function canFast() { return mode === 'battle' && !isFriend && !!beaten[S && S.stage != null ? S.stage : stage]; }
 function updateFastBtn() { $('fast').textContent = fast ? '▶ ふつう' : '▶▶ はやおくり'; $('fast').classList.toggle('on', fast); }
@@ -89,7 +89,6 @@ function showTitle() {
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0);
   $('tprog').textContent = (ob > 0 ? 'おもて さいこう ' + ob + ' にんぬき' + (uraOpen ? '（たっせい！）' : '') : '') + (uraOpen ? '　うら さいこう ' + ub + ' にんぬき' + (lsGet('ura.cleared') === '1' ? '（たっせい！！）' : '') : '');
   $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
-  $('arenabtn').hidden = !ARENA_ON;
 
   drawTitleBg();
 }
@@ -464,7 +463,7 @@ function drawTitleBg() {
 function showResult() {
   mode = 'result'; show('result');
   TR('result', { side: S.side, stage: S.stage, opp: opp && opp.name, win: S.winner === 'A' ? 'win' : S.winner === 'B' ? 'lose' : 'draw', reason: S.reason, t: Math.round(S.t * 10) / 10, hp: [Math.ceil(S.A.hp), Math.ceil(S.B.hp)], hits: [S.A.hits, S.B.hits], dmg: [Math.round(S.A.dealt), Math.round(S.B.dealt)], fast: fast });
-  $('share').hidden = false; $('vstitle').hidden = true; $('vstitle').textContent = 'タイトルへ'; $('redraw').hidden = false; $('redraw').textContent = 'モンスターを なおす';
+  $('share').hidden = false; $('vstitle').hidden = true; $('redraw').hidden = false; $('redraw').textContent = 'モンスターを なおす';
   $('next').textContent = 'つぎの あいてへ'; $('next').classList.remove('ura'); $('again').className = 'main'; goUra = false;
   if (S.side === 'vs') {
     $('rtitle').textContent = S.winner === 'A' ? '1P の かち！' : S.winner === 'B' ? '2P の かち！' : 'ひきわけ';
@@ -474,20 +473,6 @@ function showResult() {
     $('next').hidden = false; $('next').innerHTML = 'もういちど<small>なおして たたかう</small>';
     $('again').hidden = false; $('again').textContent = 'おなじ たたかいを みる'; $('again').className = 'sub';
     $('redraw').hidden = true; $('share').hidden = true; $('vstitle').hidden = false;
-    return;
-  }
-  if (S.side === 'arena') {
-    const w = S.winner === 'A' ? 1 : S.winner === 'B' ? 0 : 0.5, lastOne = arenaRun.i >= arenaRun.opps.length - 1;
-    if (arenaRun.res.length === arenaRun.i) arenaRun.res.push([arenaRun.opps[arenaRun.i].c, arenaRun.me, w]);
-    const wins = arenaRun.res.filter(r => r[2] === 1).length;
-    $('rtitle').textContent = w === 1 ? 'かち！' : w === 0 ? 'まけ…' : 'ひきわけ';
-    $('rtitle').className = 'rtitle ' + (w === 1 ? 'win' : w === 0 ? 'lose' : '');
-    $('rsub').textContent = (S.reason === 'ko' ? 'KO（' + S.t.toFixed(1) + ' びょう）' : 'じかんぎれ（のこり HP ' + Math.ceil(S.A.hp) + ' たい ' + Math.ceil(S.B.hp) + '）') + (lastOne ? '\n' + 'アリーナ ' + arenaRun.res.length + ' せん ' + wins + ' しょう！' : '');
-    $('rprog').innerHTML = arenaRun.opps.map((o, i) => '<span class="dot ' + (i < arenaRun.res.length ? (arenaRun.res[i][2] === 1 ? 'ok' : 'lost') : i === arenaRun.res.length ? 'now' : '') + '">' + (i + 1) + '</span>').join('');
-    $('next').hidden = false; $('next').textContent = lastOne ? 'もういちど（べつの あいて）' : 'つぎの あいてへ';
-    $('again').hidden = true; $('share').hidden = true; $('redraw').hidden = true;
-    $('vstitle').hidden = false; $('vstitle').textContent = 'アリーナへ もどる';
-    if (lastOne) arenaFinish();
     return;
   }
   const win = S.winner === 'A', draw = S.winner == null;
@@ -542,93 +527,9 @@ onTap($('send'), shareRobot);
 onTap($('share'), shareRobot);
 onTap($('clearpart'), () => { strokes[part] = null; if (!vs) resetAllRuns(); saveRobot(); setPart(part); updateSideUi(); });
 let goUra = false;   // おもてを クリアした 直後: つぎへ ボタンが「うらへ」
-onTap($('next'), () => { if (S && S.side === 'arena' && mode === 'result') { if (arenaRun.i >= arenaRun.opps.length - 1) arenaStart(); else { arenaRun.i++; startArenaBattle(); } return; } if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
+onTap($('next'), () => { if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
 onTap($('again'), () => { if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
-// ---------- アリーナ（みんなの モンスターと 5 れんせん）----------
-// 出す: Firebase の arena/sub に 形だけ。結果は 5 戦 まとめて arena/res に。相手リスト arena.json は GitHub Actions が 3 時間ごとに 作る（tools/arena_build.js）
-// まずは ?arenatest を 開いた 端末だけ
-const FBDB = 'https://renmy-games-default-rtdb.asia-southeast1.firebasedatabase.app';
-if (/[?&]arenatest(=|&|$)/.test(location.search)) lsSet('arenatest', '1');
-const ARENA_ON = lsGet('arenatest') === '1';
-const ARENA_COLOR = '#8e24aa';
-let arenaData = null, arenaRun = null;   // arenaRun = { opps: [{ c, n, d }], i, res: [[相手, じぶん, 1|0.5|0]], me }
-function jstDay() { return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); }
-function devId() { try { return localStorage.getItem('t.id') || 'none'; } catch (e) { return 'none'; } }
-function fbPost(path, obj) { try { fetch(FBDB + '/' + path + '/' + jstDay() + '.json', { method: 'POST', body: JSON.stringify(Object.assign(obj, { r: { '.sv': 'timestamp' } })), keepalive: true }).catch(() => {}); } catch (e) {} }
-function arenaMine() { try { return JSON.parse(lsGet('arena.mine') || '[]'); } catch (e) { return []; } }
-async function loadArena() {
-  try { const r = await fetch('arena.json?t=' + Math.floor(Date.now() / 600000)); arenaData = await r.json(); } catch (e) { arenaData = null; }
-  return arenaData;
-}
-function arenaEntry(code) { return arenaData && arenaData.pool.find(p => p.c === code); }
-function showArena(msg) {
-  mode = 'arena'; show('arena');
-  $('arenamsg').textContent = msg || '';
-  const code = myRobot ? plainCode(myRobot) : null, mine = arenaMine();
-  $('arenaprev').hidden = !myRobot;
-  if (myRobot) drawPreview($('arenaprev'), myRobot, ME.color);
-  $('arenago').disabled = !myRobot;
-  $('arenasub').disabled = !myRobot || mine.includes(code);
-  $('arenasub').textContent = myRobot && mine.includes(code) ? 'アリーナに だした！' : 'この モンスターを アリーナに だす';
-  $('arenadraw').textContent = myRobot ? 'モンスターを なおす' : 'モンスターを つくる';
-  renderArenaInfo();
-  if (!arenaData) loadArena().then(() => { if (mode === 'arena') renderArenaInfo(); });
-}
-function renderArenaInfo() {
-  const box = $('arenainfo');
-  if (!arenaData) { box.textContent = 'よみこみちゅう…'; return; }
-  const mine = arenaMine().map(c => arenaEntry(c)).filter(Boolean);
-  let h = '<div class="ar-sub">アリーナの モンスター ' + arenaData.pool.length + ' たい（' + arenaData.t + ' こうしん）</div>';
-  if (mine.length) h += '<div class="ar-sub">あなたの モンスター：' + mine.map(p => p.n + ' ' + p.w + 'しょう ' + p.l + 'はい').join('／') + '</div>';
-  h += '<div class="ar-h">つよい モンスター ランキング</div><div id="arenatop">' + ((arenaData.top || []).length ? '' : '<div class="ar-sub">まだ ないよ（6 かい いじょう たたかった モンスターが のるよ）</div>') + '</div>';
-  box.innerHTML = h;
-  (arenaData.top || []).slice(0, 5).forEach((i, k) => {
-    const p = arenaData.pool[i], d = p && RB.decodeDesign(p.c); if (!d) return;
-    const el = document.createElement('div'); el.className = 'ar-row';
-    const c = document.createElement('canvas'); c.width = 120; c.height = 120; drawPreview(c, d, ARENA_COLOR);
-    const t = document.createElement('div'); t.innerHTML = '<b>' + (k + 1) + ' い</b>　' + p.n + '<br>' + p.w + ' しょう ' + p.l + ' はい';
-    el.append(c, t); $('arenatop').append(el);
-  });
-}
-function arenaSubmit() {
-  if (!myRobot) return;
-  const code = plainCode(myRobot), mine = arenaMine();
-  if (mine.includes(code)) return;
-  const today = jstDay(), cnt = +(lsGet('arena.cnt.' + today) || 0);
-  if (cnt >= 5) { showArena('きょうは もう 5 たい だしたよ。また あした！'); return; }
-  fbPost('arena/sub', { id: devId(), d: code });
-  mine.push(code); lsSet('arena.mine', JSON.stringify(mine.slice(-20))); lsSet('arena.cnt.' + today, String(cnt + 1));
-  TR('arenasub', { me: code });
-  showArena('アリーナに だしたよ！ 3 じかん いないに みんなの あいてに なるよ');
-}
-async function arenaStart() {
-  if (!myRobot) return;
-  if (!arenaData) await loadArena();
-  const me = plainCode(myRobot), cand = arenaData ? arenaData.pool.filter(p => p.c !== me) : [];
-  if (!cand.length) { showArena('アリーナが よみこめなかった…'); return; }
-  const opps = [];
-  while (opps.length < Math.min(5, cand.length)) { const p = cand[Math.floor(Math.random() * cand.length)]; if (!opps.includes(p)) opps.push(p); }
-  arenaRun = { opps: opps.map(p => ({ c: p.c, n: p.n, d: RB.decodeDesign(p.c) })).filter(o => o.d), i: 0, res: [], me };
-  TR('arena', { n: arenaRun.opps.length });
-  startArenaBattle();
-}
-function startArenaBattle() {
-  const o = arenaRun.opps[arenaRun.i], meD = RB.decodeDesign(arenaRun.me);   // 相手リストと 同じ しくみの 形で 戦う（あとで 作りなおしても 同じ 結果）
-  isFriend = true;
-  opp = { name: o.n, color: ARENA_COLOR, d: o.d };
-  S = RB.create(meD, o.d); S.stage = arenaRun.i; S.side = 'arena'; S.crownA = !!myRobot.crown; S.crownB = false;
-  acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
-  mode = 'battle'; show('none');
-}
-function arenaFinish() {
-  if (arenaRun && arenaRun.res.length && !arenaRun.sent) { arenaRun.sent = true; fbPost('arena/res', { id: devId(), e: JSON.stringify(arenaRun.res) }); }
-}
-onTap($('arenabtn'), () => showArena());
-onTap($('arenago'), arenaStart);
-onTap($('arenasub'), arenaSubmit);
-onTap($('arenadraw'), showDraw);
-onTap($('arenaback'), showTitle);
 // ---------- うら 5 人抜き: 王冠・でんどういり・エンディング ----------
 let endT0 = 0, confetti = [];
 function onUraClear() {
@@ -702,7 +603,7 @@ function renderEnding(now) {
   if (t > 1.2) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = '700 14px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('タップで つぎへ', W / 2, H - 40); ctx.globalAlpha = 1; }
 }
 onTap($('vs'), startVsMode);
-onTap($('vstitle'), () => { if (S && S.side === 'arena') { arenaFinish(); showArena(); } else exitVs(); });
+onTap($('vstitle'), exitVs);
 onTap($('handoffgo'), () => { vs.step = 2; loadInto(vsLast(2)); showDraw(); });
 // ---------- ふたりで たたかう ----------
 function padColor() { return vs && vs.step === 2 ? P2.color : ME.color; }
@@ -786,7 +687,7 @@ function updateSideUi() {
 onTap($('sidebtn'), () => { side = side === 'ura' ? 'omote' : 'ura'; lsSet('side', side); loadSide(); updateSideUi(); setHint(side === 'ura' ? 'うら かちぬき：とんでもなく つよい 5 たい' : ''); });
 onTap($('fast'), () => { fast = !fast; TR('fast', { on: fast }); lsSet('fast', fast ? '1' : '0'); updateFastBtn(); });
 // 戦いの途中で もどる（勝ち抜きの途中経過は そのまま。戦いは決定的なので やめても 得はしない）
-onTap($('quit'), () => { if ((mode === 'battle' || mode === 'pause') && S && S.side === 'arena') { arenaFinish(); showArena(); return; } if (mode === 'battle' || mode === 'pause') { TR('quit', { side: S && S.side, stage: S && S.stage, t: S && Math.round(S.t * 10) / 10 }); showDraw(); } });
+onTap($('quit'), () => { if (mode === 'battle' || mode === 'pause') { TR('quit', { side: S && S.side, stage: S && S.stage, t: S && Math.round(S.t * 10) / 10 }); showDraw(); } });
 onTap($('closeshare'), () => { $('sharebox').hidden = true; });
 onTap($('copy'), () => {
   const ta = $('sharetext'); ta.select();
@@ -828,7 +729,6 @@ showTitle();
   if (q.get('use')) { const d = RB.decodeDesign(q.get('use')); if (d) { myRobot = withCrown(d); strokes = { body: d.body, arm: d.arm, leg: d.leg }; lsSet('robot', RB.encodeDesign(myRobot)); resetAllRuns(); showTitle(); } }   // オーナーの 確認用: その モンスターを じぶんの モンスターに
   if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
   if (q.has('ura')) { uraOpen = true; side = 'ura'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: うら
-  if (q.has('arenadev') && ARENA_ON) { if (!myRobot) sample(); showArena(); if (q.get('arenadev') === 'res') arenaStart().then(() => { const n = +(q.get('n') || 1); for (let i = 0; i < n; i++) { if (i) arenaRun.i++; const o = arenaRun.opps[arenaRun.i]; S = RB.fight(RB.decodeDesign(arenaRun.me), o.d); S.side = 'arena'; S.stage = arenaRun.i; opp = { name: o.n, color: ARENA_COLOR, d: o.d }; showResult(); } }); }   // 開発用: アリーナ画面（=res で n 戦ぶんの 結果）
   if (q.has('draw')) { if (!myRobot) sample(); if (q.get('draw') === 'arm') { strokes.arm = null; strokes.leg = null; myRobot = null; } showDraw(); }
   if (q.has('shot')) {
     if (!myRobot) sample();
