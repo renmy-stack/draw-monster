@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=43">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=44">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=43">
+<link rel="stylesheet" href="style.css?v=44">
 <script src="/t.js?v=3"></script>
 </head>
 <body>
@@ -32,6 +32,10 @@
     <div class="tbtns">
       <button id="start" class="main">モンスターを つくる</button>
       <button id="vs" class="sub vsbtn">ふたりで たたかう</button>
+    </div>
+    <div id="legendbox" hidden>
+      <div class="legend-title">⭐ でんせつ（タップで しょうめいしょ）</div>
+      <div id="legendlist"></div>
     </div>
     <div id="hallbox" hidden>
       <div class="hall-title">👑 でんどういり</div>
@@ -97,6 +101,7 @@
     </div>
     <div class="rbtns small">
       <button id="redraw" class="sub">モンスターを なおす</button>
+      <button id="cert" class="sub certbtn" hidden>でんせつ しょうめいしょ</button>
       <button id="share" class="sub">モンスターを おくる</button>
       <button id="vstitle" class="sub" hidden>タイトルへ</button>
     </div>
@@ -121,6 +126,14 @@
   </div>
 </div>
 
+<div id="certbox" hidden>
+  <div class="panel">
+    <div class="cert-note">がぞうを ながおし して ほぞん してね</div>
+    <img id="certimg" alt="でんせつ しょうめいしょ">
+    <div class="rbtns small"><button id="certclose" class="sub">とじる</button></div>
+  </div>
+</div>
+
 <div id="sharebox" hidden>
   <div class="panel">
     <div class="rtitle">モンスターを おくる</div>
@@ -133,7 +146,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=43"></script>
-<script src="game.js?v=43"></script>
+<script src="sim.js?v=44"></script>
+<script src="game.js?v=44"></script>
 </body>
 </html>

@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '43';
+const VERSION = '44';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -21,7 +21,8 @@ let vs = null;
 function plainCode(d) { return RB.encodeDesign({ body: d.body, arm: d.arm, leg: d.leg }); }
 function crownedList() { try { return JSON.parse(lsGet('crowned') || '[]'); } catch (e) { return []; } }
 function isCrowned(d) { return !!d && crownedList().includes(plainCode(d)); }
-function withCrown(d) { if (d) d.crown = d.crown || isCrowned(d); return d; }
+function legendList() { try { return JSON.parse(lsGet('legend') || '[]'); } catch (e) { return []; } }
+function withCrown(d) { if (d) { d.crown = d.crown || isCrowned(d); d.legend = d.legend || legendList().includes(plainCode(d)); } return d; }
 const PARTS = { body: 'からだ', arm: 'うで', leg: 'あし' };
 const PART_HINT = {
   body: '<b>からだ</b> を かこむように かいてね',
@@ -172,9 +173,10 @@ function drawRobotLocal(g, d, color, alpha, open) {
   body(g, d.body, color, open, d);
   if (d.leg && d.leg.length > 1) limb(g, d.leg, '#455a64', 1);
   if (d.arm && d.arm.length > 1) arm(g, d.arm, color);
-  if (d.crown && d.body && d.body.length > 2) {
+  if ((d.crown || d.legend) && d.body && d.body.length > 2) {
     const c = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] })));
-    drawCrown(g, c.x, c.y - 1, c.s);
+    if (d.crown) drawCrown(g, c.x, c.y - 1, c.s);
+    if (d.legend) drawStar(g, c.x, c.y - 1 - (d.crown ? c.s * 0.8 : 0) - c.s * 0.45, c.s * 0.45);
   }
   g.globalAlpha = 1;
 }
@@ -195,6 +197,12 @@ function drawCrown(g, x, y, s) {
   g.fillStyle = '#e53935';
   for (const [px, py] of [[x - s / 2, y - h], [x, y - h * 1.05], [x + s / 2, y - h]]) { g.beginPath(); g.arc(px, py, s * 0.09, 0, 7); g.fill(); }
   g.fillStyle = '#42a5f5'; g.beginPath(); g.arc(x, y - h * 0.3, s * 0.1, 0, 7); g.fill();
+}
+// でんせつの 星（x, y が まんなか、r が 半径）
+function drawStar(g, x, y, r) {
+  g.beginPath();
+  for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+  g.closePath(); g.fillStyle = '#ffeb3b'; g.fill(); g.lineWidth = Math.max(2, r * 0.14); g.strokeStyle = '#b8860b'; g.stroke();
 }
 function body(g, pts, color, open, d) {
   pline(g, pts); if (!open) g.closePath();
@@ -312,7 +320,7 @@ function startBattle(friend) {
   if (!myRobot) return;
   isFriend = !!friend;
   opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: CPUS()[stage].name, color: CPUS()[stage].color, d: CPUS()[stage] };
-  S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown;
+  S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend;
   TR('battle', { side: S.side, stage: stage, opp: opp.name, me: RB.encodeDesign(myRobot), st: stat4(myRobot), crown: !!myRobot.crown, fast: fast });
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
@@ -413,7 +421,7 @@ function drawRobotWorld(b, color, flash, crown) {
   const poly = b.bodyPts.map(p => tf(p.x, p.y));
   const bodyCol = flash ? '#ffffff' : color;
   if (S.side === 'ura' && b === S.B) { ctx.shadowColor = '#ff1744'; ctx.shadowBlur = 26; }
-  if (S.side === 'minna' && b === S.B) { ctx.shadowColor = '#ffd54f'; ctx.shadowBlur = 26; }   // みんなの 敵は 金に 光る   // うらの敵は 赤く光る
+  if ((S.side === 'minna' && b === S.B) || (b === S.A && S.legendA)) { ctx.shadowColor = '#ffd54f'; ctx.shadowBlur = 26; }   // みんなの 敵と でんせつの モンスターは 金に 光る   // みんなの 敵は 金に 光る   // うらの敵は 赤く光る
   pline(ctx, poly); ctx.closePath(); ctx.fillStyle = bodyCol; ctx.fill();
   ctx.shadowBlur = 0;
   ctx.save(); pline(ctx, poly); ctx.closePath(); ctx.clip();
@@ -426,7 +434,8 @@ function drawRobotWorld(b, color, flash, crown) {
   const w = x1 - x0, r = Math.max(3.5, Math.min(8, w * 0.1));
   const ex = (x0 + x1) / 2 + b.facing * w * 0.12, ey = top.y + Math.min(22, w * 0.3 + 8);
   face(ctx, tf, ex, ey, r, b.facing, b.downT > 0 || b.hp <= 0);
-  if (crown) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawCrown(ctx, 0, -1, cs.s); ctx.restore(); }
+  const legend = b === S.A && S.legendA;
+  if (crown || legend) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); if (crown) drawCrown(ctx, 0, -1, cs.s); if (legend) drawStar(ctx, 0, -1 - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
   limb(ctx, legA, '#455a64', 1);
   arm(ctx, joint(b.arm), color);
 }
@@ -469,6 +478,7 @@ function showResult() {
   mode = 'result'; show('result');
   TR('result', { side: S.side, stage: S.stage, opp: opp && opp.name, win: S.winner === 'A' ? 'win' : S.winner === 'B' ? 'lose' : 'draw', reason: S.reason, t: Math.round(S.t * 10) / 10, hp: [Math.ceil(S.A.hp), Math.ceil(S.B.hp)], hits: [S.A.hits, S.B.hits], dmg: [Math.round(S.A.dealt), Math.round(S.B.dealt)], fast: fast });
   $('share').hidden = false; $('vstitle').hidden = true; $('redraw').hidden = false; $('redraw').textContent = 'モンスターを なおす';
+  $('cert').hidden = true;
   $('next').textContent = 'つぎの あいてへ'; $('next').classList.remove('ura'); $('again').className = 'main'; goUra = false;
   if (S.side === 'vs') {
     $('rtitle').textContent = S.winner === 'A' ? '1P の かち！' : S.winner === 'B' ? '2P の かち！' : 'ひきわけ';
@@ -493,7 +503,7 @@ function showResult() {
       else {
         cleared = true; lsSet(sk('cleared'), '1'); resetRun();
         if (side === 'ura') { onUraClear(); }
-        if (side === 'minna') { TR('minnaclear', { me: plainCode(myRobot) }); $('rsub').textContent += '\nみんなの さいきょう ぐんだん を たおした！！！ でんせつ！'; }
+        if (side === 'minna') { onMinnaClear(); $('rsub').textContent += '\nみんなの さいきょう ぐんだん を たおした！！！\nでんせつ の モンスター に なった！'; }
         if (side === 'ura') $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！ すごすぎる！';
         else if (side === 'omote') { $('rsub').textContent += '\n5 たい かちぬき たっせい！'; const firstUra = !uraOpen; uraOpen = true; $('rsub').textContent += firstUra ? '\n…うら かちぬき が あらわれた！' : '\nうら かちぬき が まってるぞ…！'; goUra = true; }
       }
@@ -548,7 +558,66 @@ function onUraClear() {
   endingPending = true;
 }
 let endingPending = false;
+function onMinnaClear() {
+  const code = plainCode(myRobot), list = legendList();
+  if (!list.includes(code)) { list.push(code); lsSet('legend', JSON.stringify(list)); }
+  let lh = []; try { lh = JSON.parse(lsGet('legendhall') || '[]'); } catch (e) {}
+  const t = new Date(), day = t.getFullYear() + '/' + (t.getMonth() + 1) + '/' + t.getDate();
+  if (!lh.some(h => h.c === code)) { lh.push({ c: code, d: day }); lsSet('legendhall', JSON.stringify(lh)); }
+  myRobot.legend = true; S.legendA = true;
+  TR('minnaclear', { me: code });
+  $('cert').hidden = false; certFor = { c: code, d: day };
+}
+// でんせつ しょうめいしょ（画像）: モンスターの 絵と 日付。X などに 投稿できる
+let certFor = null;
+function makeCert(code, day) {
+  const d = RB.decodeDesign(code); if (!d) return null;
+  withCrown(d); d.legend = true;
+  const c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
+  const g = c.getContext('2d');
+  const bg = g.createLinearGradient(0, 0, 0, 1350); bg.addColorStop(0, '#04161a'); bg.addColorStop(1, '#0f3d3a');
+  g.fillStyle = bg; g.fillRect(0, 0, 1080, 1350);
+  g.strokeStyle = '#ffd54f'; g.lineWidth = 16; g.strokeRect(40, 40, 1000, 1270); g.lineWidth = 4; g.strokeRect(70, 70, 940, 1210);
+  g.textAlign = 'center'; g.fillStyle = '#ffd54f';
+  g.font = '900 96px sans-serif'; g.fillText('でんせつ', 540, 220);
+  g.font = '900 64px sans-serif'; g.fillText('しょうめいしょ', 540, 310);
+  const m = document.createElement('canvas'); m.width = 720; m.height = 600;
+  const mg = m.getContext('2d'); mg.shadowColor = '#ffd54f'; mg.shadowBlur = 40;
+  drawPreview(m, d, ME.color);
+  g.drawImage(m, 180, 360);
+  g.fillStyle = '#ffffff'; g.font = '800 50px sans-serif';
+  g.fillText('みんなの さいきょう ぐんだん を', 540, 1060); g.fillText('たおした！', 540, 1130);
+  g.fillStyle = '#b2dfdb'; g.font = '700 38px sans-serif'; g.fillText(day + '　かいて！モンスターバトル', 540, 1220);
+  return c;
+}
+function showCert(code, day) {
+  const c = makeCert(code, day); if (!c) return;
+  TR('cert', { me: code });
+  const text = 'みんなの さいきょう ぐんだん を たおして でんせつ に なった！（かいて！モンスターバトル）' + String.fromCharCode(10) + SITE_URL;
+  c.toBlob(blob => {
+    const file = blob && new File([blob], 'densetsu.png', { type: 'image/png' });
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+      navigator.share({ files: [file], text }).catch(err => { if (!err || err.name !== 'AbortError') openCertBox(c); });
+    } else openCertBox(c);
+  }, 'image/png');
+}
+function openCertBox(c) { $('certimg').src = c.toDataURL('image/png'); $('certbox').hidden = false; }
+onTap($('cert'), () => { if (certFor) showCert(certFor.c, certFor.d); });
+onTap($('certclose'), () => { $('certbox').hidden = true; });
+function renderLegend() {
+  let lh = []; try { lh = JSON.parse(lsGet('legendhall') || '[]'); } catch (e) {}
+  $('legendbox').hidden = !lh.length;
+  const list = $('legendlist'); list.innerHTML = '';
+  for (const h of lh.slice(-12)) {
+    const d = RB.decodeDesign(h.c); if (!d) continue; withCrown(d); d.legend = true;
+    const el = document.createElement('div'); el.className = 'hall';
+    el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + h.d + '</span>';
+    list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color);
+    el.addEventListener('click', () => showCert(h.c, h.d));
+  }
+}
 function renderHall() {
+  renderLegend();
   let hall = []; try { hall = JSON.parse(lsGet('hall') || '[]'); } catch (e) {}
   $('hallbox').hidden = !hall.length;
   const list = $('halllist'); list.innerHTML = '';
@@ -734,6 +803,7 @@ showTitle();
   if (q.has('beaten')) beaten = [true, true, true, true, true];   // 開発用: 早送りボタンを見る
   if (q.get('use')) { const d = RB.decodeDesign(q.get('use')); if (d) { myRobot = withCrown(d); strokes = { body: d.body, arm: d.arm, leg: d.leg }; lsSet('robot', RB.encodeDesign(myRobot)); resetAllRuns(); showTitle(); } }   // オーナーの 確認用: その モンスターを じぶんの モンスターに
   if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
+  if (q.has('certpreview')) { if (!myRobot) sample(); openCertBox(makeCert(plainCode(myRobot), '2026/9/27')); }   // オーナーの 確認用: でんせつ しょうめいしょ
   if (q.has('minna') && MINNA_OPEN) { side = 'minna'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: みんな
   if (q.has('ura')) { uraOpen = true; side = 'ura'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: うら
   if (q.has('draw')) { if (!myRobot) sample(); if (q.get('draw') === 'arm') { strokes.arm = null; strokes.leg = null; myRobot = null; } showDraw(); }

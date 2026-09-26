@@ -22,7 +22,7 @@ button { font: inherit; }
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 16px; background: rgba(10, 12, 30, .55);
 }
-#hallbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
+#hallbox[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
 .panel {
   width: min(92vw, 400px); max-height: calc(100% - 20px); overflow-y: auto;
   background: var(--paper); border: 4px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow);
@@ -185,3 +185,15 @@ button:disabled { opacity: .45; }
 #halllist { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
 #halllist .hall { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 700; color: #7a5c00; }
 #halllist canvas { width: 64px; height: 64px; border-radius: 8px; background: #1f2250; }
+
+/* でんせつ（みんなの さいきょう ぐんだん を たおした） */
+#legendbox { margin-top: 12px; padding: 8px; border-radius: 12px; border: 2px solid #26a69a; background: #e0f2f1; }
+.legend-title { font-weight: 900; font-size: 15px; color: #00796b; }
+#legendlist { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
+#legendlist .hall { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 700; color: #00695c; cursor: pointer; }
+#legendlist canvas { width: 64px; height: 64px; border-radius: 8px; background: #0f3d3a; }
+.certbtn { background: #ffd54f; border-color: #b8860b; }
+#certbox { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(4, 22, 26, .85); z-index: 30; }
+#certbox .panel { max-height: 100%; overflow: auto; }
+#certimg { display: block; width: 100%; max-width: 320px; margin: 8px auto 0; border-radius: 8px; }
+.cert-note { font-weight: 800; font-size: 14px; color: #00796b; }
