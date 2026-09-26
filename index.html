@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=35">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=36">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=35">
+<link rel="stylesheet" href="style.css?v=36">
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -132,7 +132,22 @@
   </div>
 </div>
 
-<script src="sim.js?v=35"></script>
-<script src="game.js?v=35"></script>
+<script src="sim.js?v=36"></script>
+<script src="game.js?v=36"></script>
+<script>
+// アクセスを 数える（送るのは ゲーム名 と「今日 はじめてか」だけ）。?nocount を 1 回 開いた 端末は 数えない（オーナー用）
+(function () {
+  var API = 'https://script.google.com/macros/s/AKfycbxLuuErUis6wXoyY_O0oP6FasLkPWSsJdRBjGzWfAuvGIS6IipmH0A6CNh-I7Swh0JSHw/exec', G = 'draw-monster';
+  if (location.hostname.indexOf('github.io') < 0) return;   // 手元の 確認では 数えない
+  var first = 1, day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+  try {
+    if (/[?&]nocount/.test(location.search)) localStorage.setItem('count.off', '1');
+    if (localStorage.getItem('count.off')) return;
+    first = localStorage.getItem('count.' + G) === day ? 0 : 1;
+    localStorage.setItem('count.' + G, day);
+  } catch (e) {}
+  try { fetch(API + '?g=' + G + '&u=' + first, { mode: 'no-cors' }); } catch (e) {}
+})();
+</script>
 </body>
 </html>
