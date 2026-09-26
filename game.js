@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '32';
+const VERSION = '33';
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
 const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
@@ -543,7 +543,11 @@ function renderHall() {
   }
 }
 function startEnding() { endingPending = false; mode = 'ending'; show('none'); $('quit').hidden = true; $('fast').hidden = true; endT0 = performance.now(); confetti = []; }
-function finishEnding() { mode = 'result'; show('result'); }
+let endingPreview = false;   // ?endingpreview の 見本（王冠・でんどういりの 記録は 付けない）
+function finishEnding() {
+  if (endingPreview) { endingPreview = false; myRobot.crown = isCrowned(myRobot); showTitle(); return; }
+  mode = 'result'; show('result');
+}
 window.endingAt = sec => { endT0 = performance.now() - sec * 1000; };   // 開発用: エンディングの その秒を 見る
 cv.addEventListener('pointerdown', () => { if (mode === 'ending' && performance.now() - endT0 > 1200) finishEnding(); });
 // エンディング: 倒した 10 体が 行進 → 王冠の じぶんの モンスター
@@ -701,6 +705,7 @@ showTitle();
   const sample = () => { const c = RB.CPU[2]; myRobot = RB.design(c.body, c.arm, c.leg); strokes = { body: myRobot.body, arm: myRobot.arm, leg: myRobot.leg }; };
   if (q.has('stage') && !q.has('shot')) stage = +q.get('stage');
   if (q.has('beaten')) beaten = [true, true, true, true, true];   // 開発用: 早送りボタンを見る
+  if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
   if (q.has('ura')) { uraOpen = true; side = 'ura'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: うら
   if (q.has('draw')) { if (!myRobot) sample(); if (q.get('draw') === 'arm') { strokes.arm = null; strokes.leg = null; myRobot = null; } showDraw(); }
   if (q.has('shot')) {
