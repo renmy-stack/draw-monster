@@ -175,3 +175,6 @@ button:disabled { opacity: .45; }
 #title .rules { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; margin: 0; }
 #title .rules dt { font-weight: 800; color: #1e88e5; white-space: nowrap; }
 #title .rules dd { margin: 0; }
+
+#title .rules { row-gap: 6px; }
+#title .rules dt, #title .rules dd { line-height: 1.35; }
