@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '51';
+const VERSION = '52';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -325,7 +325,7 @@ function startBattle(friend) {
   if (!myRobot) return;
   isFriend = !!friend;
   opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: CPUS()[stage].name, color: CPUS()[stage].color, d: CPUS()[stage] };
-  S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend;
+  S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend; S.legendB = !!opp.d.legend;
   TR('battle', { side: S.side, stage: stage, opp: opp.name, me: RB.encodeDesign(myRobot), st: stat4(myRobot), crown: !!myRobot.crown, fast: fast });
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
@@ -426,7 +426,7 @@ function drawRobotWorld(b, color, flash, crown) {
   const poly = b.bodyPts.map(p => tf(p.x, p.y));
   const bodyCol = flash ? '#ffffff' : color;
   if (S.side === 'ura' && b === S.B) { ctx.shadowColor = '#ff1744'; ctx.shadowBlur = 26; }
-  if ((S.side === 'minna' && b === S.B) || (b === S.A && S.legendA)) { ctx.shadowColor = '#ffd54f'; ctx.shadowBlur = 26; }   // みんなの 敵と でんせつの モンスターは 金に 光る   // みんなの 敵は 金に 光る   // うらの敵は 赤く光る
+  if ((S.side === 'minna' && b === S.B) || (b === S.A && S.legendA) || (b === S.B && S.legendB)) { ctx.shadowColor = '#ffd54f'; ctx.shadowBlur = 26; }   // みんなの 敵と でんせつの モンスターは 金に 光る   // みんなの 敵は 金に 光る   // うらの敵は 赤く光る
   pline(ctx, poly); ctx.closePath(); ctx.fillStyle = bodyCol; ctx.fill();
   ctx.shadowBlur = 0;
   ctx.save(); pline(ctx, poly); ctx.closePath(); ctx.clip();
@@ -439,7 +439,7 @@ function drawRobotWorld(b, color, flash, crown) {
   const w = x1 - x0, r = Math.max(3.5, Math.min(8, w * 0.1));
   const ex = (x0 + x1) / 2 + b.facing * w * 0.12, ey = top.y + Math.min(22, w * 0.3 + 8);
   face(ctx, tf, ex, ey, r, b.facing, b.downT > 0 || b.hp <= 0);
-  const legend = b === S.A && S.legendA;
+  const legend = (b === S.A && S.legendA) || (b === S.B && S.legendB);
   if (crown || legend) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); if (crown) drawCrown(ctx, 0, -1, cs.s); if (legend) drawStar(ctx, 0, -1 - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
   limb(ctx, legA, '#455a64', 1);
   arm(ctx, joint(b.arm), color);
