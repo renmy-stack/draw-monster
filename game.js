@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '45';
+const VERSION = '46';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -47,9 +47,9 @@ let myRobot = null;
 if (/[?&]uratest(=|&|$)/.test(location.search)) lsSet('uratest', '1');
 let URA_TEST = lsGet('uratest') === '1';
 let uraOpen = URA_TEST || lsGet('cleared') === '1';   // おもてを クリアしたら 出る（オーナーの端末は テスト用に いつでも）
-// みんなの さいきょう ぐんだん（3 つめの 勝ち抜き）: まずは ?minnatest を 開いた 端末だけ
+// みんなの さいきょう ぐんだん（3 つめの 勝ち抜き）: うらを クリアした 人に 出る（?minnatest の 端末は いつでも）
 if (/[?&]minnatest(=|&|$)/.test(location.search)) lsSet('minnatest', '1');
-let MINNA_OPEN = lsGet('minnatest') === '1';
+let MINNA_OPEN = lsGet('minnatest') === '1' || lsGet('ura.cleared') === '1';   // うらを クリアしたら 出る
 const SIDE_LABEL = { omote: 'おもて', ura: 'うら', minna: 'みんな' };
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
 const sk = n => (side === 'omote' ? '' : side + '.') + n;
@@ -94,6 +94,7 @@ function showTitle() {
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0), mb = +(lsGet('minna.best') || 0);
   $('tprog').textContent = (ob > 0 ? 'おもて さいこう ' + ob + ' にんぬき' + (uraOpen ? '（たっせい！）' : '') : '') + (uraOpen ? '　うら さいこう ' + ub + ' にんぬき' + (lsGet('ura.cleared') === '1' ? '（たっせい！！）' : '') : '') + (MINNA_OPEN ? '　みんな さいこう ' + mb + ' にんぬき' + (lsGet('minna.cleared') === '1' ? '（たっせい！！！）' : '') : '');
   $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
+  $('minnabtn').hidden = !MINNA_OPEN || lsGet('minna.cleared') === '1';
 
   drawTitleBg();
 }
@@ -479,7 +480,7 @@ function showResult() {
   TR('result', { side: S.side, stage: S.stage, opp: opp && opp.name, win: S.winner === 'A' ? 'win' : S.winner === 'B' ? 'lose' : 'draw', reason: S.reason, t: Math.round(S.t * 10) / 10, hp: [Math.ceil(S.A.hp), Math.ceil(S.B.hp)], hits: [S.A.hits, S.B.hits], dmg: [Math.round(S.A.dealt), Math.round(S.B.dealt)], fast: fast });
   $('share').hidden = false; $('vstitle').hidden = true; $('redraw').hidden = false; $('redraw').textContent = 'モンスターを なおす';
   $('cert').hidden = true;
-  $('next').textContent = 'つぎの あいてへ'; $('next').classList.remove('ura'); $('again').className = 'main'; goUra = false;
+  $('next').textContent = 'つぎの あいてへ'; $('next').classList.remove('ura', 'minna'); $('again').className = 'main'; goUra = false; goMinna = false;
   if (S.side === 'vs') {
     $('rtitle').textContent = S.winner === 'A' ? '1P の かち！' : S.winner === 'B' ? '2P の かち！' : 'ひきわけ';
     $('rtitle').className = 'rtitle ' + (S.winner ? 'win' : '');
@@ -504,7 +505,7 @@ function showResult() {
         cleared = true; lsSet(sk('cleared'), '1'); resetRun();
         if (side === 'ura') { onUraClear(); }
         if (side === 'minna') { onMinnaClear(); $('rsub').textContent += '\nみんなの さいきょう ぐんだん を たおした！！！\nでんせつ の モンスター に なった！'; }
-        if (side === 'ura') $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！ すごすぎる！';
+        if (side === 'ura') { $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！ すごすぎる！'; const firstM = !MINNA_OPEN; MINNA_OPEN = true; $('rsub').textContent += firstM ? '\n…みんなの さいきょう ぐんだん が あらわれた！' : '\nみんなの さいきょう ぐんだん が まってるぞ…！'; goMinna = true; }
         else if (side === 'omote') { $('rsub').textContent += '\n5 たい かちぬき たっせい！'; const firstUra = !uraOpen; uraOpen = true; $('rsub').textContent += firstUra ? '\n…うら かちぬき が あらわれた！' : '\nうら かちぬき が まってるぞ…！'; goUra = true; }
       }
     } else {
@@ -514,10 +515,11 @@ function showResult() {
     if (wins > best) { best = wins; lsSet(sk('best'), String(best)); $('rsub').textContent += '\nさいこう きろく！'; }
   }
   $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
-  $('next').hidden = !showNext && !goUra;
+  $('next').hidden = !showNext && !goUra && !goMinna;
   $('again').hidden = showNext;
   if (goUra) { $('next').innerHTML = 'うら かちぬき へ！<small>とんでもなく つよい 5 たい</small>'; $('next').classList.add('ura'); $('again').className = 'sub'; $('again').textContent = 'おもてを もういちど'; }
-  $('again').textContent = isFriend ? 'もういちど' : goUra ? 'おもてを もういちど' : '1 たいめから もういちど';
+  if (goMinna) { $('next').innerHTML = 'みんなの さいきょう ぐんだん へ！<small>うらを クリアした みんなの モンスター 5 たい</small>'; $('next').classList.add('minna'); $('again').className = 'sub'; }
+  $('again').textContent = isFriend ? 'もういちど' : goUra ? 'おもてを もういちど' : goMinna ? 'うらを もういちど' : '1 たいめから もういちど';
   $('redraw').textContent = !isFriend && stage > 0 ? 'モンスターを なおす（1 たいめから）' : 'モンスターを なおす';
   if (endingPending) startEnding();
 }
@@ -534,6 +536,7 @@ function showShareBox(text) { $('sharetext').value = text; $('sharebox').hidden 
 // ---------- ボタン ----------
 function onTap(el, fn) { el.addEventListener('click', e => { e.preventDefault(); fn(); }); }
 onTap($('start'), showDraw);
+onTap($('minnabtn'), () => { toMinna('title'); showDraw(); setHint('みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい'); });
 // タイトルの文字を 5 回つづけてタップ → うら テストの印（ホーム画面のアプリは Safari と保存場所が別なので）
 { let n = 0, t0 = 0; $('title').querySelector('.logo').addEventListener('click', () => { const now = Date.now(); n = now - t0 < 800 ? n + 1 : 1; t0 = now; if (n >= 5) { n = 0; lsSet('uratest', '1'); URA_TEST = true; uraOpen = true; showTitle(); } }); }
 onTap($('back'), () => { if (vs) exitVs(); else showTitle(); });
@@ -543,7 +546,9 @@ onTap($('send'), shareRobot);
 onTap($('share'), shareRobot);
 onTap($('clearpart'), () => { strokes[part] = null; if (!vs) resetAllRuns(); saveRobot(); setPart(part); updateSideUi(); });
 let goUra = false;   // おもてを クリアした 直後: つぎへ ボタンが「うらへ」
-onTap($('next'), () => { if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
+let goMinna = false;   // うらを クリアした 直後: つぎへ ボタンが「みんなの さいきょう ぐんだん へ」
+function toMinna(from) { goMinna = false; side = 'minna'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotominna', { from }); }
+onTap($('next'), () => { if (!vs && goMinna) { toMinna('result'); startBattle(false); return; } if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
 onTap($('again'), () => { if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 // ---------- うら 5 人抜き: 王冠・でんどういり・エンディング ----------

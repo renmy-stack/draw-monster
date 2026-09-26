@@ -197,3 +197,7 @@ button:disabled { opacity: .45; }
 #certbox .panel { max-height: 100%; overflow: auto; }
 #certimg { display: block; width: 100%; max-width: 320px; margin: 8px auto 0; border-radius: 8px; }
 .cert-note { font-weight: 800; font-size: 14px; color: #00796b; }
+
+/* みんなの さいきょう ぐんだん へ さそう ボタン（青緑と 金） */
+.main.minna { background: #00695c; border-color: #ffd54f; color: #fff; box-shadow: 0 4px 0 var(--ink), 0 0 16px rgba(255, 213, 79, .7); }
+.main.minna small { display: block; font-size: 12px; font-weight: 700; opacity: .95; }
