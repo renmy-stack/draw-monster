@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '44';
+const VERSION = '45';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -593,16 +593,24 @@ function makeCert(code, day) {
 function showCert(code, day) {
   const c = makeCert(code, day); if (!c) return;
   TR('cert', { me: code });
-  const text = 'みんなの さいきょう ぐんだん を たおして でんせつ に なった！（かいて！モンスターバトル）' + String.fromCharCode(10) + SITE_URL;
+  openCertBox(c);
+}
+// 証明書を 画面に 出す → 「シェア」で 共有の 画面（X など）。共有できない ブラウザでは 長押しで 保存
+let certFile = null;
+function openCertBox(c) {
+  $('certimg').src = c.toDataURL('image/png'); $('certbox').hidden = false;
+  certFile = null; $('certshare').hidden = true;
   c.toBlob(blob => {
     const file = blob && new File([blob], 'densetsu.png', { type: 'image/png' });
-    if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-      navigator.share({ files: [file], text }).catch(err => { if (!err || err.name !== 'AbortError') openCertBox(c); });
-    } else openCertBox(c);
+    if (file && navigator.canShare && navigator.canShare({ files: [file] })) { certFile = file; $('certshare').hidden = false; }
   }, 'image/png');
 }
-function openCertBox(c) { $('certimg').src = c.toDataURL('image/png'); $('certbox').hidden = false; }
-onTap($('cert'), () => { if (certFor) showCert(certFor.c, certFor.d); });
+onTap($('certshare'), () => {
+  if (!certFile) return;
+  TR('certshare', null);
+  const text = 'みんなの さいきょう ぐんだん を たおして でんせつ に なった！（かいて！モンスターバトル）' + String.fromCharCode(10) + SITE_URL;
+  navigator.share({ files: [certFile], text }).catch(() => {});
+});
 onTap($('certclose'), () => { $('certbox').hidden = true; });
 function renderLegend() {
   let lh = []; try { lh = JSON.parse(lsGet('legendhall') || '[]'); } catch (e) {}
