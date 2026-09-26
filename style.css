@@ -213,3 +213,10 @@ button:disabled { opacity: .45; }
 .minna-text p { margin: 4px 0; }
 .minna-text b { color: #00796b; }
 .linkbtn { background: none; border: none; box-shadow: none; color: #00796b; font-size: 12px; font-weight: 800; text-decoration: underline; padding: 2px 6px; margin: -2px 0 2px; }
+
+.minna-flow { margin-top: 8px; font-size: 13px; line-height: 1.45; }
+.minna-flow .mf { background: #e0f2f1; border-radius: 10px; padding: 5px 8px; }
+.minna-flow .mf b, .mf-proof b, .mf-end b { color: #00796b; font-size: 15px; }
+.mf-arrow { color: #26a69a; font-size: 11px; line-height: 1.2; }
+.mf-proof { margin-top: 8px; padding: 6px 8px; border: 2px solid #ffd54f; border-radius: 10px; background: #fff8dc; font-size: 13px; font-weight: 700; line-height: 1.45; }
+.mf-end { margin-top: 8px; font-size: 13px; font-weight: 700; line-height: 1.45; }

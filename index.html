@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=49">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=50">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=49">
+<link rel="stylesheet" href="style.css?v=50">
 <script src="/t.js?v=3"></script>
 </head>
 <body>
@@ -132,12 +132,17 @@
   <div class="panel">
     <div class="minna-title">みんなの<br>さいきょう ぐんだん</div>
     <div id="minnalist"></div>
-    <div class="minna-text">
-      <p>ここまでに かかれた モンスターは <b>2 まん しゅるい いじょう</b>。</p>
-      <p>その なかで <b>うら かちぬき を クリアした 133 たい</b> が <b>そうあたり 17,556 せん</b>！</p>
-      <p>つよい モンスターを しぼりこみ、<b>1,600 たい いじょう</b> の みんなの モンスターと たたかわせても、<b>5 たい ぜんぶに かてた モンスターは 1 たいも いなかった</b> くみあわせ。</p>
-      <p>ぜんぶ <b>みんなが かいた モンスター</b>。かてば <b>でんせつ</b>！</p>
+    <div class="minna-flow">
+      <div class="mf">みんなが かいた モンスター<br><b>2 まん しゅるい いじょう</b></div>
+      <div class="mf-arrow">▼</div>
+      <div class="mf">うら かちぬき を クリアできたのは<br><b>133 たい</b></div>
+      <div class="mf-arrow">▼</div>
+      <div class="mf">その 133 たいで <b>そうあたり</b><br>（ぜんぶで 17,556 せん）</div>
+      <div class="mf-arrow">▼</div>
+      <div class="mf">いちばん やぶられにくい<br><b>5 たいの くみあわせ</b> を えらんだ</div>
     </div>
+    <div class="mf-proof">みんなの モンスター 1,600 たいと たたかわせても<br>5 たい ぜんぶに かてたのは <b>0 たい</b>！</div>
+    <div class="mf-end">ぜんぶ みんなが かいた モンスター。<br>かてば <b>でんせつ</b>！</div>
     <div class="rbtns small"><button id="minnaclose" class="sub">とじる</button></div>
   </div>
 </div>
@@ -163,7 +168,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=49"></script>
-<script src="game.js?v=49"></script>
+<script src="sim.js?v=50"></script>
+<script src="game.js?v=50"></script>
 </body>
 </html>
