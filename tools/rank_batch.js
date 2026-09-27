@@ -1,4 +1,4 @@
-// node tools/rank_batch.js — モンスター ランクせん の 5 分ごとの 計算（GitHub Actions が 実行。RANK_ADMIN が いる）
+// node tools/rank_batch.js — モンスター ランクせん の 計算（GitHub Actions が 実行。起動は Cloudflare の 受付係から 15 分に 1 回まで。RANK_ADMIN が いる）
 // 順位 ＝ 登録中の みんなと 総当たり（左右 入れかえて 2 戦）した 勝率。同じ 2 体・同じ 左右は いつも 同じ 結果 なので 運が 入らない
 // 1. 登録中の モンスターを 受け取る
 // 2. まだ 戦って いない 組み合わせを、戦った 数が 少ない モンスター（＝ 新しく 登録された）から 最大 BUDGET 戦 計算（CPU の 数だけ 並列）
