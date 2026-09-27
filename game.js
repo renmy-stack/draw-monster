@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '57';
+const VERSION = '58';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -591,7 +591,7 @@ onTap($('next'), () => { if (!vs && goMinna) { toMinna('result'); startBattle(fa
 onTap($('again'), () => { if (S && S.side === 'rank' && rankLast) { rankBattle(...rankLast); return; } if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 // ---------- モンスター ランクせん（みんなの モンスターと 自動で 対戦）----------
-// 登録（形と 名前）だけ ゲームから 送る。順位は サーバーが みんなと 総当たり（左右 入れかえて 2 戦）した 勝率で 決める ＝ 運も ずるも ない
+// 登録（形と 名前）だけ ゲームから 送る。順位は サーバー（登録が あれば 15 分に 1 回まで 計算）が みんなと 総当たり（左右 入れかえて 2 戦）した 勝率で 決める ＝ 運も ずるも ない
 // リプレイと 練習試合は この 端末で 計算（同じ 2 体・同じ 左右なら 同じ 試合に なる）。まずは ?ranktest の 端末だけ
 const RANK_API = 'https://renmy-rank.renmy-stack.workers.dev';
 if (/[?&]ranktest(=|&|$)/.test(location.search)) lsSet('ranktest', '1');
@@ -618,7 +618,7 @@ function showRank(msg) {
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
-  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなと そうあたりの しょうりつで じゅんい・5 ふんごとに こうしん・よる 0 じの 1 いが チャンピオン' : 'よみこみちゅう…';
+  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなと そうあたりの しょうりつで じゅんい・15 ふんごとに こうしん・よる 0 じの 1 いが チャンピオン' : 'よみこみちゅう…';
   // 先週の チャンピオン
   const ch = t && t.champion, cb = $('rankchamp'); cb.hidden = !ch; cb.innerHTML = '';
   if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.rating + '%）')); cb.append(s); }
@@ -630,7 +630,7 @@ function renderRank() {
     const info = document.createElement('div');
     const nm = document.createElement('div'); nm.className = 'rk-name'; nm.textContent = me.name;
     const st = document.createElement('div'); st.className = 'rk-stat';
-    st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'みんなとの たいせんを けいさんちゅう…（5 ふん くらい）';
+    st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'みんなとの たいせんを けいさんちゅう…（15 ふん いないに でるよ）';
     info.append(nm, st); head.append(info); box.append(head);
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'この モンスターは ひょうじされて いません'; box.append(h); }
     const rec = me.recent || [];
@@ -643,7 +643,7 @@ function renderRank() {
         const dd = document.createElement('span'); dd.className = 'rk-d'; dd.textContent = r.s === 'A' ? 'ひだり' : 'みぎ';
         row.append(chip, nmm, dd); row.addEventListener('click', () => rankReplay(me, r)); box.append(row);
       }
-    } else { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'みんなとの たいせんを けいさんちゅう。5 ふん くらい まってね'; box.append(n); }
+    } else { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'みんなとの たいせんを けいさんちゅう。15 ふん いないに でるよ'; box.append(n); }
   } else {
     const n = document.createElement('div'); n.className = 'rk-note';
     n.textContent = myRobot ? 'いまの モンスターを とうろくすると、みんなの モンスター ぜんいんと じどうで たたかって じゅんいが きまるよ' : 'まず モンスターを つくってね';
@@ -676,7 +676,7 @@ async function rankRegister() {
   try {
     const r = await (await fetch(RANK_API + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: plainCode(myRobot), name }) })).json();
     if (r.error) $('rankmsg').textContent = r.error;
-    else { TR('rankreg', { me: plainCode(myRobot) }); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ 5 ふん くらいで みんなとの たいせん けっかが でるよ'; }
+    else { TR('rankreg', { me: plainCode(myRobot) }); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ 15 ふん いないに みんなとの たいせん けっかが でるよ'; }
   } catch (e) { $('rankmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   rankBusy = false; if (mode === 'rank') renderRank();
 }
