@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '63';
+const VERSION = '64';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -617,7 +617,7 @@ onTap($('next'), () => { if (!vs && goMinna) { toMinna('result'); startBattle(fa
 onTap($('again'), () => { if (S && S.side === 'rank' && rankLast) { rankBattle(...rankLast); return; } if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 // ---------- モンスター ランクせん（みんなの モンスターと 自動で 対戦）----------
-// 登録（形と 名前）だけ ゲームから 送る。順位は サーバー（登録が あれば 15 分に 1 回まで 計算）が みんなと 総当たり（左右 入れかえて 2 戦）した 勝率で 決める ＝ 運も ずるも ない
+// 登録（形と 名前）だけ ゲームから 送る。順位は サーバー（登録が あれば 15 分に 1 回まで 計算）が 決める。1000 体 までは 全員と、こえたら 全員が 同じ 代表 1000 体と、左右 入れかえて 2 戦ずつ した 勝率 ＝ 運も ずるも ない
 // リプレイと 練習試合は この 端末で 計算（同じ 2 体・同じ 左右なら 同じ 試合に なる）
 const RANK_API = 'https://renmy-rank.renmy-stack.workers.dev';
 const RANK_ON = true;   // 2026-09-28 全員に 公開（前は ?ranktest の 端末だけ）
@@ -645,7 +645,7 @@ function showRank(msg) {
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
-  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなと そうあたりの しょうりつで じゅんい・15 ふんごとに こうしん・よる 0 じの 1 いが チャンピオン・7 にち あそばないと おやすみ' : 'よみこみちゅう…';
+  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなの モンスターと たたかった しょうりつで じゅんい・15 ふんごとに こうしん・よる 0 じの 1 いが チャンピオン・7 にち あそばないと おやすみ' : 'よみこみちゅう…';
   // 先週の チャンピオン
   const ch = t && t.champion, cb = $('rankchamp'); cb.hidden = !ch; cb.innerHTML = '';
   if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.rating + '%）' + (ch.streak >= 2 ? '　' + ch.streak + ' にち れんぞく！' : ''))); cb.append(s); }
@@ -676,7 +676,7 @@ function renderRank() {
     } else { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'みんなとの たいせんを けいさんちゅう。15 ふん いないに でるよ'; box.append(n); }
   } else {
     const n = document.createElement('div'); n.className = 'rk-note';
-    n.textContent = myRobot ? 'いまの モンスターを とうろくすると、みんなの モンスター ぜんいんと じどうで たたかって じゅんいが きまるよ' : 'まず モンスターを つくってね';
+    n.textContent = myRobot ? 'いまの モンスターを とうろくすると、みんなの モンスターと じどうで たたかって じゅんいが きまるよ' : 'まず モンスターを つくってね';
     box.append(n);
   }
   // 登録（いまの モンスター）
