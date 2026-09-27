@@ -1,9 +1,8 @@
-# モンスター ランクせん: 5 分ごとに まだの 組み合わせを 総当たりで 計算して 勝率・順位を 書き戻す（tools/rank_batch.js）
+# モンスター ランクせん: まだの 組み合わせを 総当たりで 計算して 勝率・順位を 書き戻す（tools/rank_batch.js）
 # 管理の 合言葉は リポジトリの Secrets の RANK_ADMIN
 name: rank
+# 起動は Cloudflare の 受付係（renmy-rank）から（登録が あれば、15 分に 1 回まで・毎日 0:05）
 on:
-  schedule:
-    - cron: '*/5 * * * *'
   workflow_dispatch:
 permissions:
   contents: read
