@@ -375,6 +375,7 @@ function encodeDesign(d) {
   }
   if (d.crown) s += String.fromCharCode(1);   // 王冠（うら 5 人抜きした モンスター。見た目だけ）
   if (d.legend) s += String.fromCharCode(2);   // でんせつ（みんなの さいきょう ぐんだん を たおした。見た目だけ。前の版は 読まずに むし）
+  if (d.champ) s += String.fromCharCode(3) + String.fromCharCode(Math.max(1, Math.min(255, d.champ | 0)));   // チャンピオン メダル（ランクせんで 1 位に なった 日数。見た目だけ）
   const b = typeof btoa === 'function' ? btoa(s) : Buffer.from(s, 'binary').toString('base64');
   return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -398,7 +399,8 @@ function decodeDesign(str) {
     }
     const d = design(out.body, out.arm, out.leg);
     if (i < s.length && s.charCodeAt(i) === 1) { d.crown = true; i++; }
-    if (i < s.length && s.charCodeAt(i) === 2) d.legend = true;
+    if (i < s.length && s.charCodeAt(i) === 2) { d.legend = true; i++; }
+    if (i + 1 < s.length && s.charCodeAt(i) === 3) d.champ = s.charCodeAt(i + 1) || 1;
     return validDesign(d) ? d : null;
   } catch (e) { return null; }
 }

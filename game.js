@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '59';
+const VERSION = '60';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -22,7 +22,9 @@ function plainCode(d) { return RB.encodeDesign({ body: d.body, arm: d.arm, leg: 
 function crownedList() { try { return JSON.parse(lsGet('crowned') || '[]'); } catch (e) { return []; } }
 function isCrowned(d) { return !!d && crownedList().includes(plainCode(d)); }
 function legendList() { try { return JSON.parse(lsGet('legend') || '[]'); } catch (e) { return []; } }
-function withCrown(d) { if (d) { d.crown = d.crown || isCrowned(d); d.legend = d.legend || legendList().includes(plainCode(d)); } return d; }
+// チャンピオン メダル: ランクせんで 1 位に なった 形 → 日数（{ 形: 日数 }）
+function champMap() { try { return JSON.parse(lsGet('champ') || '{}'); } catch (e) { return {}; } }
+function withCrown(d) { if (d) { const c = plainCode(d); d.crown = d.crown || isCrowned(d); d.legend = d.legend || legendList().includes(c); d.champ = Math.max(d.champ || 0, champMap()[c] || 0); } return d; }
 const PARTS = { body: 'からだ', arm: 'うで', leg: 'あし' };
 const PART_HINT = {
   body: '<b>からだ</b> を かこむように かいてね',
@@ -191,7 +193,23 @@ function drawRobotLocal(g, d, color, alpha, open) {
     if (d.crown) drawCrown(g, c.x, c.y - 1, c.s);
     if (d.legend) drawStar(g, c.x, c.y - 1 - (d.crown ? c.s * 0.8 : 0) - c.s * 0.45, c.s * 0.45);
   }
+  if (d.champ && d.body && d.body.length > 2) { const m = medalSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); drawMedal(g, m.x, m.y, m.r, d.champ); }
   g.globalAlpha = 1;
+}
+// チャンピオン メダルを さげる所: 体の まんなか より 少し 下
+function medalSpot(pts) {
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const p of pts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
+  return { x: (x0 + x1) / 2, y: y0 + (y1 - y0) * 0.6, r: Math.max(7, Math.min(16, (x1 - x0) * 0.13)) };
+}
+// チャンピオン メダル（リボン＋金の 丸＋日数）: x, y が 丸の まんなか
+function drawMedal(g, x, y, r, n) {
+  g.lineWidth = Math.max(1.5, r * 0.12); g.strokeStyle = '#3e2723';
+  g.fillStyle = '#e53935'; g.beginPath(); g.moveTo(x - r * 0.9, y - r * 2.1); g.lineTo(x - r * 0.1, y - r * 2.1); g.lineTo(x + r * 0.15, y - r * 0.6); g.lineTo(x - r * 0.45, y - r * 0.6); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#1e88e5'; g.beginPath(); g.moveTo(x + r * 0.1, y - r * 2.1); g.lineTo(x + r * 0.9, y - r * 2.1); g.lineTo(x + r * 0.45, y - r * 0.6); g.lineTo(x - r * 0.15, y - r * 0.6); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#ffc107'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.stroke();
+  g.strokeStyle = '#ffe082'; g.lineWidth = Math.max(1, r * 0.1); g.beginPath(); g.arc(x, y, r * 0.72, 0, 7); g.stroke();
+  g.fillStyle = '#6d4c00'; g.font = '900 ' + Math.round(r * 1.05) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n), x, y + r * 0.05);
 }
 // 王冠を のせる所: 体の いちばん上の あたり（上から 8 以内の 点）の まんなか
 function crownSpot(pts) {
@@ -335,7 +353,7 @@ function startBattle(friend) {
   if (!myRobot) return;
   isFriend = !!friend;
   opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: CPUS()[stage].name, color: CPUS()[stage].color, d: CPUS()[stage] };
-  S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend; S.legendB = !!opp.d.legend;
+  S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend; S.legendB = !!opp.d.legend; S.champA = myRobot.champ || 0; S.champB = opp.d.champ || 0;
   TR('battle', { side: S.side, stage: stage, opp: opp.name, me: RB.encodeDesign(myRobot), st: stat4(myRobot), crown: !!myRobot.crown, fast: fast });
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
@@ -451,6 +469,8 @@ function drawRobotWorld(b, color, flash, crown) {
   face(ctx, tf, ex, ey, r, b.facing, b.downT > 0 || b.hp <= 0);
   const legend = (b === S.A && S.legendA) || (b === S.B && S.legendB);
   if (crown || legend) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); if (crown) drawCrown(ctx, 0, -1, cs.s); if (legend) drawStar(ctx, 0, -1 - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
+  const champ = b === S.A ? S.champA : S.champB;
+  if (champ) { const ms = medalSpot(b.bodyPts), c = tf(ms.x, ms.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawMedal(ctx, 0, 0, ms.r, champ); ctx.restore(); }
   limb(ctx, legA, '#455a64', 1);
   arm(ctx, joint(b.arm), color);
 }
@@ -597,13 +617,14 @@ const RANK_API = 'https://renmy-rank.renmy-stack.workers.dev';
 if (/[?&]ranktest(=|&|$)/.test(location.search)) lsSet('ranktest', '1');
 const RANK_ON = lsGet('ranktest') === '1';
 const RANK_COLOR = '#ef6c00';
-let rankTop = null, rankMe = null, rankBusy = false;
+let rankTop = null, rankMe = null, rankBusy = false, rankGotMedal = 0;
 function rankDev() { let d = lsGet('rank.dev'); if (!d) { d = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); lsSet('rank.dev', d); } return d; }
 function seasonRange(s) { const a = new Date(s + 'T00:00:00Z'); return (a.getUTCMonth() + 1) + '/' + a.getUTCDate(); }
 async function loadRank() {
   try {
     const [t, m] = await Promise.all([fetch(RANK_API + '/top').then(r => r.json()), fetch(RANK_API + '/me?dev=' + rankDev()).then(r => r.json())]);
     rankTop = t; rankMe = m.me;
+    if (rankMe && rankMe.champDays) { const cm = champMap(), had = cm[rankMe.code] || 0; if (rankMe.champDays > had) { cm[rankMe.code] = rankMe.champDays; lsSet('champ', JSON.stringify(cm)); rankGotMedal = rankMe.champDays; if (myRobot && plainCode(myRobot) === rankMe.code) { myRobot.champ = rankMe.champDays; lsSet('robot', RB.encodeDesign(myRobot)); } TR('rankmedal', { n: rankMe.champDays }); } }
   } catch (e) { rankTop = null; }
 }
 function miniPreview(code, color, size) {
@@ -614,7 +635,7 @@ function showRank(msg) {
   mode = 'rank'; show('rank');
   $('rankmsg').textContent = msg || '';
   renderRank();
-  loadRank().then(() => { if (mode === 'rank') renderRank(); });
+  loadRank().then(() => { if (mode === 'rank') { renderRank(); if (rankGotMedal) { $('rankmsg').textContent = '🏆 チャンピオン メダルを もらった！（' + rankGotMedal + ' かいめ）'; rankGotMedal = 0; } } });
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
@@ -626,7 +647,7 @@ function renderRank() {
   const box = $('rankme'); box.innerHTML = '';
   if (me) {
     const head = document.createElement('div'); head.className = 'rk-mehead';
-    head.append(miniPreview(me.code, ME.color, 120));
+    { const md = RB.decodeDesign(me.code); if (md) { md.champ = champMap()[me.code] || 0; const cv = document.createElement('canvas'); cv.width = cv.height = 120; drawPreview(cv, md, ME.color); head.append(cv); } }
     const info = document.createElement('div');
     const nm = document.createElement('div'); nm.className = 'rk-name'; nm.textContent = me.name;
     const st = document.createElement('div'); st.className = 'rk-stat';
