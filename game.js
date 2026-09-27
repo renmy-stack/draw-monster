@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '60';
+const VERSION = '61';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -193,23 +193,27 @@ function drawRobotLocal(g, d, color, alpha, open) {
     if (d.crown) drawCrown(g, c.x, c.y - 1, c.s);
     if (d.legend) drawStar(g, c.x, c.y - 1 - (d.crown ? c.s * 0.8 : 0) - c.s * 0.45, c.s * 0.45);
   }
-  if (d.champ && d.body && d.body.length > 2) { const m = medalSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); drawMedal(g, m.x, m.y, m.r, d.champ); }
+  if (d.champ && d.body && d.body.length > 2) { const m = medalSpot(d.body.map(p => ({ x: p[0], y: p[1] })), 1, true); drawMedal(g, m.x, m.y, m.r); }
   g.globalAlpha = 1;
 }
-// チャンピオン メダルを さげる所: 体の まんなか より 少し 下
-function medalSpot(pts) {
-  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
-  for (const p of pts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
-  return { x: (x0 + x1) / 2, y: y0 + (y1 - y0) * 0.6, r: Math.max(7, Math.min(16, (x1 - x0) * 0.13)) };
+// チャンピオン メダルを さげる所: 口の すぐ 下（首元）。顔と 同じ 計算で 目の 位置を 出す（local: 描く画面・絵 / world: バトル）
+function medalSpot(pts, facing, local) {
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity;
+  for (const p of pts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); }
+  const w = x1 - x0, ex = local ? x0 + w * 0.62 : (x0 + x1) / 2 + facing * w * 0.12, ey = y0 + Math.min(22, w * 0.3 + 8), r = Math.max(3.5, Math.min(8, w * 0.1));
+  const mr = Math.max(5, Math.min(11, r * 1.35));
+  return { x: ex + facing * r * 0.4, y: ey + r * 3.3 + mr * 1.9, r: mr };
 }
-// チャンピオン メダル（リボン＋金の 丸＋日数）: x, y が 丸の まんなか
-function drawMedal(g, x, y, r, n) {
-  g.lineWidth = Math.max(1.5, r * 0.12); g.strokeStyle = '#3e2723';
-  g.fillStyle = '#e53935'; g.beginPath(); g.moveTo(x - r * 0.9, y - r * 2.1); g.lineTo(x - r * 0.1, y - r * 2.1); g.lineTo(x + r * 0.15, y - r * 0.6); g.lineTo(x - r * 0.45, y - r * 0.6); g.closePath(); g.fill(); g.stroke();
-  g.fillStyle = '#1e88e5'; g.beginPath(); g.moveTo(x + r * 0.1, y - r * 2.1); g.lineTo(x + r * 0.9, y - r * 2.1); g.lineTo(x + r * 0.45, y - r * 0.6); g.lineTo(x - r * 0.15, y - r * 0.6); g.closePath(); g.fill(); g.stroke();
+// チャンピオン メダル（リボン＋金の 丸＋うきぼりの 星）: x, y が 丸の まんなか。数字は 入れない（順位と まちがえる ため）
+function drawMedal(g, x, y, r) {
+  g.lineWidth = Math.max(1.2, r * 0.13); g.strokeStyle = '#3e2723'; g.lineJoin = 'round';
+  g.fillStyle = '#e53935'; g.beginPath(); g.moveTo(x - r * 0.95, y - r * 1.9); g.lineTo(x - r * 0.15, y - r * 1.9); g.lineTo(x + r * 0.1, y - r * 0.55); g.lineTo(x - r * 0.5, y - r * 0.55); g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#1e88e5'; g.beginPath(); g.moveTo(x + r * 0.15, y - r * 1.9); g.lineTo(x + r * 0.95, y - r * 1.9); g.lineTo(x + r * 0.5, y - r * 0.55); g.lineTo(x - r * 0.1, y - r * 0.55); g.closePath(); g.fill(); g.stroke();
   g.fillStyle = '#ffc107'; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill(); g.stroke();
-  g.strokeStyle = '#ffe082'; g.lineWidth = Math.max(1, r * 0.1); g.beginPath(); g.arc(x, y, r * 0.72, 0, 7); g.stroke();
-  g.fillStyle = '#6d4c00'; g.font = '900 ' + Math.round(r * 1.05) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n), x, y + r * 0.05);
+  g.strokeStyle = '#ffe082'; g.lineWidth = Math.max(1, r * 0.1); g.beginPath(); g.arc(x, y, r * 0.74, 0, 7); g.stroke();
+  g.fillStyle = '#e0a000'; g.beginPath();
+  for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.24 : r * 0.55; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
+  g.closePath(); g.fill();
 }
 // 王冠を のせる所: 体の いちばん上の あたり（上から 8 以内の 点）の まんなか
 function crownSpot(pts) {
@@ -470,7 +474,7 @@ function drawRobotWorld(b, color, flash, crown) {
   const legend = (b === S.A && S.legendA) || (b === S.B && S.legendB);
   if (crown || legend) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); if (crown) drawCrown(ctx, 0, -1, cs.s); if (legend) drawStar(ctx, 0, -1 - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
   const champ = b === S.A ? S.champA : S.champB;
-  if (champ) { const ms = medalSpot(b.bodyPts), c = tf(ms.x, ms.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawMedal(ctx, 0, 0, ms.r, champ); ctx.restore(); }
+  if (champ) { const ms = medalSpot(b.bodyPts, b.facing, false), c = tf(ms.x, ms.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawMedal(ctx, 0, 0, ms.r); ctx.restore(); }
   limb(ctx, legA, '#455a64', 1);
   arm(ctx, joint(b.arm), color);
 }
@@ -635,7 +639,7 @@ function showRank(msg) {
   mode = 'rank'; show('rank');
   $('rankmsg').textContent = msg || '';
   renderRank();
-  loadRank().then(() => { if (mode === 'rank') { renderRank(); if (rankGotMedal) { $('rankmsg').textContent = '🏆 チャンピオン メダルを もらった！（' + rankGotMedal + ' かいめ）'; rankGotMedal = 0; } } });
+  loadRank().then(() => { if (mode === 'rank') { renderRank(); if (rankGotMedal) { $('rankmsg').textContent = '🏆 チャンピオン メダルを もらった！（チャンピオン ' + rankGotMedal + ' かいめ）'; rankGotMedal = 0; } } });
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
