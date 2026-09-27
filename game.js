@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '58';
+const VERSION = '59';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -618,10 +618,10 @@ function showRank(msg) {
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
-  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなと そうあたりの しょうりつで じゅんい・15 ふんごとに こうしん・よる 0 じの 1 いが チャンピオン' : 'よみこみちゅう…';
+  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなと そうあたりの しょうりつで じゅんい・15 ふんごとに こうしん・よる 0 じの 1 いが チャンピオン・7 にち あそばないと おやすみ' : 'よみこみちゅう…';
   // 先週の チャンピオン
   const ch = t && t.champion, cb = $('rankchamp'); cb.hidden = !ch; cb.innerHTML = '';
-  if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.rating + '%）')); cb.append(s); }
+  if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.rating + '%）' + (ch.streak >= 2 ? '　' + ch.streak + ' にち れんぞく！' : ''))); cb.append(s); }
   // 自分の モンスター
   const box = $('rankme'); box.innerHTML = '';
   if (me) {
@@ -631,7 +631,10 @@ function renderRank() {
     const nm = document.createElement('div'); nm.className = 'rk-name'; nm.textContent = me.name;
     const st = document.createElement('div'); st.className = 'rk-stat';
     st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'みんなとの たいせんを けいさんちゅう…（15 ふん いないに でるよ）';
-    info.append(nm, st); head.append(info); box.append(head);
+    info.append(nm, st);
+    if (me.champ) { const c = document.createElement('div'); c.className = 'rk-champbadge'; c.textContent = '👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく！）' : '！'); info.append(c); }
+    head.append(info); box.append(head);
+    if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。15 ふん いないに ランキングに もどるよ'; box.append(b); }
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'この モンスターは ひょうじされて いません'; box.append(h); }
     const rec = me.recent || [];
     if (rec.length) {
@@ -713,7 +716,7 @@ async function titleRank() {
   const me = rankMe, cur = myRobot && plainCode(myRobot);
   if (me && me.pos) {
     const prev = +(lsGet('rank.lastpos') || 0);
-    cap.textContent = 'いま ' + me.pos + ' い（' + me.count + ' たい）しょうりつ ' + me.pct + '%' + (prev && me.pos < prev ? '　↑ あがった！' : '');
+    cap.textContent = (me.champ ? '👑 チャンピオン' + (me.champ >= 2 ? me.champ + ' にち れんぞく・' : '・') : '') + 'いま ' + me.pos + ' い（' + me.count + ' たい）しょうりつ ' + me.pct + '%' + (prev && me.pos < prev ? '　↑ あがった！' : '');
     lsSet('rank.lastpos', String(me.pos));
   } else cap.textContent = me ? 'とうろく ずみ・けいさんちゅう' : 'とうろくして みんなと じどうで たいせん！';
   $('rankbtn').classList.toggle('new', !me);
