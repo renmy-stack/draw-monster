@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=53">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=54">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=53">
+<link rel="stylesheet" href="style.css?v=54">
 <script src="/t.js?v=4"></script>
 </head>
 <body>
@@ -34,6 +34,7 @@
       <button id="minnaabout" class="linkbtn" hidden>どんな 5 たい？</button>
       <button id="start" class="main">モンスターを つくる</button>
       <button id="vs" class="sub vsbtn">ふたりで たたかう</button>
+      <button id="rankbtn" class="sub vsbtn rankbtn" hidden>ランクせん（みんなと たいせん）</button>
     </div>
     <div id="legendbox" hidden>
       <div class="legend-title">⭐ でんせつ（タップで しょうめいしょ）</div>
@@ -60,6 +61,30 @@
       <p>5 たい かちぬくと… <b>なにかが おこる！？</b></p>
       <p><b>ふたりで たたかう</b> で<br>ひとつの スマホで たいせん</p>
       <p>モンスターを <b>ともだちに おくって</b><br>しょうぶ</p>
+    </div>
+  </div>
+</div>
+
+<div id="rank" hidden>
+  <div class="panel">
+    <div class="rtitle">モンスター ランクせん</div>
+    <div id="ranksub" class="rk-sub"></div>
+    <div id="rankchamp" class="rk-champ" hidden></div>
+    <div class="rk-h">あなたの モンスター</div>
+    <div id="rankme"></div>
+    <div id="rankreg">
+      <canvas id="rankprev" width="240" height="240"></canvas>
+      <label class="rk-label" for="rankname">なまえ（10 もじまで）</label>
+      <input id="rankname" maxlength="10" autocomplete="off" placeholder="モンスターの なまえ">
+      <div class="rbtns"><button id="rankregbtn" class="main">いまの モンスターで とうろく</button></div>
+      <div id="rankreghint" class="rk-note"></div>
+    </div>
+    <div id="rankmsg" class="rk-msg"></div>
+    <div class="rk-h">ランキング（タップで れんしゅうじあい）</div>
+    <div id="ranklist"></div>
+    <div class="rbtns small">
+      <button id="rankdraw" class="sub">モンスターを つくる・なおす</button>
+      <button id="rankback" class="sub">タイトルへ</button>
     </div>
   </div>
 </div>
@@ -168,7 +193,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=53"></script>
-<script src="game.js?v=53"></script>
+<script src="sim.js?v=54"></script>
+<script src="game.js?v=54"></script>
 </body>
 </html>

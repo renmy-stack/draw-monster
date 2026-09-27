@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '53';
+const VERSION = '54';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -80,7 +80,7 @@ function resize() {
   sizePad(); if (mode === 'draw') drawPad();
 }
 window.addEventListener('resize', resize);
-function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
+function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff', 'rank']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
 // はやおくり: 一度でも倒した CPU との戦いだけ
 function canFast() { return mode === 'battle' && !isFriend && !!beaten[S && S.stage != null ? S.stage : stage]; }
 function updateFastBtn() { $('fast').textContent = fast ? '▶ ふつう' : '▶▶ はやおくり'; $('fast').classList.toggle('on', fast); }
@@ -96,6 +96,7 @@ function showTitle() {
   $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
   $('minnabtn').hidden = !MINNA_OPEN || lsGet('minna.cleared') === '1';
   $('minnaabout').hidden = !MINNA_OPEN;
+  $('rankbtn').hidden = !RANK_ON;
   $('minnaabout').textContent = $('minnabtn').hidden ? 'みんなの さいきょう ぐんだん って？' : 'どんな 5 たい？';   // 大きな ボタンが ない（クリアした）ときは 名前ごと
 
   drawTitleBg();
@@ -390,7 +391,7 @@ function renderBattle(dt) {
   ctx.fillStyle = '#7c83ff'; ctx.fillRect(-RB.HW, 0, 2 * RB.HW, 5);
   ctx.strokeStyle = 'rgba(255,255,255,.15)'; ctx.lineWidth = 2;
   for (let x = -RB.HW; x <= RB.HW; x += 60) { ctx.beginPath(); ctx.moveTo(x, 5); ctx.lineTo(x * 1.3, 120); ctx.stroke(); }
-  for (const k of ['B', 'A']) drawRobotWorld(S[k], k === 'A' ? ME.color : opp.color, hurt[k] > 0, k === 'A' ? S.crownA : S.crownB);
+  for (const k of ['B', 'A']) drawRobotWorld(S[k], k === 'A' ? (S.leftColor || ME.color) : opp.color, hurt[k] > 0, k === 'A' ? S.crownA : S.crownB);
   for (const k of ['A', 'B']) if (hurt[k] > 0) hurt[k]--;
   // かけら・数字
   for (let i = parts.length - 1; i >= 0; i--) {
@@ -455,7 +456,7 @@ function drawHud() {
     ctx.font = '900 12px sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = right ? 'right' : 'left';
     ctx.fillText(Math.ceil(hp), right ? x + bw - 4 : x + 4, top + 35);
   };
-  bar(12, S.A.hp, S.A.maxHp, S.side === 'vs' ? '1P' : ME.name, ME.color, false);
+  bar(12, S.A.hp, S.A.maxHp, S.leftName || (S.side === 'vs' ? '1P' : ME.name), S.leftColor || ME.color, false);
   bar(W - 12 - bw, S.B.hp, S.B.maxHp, opp.name, S.side === 'ura' ? '#ff5252' : opp.color, true);   // うらの敵は色が暗いので バーは赤
   ctx.textAlign = 'center'; ctx.font = '900 26px sans-serif'; ctx.fillStyle = S.t > RB.TIME - 5 ? '#ff8a80' : '#fff';
   ctx.fillText(Math.max(0, Math.ceil(RB.TIME - S.t)), W / 2, top + 34);
@@ -493,6 +494,17 @@ function showResult() {
     $('next').hidden = false; $('next').innerHTML = 'もういちど<small>なおして たたかう</small>';
     $('again').hidden = false; $('again').textContent = 'おなじ たたかいを みる'; $('again').className = 'sub';
     $('redraw').hidden = true; $('share').hidden = true; $('vstitle').hidden = false;
+    return;
+  }
+  if (S.side === 'rank') {
+    const mine = S.winner === S.meSide, draw0 = S.winner == null;
+    $('rtitle').textContent = draw0 ? 'ひきわけ' : mine ? 'かち！' : 'まけ…';
+    $('rtitle').className = 'rtitle ' + (draw0 ? '' : mine ? 'win' : 'lose');
+    $('rsub').textContent = (S.rankKind === 'replay' ? 'リプレイ' : 'れんしゅうじあい（てんすうは かわらない）') + '\n' + (S.reason === 'ko' ? 'KO（' + S.t.toFixed(1) + ' びょう）' : 'じかんぎれ（のこり HP ' + Math.ceil(S.A.hp) + ' たい ' + Math.ceil(S.B.hp) + '）');
+    $('rprog').innerHTML = '';
+    $('next').hidden = true; $('again').hidden = false; $('again').className = 'main'; $('again').textContent = 'もういちど みる';
+    $('share').hidden = true; $('redraw').hidden = S.rankKind !== 'practice'; $('redraw').textContent = 'モンスターを なおす';
+    $('vstitle').hidden = false; $('vstitle').textContent = 'ランクせんへ もどる';
     return;
   }
   const win = S.winner === 'A', draw = S.winner == null;
@@ -565,8 +577,124 @@ function showMinnaInfo() {
 onTap($('minnaclose'), () => { $('minnainfo').hidden = true; });
 function toMinna(from) { goMinna = false; side = 'minna'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotominna', { from }); if (lsGet('minna.intro') !== '1') showMinnaInfo(); }
 onTap($('next'), () => { if (!vs && goMinna) { toMinna('result'); startBattle(false); return; } if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
-onTap($('again'), () => { if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
+onTap($('again'), () => { if (S && S.side === 'rank' && rankLast) { rankBattle(...rankLast); return; } if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
+// ---------- モンスター ランクせん（みんなの モンスターと 自動で 対戦）----------
+// 登録（形と 名前）だけ ゲームから 送る。対戦・点数・順位は サーバー（1 時間ごと）が 決める ＝ ずる できない
+// リプレイと 練習試合は この 端末で 計算（同じ 2 体・同じ 左右なら 同じ 試合に なる）。まずは ?ranktest の 端末だけ
+const RANK_API = 'https://renmy-rank.renmy-stack.workers.dev';
+if (/[?&]ranktest(=|&|$)/.test(location.search)) lsSet('ranktest', '1');
+const RANK_ON = lsGet('ranktest') === '1';
+const RANK_COLOR = '#ef6c00';
+let rankTop = null, rankMe = null, rankBusy = false;
+function rankDev() { let d = lsGet('rank.dev'); if (!d) { d = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); lsSet('rank.dev', d); } return d; }
+function seasonRange(s) { const a = new Date(s + 'T00:00:00Z'), b = new Date(a.getTime() + 6 * 864e5); return (a.getUTCMonth() + 1) + '/' + a.getUTCDate() + '〜' + (b.getUTCMonth() + 1) + '/' + b.getUTCDate(); }
+async function loadRank() {
+  try {
+    const [t, m] = await Promise.all([fetch(RANK_API + '/top').then(r => r.json()), fetch(RANK_API + '/me?dev=' + rankDev()).then(r => r.json())]);
+    rankTop = t; rankMe = m.me;
+  } catch (e) { rankTop = null; }
+}
+function miniPreview(code, color, size) {
+  const c = document.createElement('canvas'); c.width = c.height = size || 96;
+  const d = RB.decodeDesign(code); if (d) drawPreview(c, d, color); return c;
+}
+function showRank(msg) {
+  mode = 'rank'; show('rank');
+  $('rankmsg').textContent = msg || '';
+  renderRank();
+  loadRank().then(() => { if (mode === 'rank') renderRank(); });
+}
+function renderRank() {
+  const t = rankTop, me = rankMe;
+  $('ranksub').textContent = t ? 'こんしゅうの シーズン ' + seasonRange(t.season) + '・' + t.count + ' たい さんか・1 じかんごとに じどうで たいせん' : 'よみこみちゅう…';
+  // 先週の チャンピオン
+  const ch = t && t.champion, cb = $('rankchamp'); cb.hidden = !ch; cb.innerHTML = '';
+  if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 せんしゅうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（' + ch.w + 'しょう ' + ch.l + 'はい）')); cb.append(s); }
+  // 自分の モンスター
+  const box = $('rankme'); box.innerHTML = '';
+  if (me) {
+    const head = document.createElement('div'); head.className = 'rk-mehead';
+    head.append(miniPreview(me.code, ME.color, 120));
+    const info = document.createElement('div');
+    const nm = document.createElement('div'); nm.className = 'rk-name'; nm.textContent = me.name;
+    const st = document.createElement('div'); st.className = 'rk-stat';
+    st.textContent = (me.pos ? me.pos + ' い / ' + (t ? t.count : '?') + ' たい' : 'じゅんいは つぎの たいせん から') + '　てん ' + Math.round(me.rating) + '　' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '');
+    info.append(nm, st); head.append(info); box.append(head);
+    if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'この モンスターは ひょうじされて いません'; box.append(h); }
+    const rec = me.recent || [];
+    if (rec.length) {
+      const lt = document.createElement('div'); lt.className = 'rk-h'; lt.textContent = 'さいきんの たいせん（タップで リプレイ）'; box.append(lt);
+      for (const r of rec) {
+        const row = document.createElement('button'); row.className = 'rk-row';
+        const chip = document.createElement('span'); chip.className = 'rk-chip ' + r.r; chip.textContent = r.r === 'W' ? 'かち' : r.r === 'L' ? 'まけ' : 'わけ';
+        const nmm = document.createElement('span'); nmm.className = 'rk-opp'; nmm.textContent = 'vs ' + r.n;
+        const dd = document.createElement('span'); dd.className = 'rk-d'; dd.textContent = (r.d >= 0 ? '+' : '') + r.d;
+        row.append(chip, nmm, dd); row.addEventListener('click', () => rankReplay(me, r)); box.append(row);
+      }
+    } else { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'つぎの たいせんは まいじ 7 ふん ごろ。すこし まってね'; box.append(n); }
+  } else {
+    const n = document.createElement('div'); n.className = 'rk-note';
+    n.textContent = myRobot ? 'いまの モンスターを とうろくすると、1 じかんごとに みんなの モンスターと じどうで たたかうよ' : 'まず モンスターを つくってね';
+    box.append(n);
+  }
+  // 登録（いまの モンスター）
+  const same = me && myRobot && plainCode(myRobot) === me.code;
+  $('rankreg').hidden = !myRobot || same;
+  $('rankregbtn').textContent = me ? 'いまの モンスターで とうろくしなおす' : 'いまの モンスターで とうろく';
+  $('rankreghint').textContent = me ? 'とうろくしなおすと てんすうは 1000 から やりなおし' : '';
+  if (myRobot) drawPreview($('rankprev'), myRobot, ME.color);
+  if (!$('rankname').value && me) $('rankname').value = me.name;
+  // ランキング
+  const list = $('ranklist'); list.innerHTML = '';
+  for (const m of (t && t.top) || []) {
+    const row = document.createElement('button'); row.className = 'rk-row rk-top' + (me && m.id === me.id ? ' mine' : '');
+    const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = m.pos || '-';
+    const nm = document.createElement('span'); nm.className = 'rk-opp'; nm.textContent = m.name;
+    const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = Math.round(m.rating) + '　' + m.w + '-' + m.l;
+    row.append(p, miniPreview(m.code, RANK_COLOR, 64), nm, sc);
+    row.addEventListener('click', () => rankPractice(m)); list.append(row);
+  }
+  if (t && !(t.top || []).length) list.textContent = 'まだ だれも とうろく して いないよ';
+}
+async function rankRegister() {
+  if (!myRobot || rankBusy) return;
+  const name = $('rankname').value.trim();
+  if (!name) { $('rankmsg').textContent = 'なまえを いれてね'; return; }
+  rankBusy = true; $('rankmsg').textContent = 'とうろくちゅう…';
+  try {
+    const r = await (await fetch(RANK_API + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: plainCode(myRobot), name }) })).json();
+    if (r.error) $('rankmsg').textContent = r.error;
+    else { TR('rankreg', { me: plainCode(myRobot) }); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ つぎの たいせんは まいじ 7 ふん ごろ'; }
+  } catch (e) { $('rankmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
+  rankBusy = false; if (mode === 'rank') renderRank();
+}
+// 対戦を 見る: side は 自分が 左（A）か 右（B）か。同じ 左右で 計算するので サーバーと 同じ 試合に なる
+function rankBattle(leftCode, rightCode, leftName, rightName, leftColor, rightColor, meSide, kind) {
+  const L = RB.decodeDesign(leftCode), R = RB.decodeDesign(rightCode); if (!L || !R) return;
+  isFriend = true;
+  opp = { name: rightName, color: rightColor, d: R };
+  S = RB.create(L, R); S.stage = 0; S.side = 'rank'; S.leftName = leftName; S.leftColor = leftColor; S.meSide = meSide; S.rankKind = kind;
+  S.crownA = false; S.crownB = false;
+  rankLast = [leftCode, rightCode, leftName, rightName, leftColor, rightColor, meSide, kind];
+  acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
+  mode = 'battle'; show('none');
+}
+let rankLast = null;
+function rankReplay(me, r) {
+  TR('rankreplay', null);
+  if (r.s === 'A') rankBattle(me.code, r.c, me.name, r.n, ME.color, RANK_COLOR, 'A', 'replay');
+  else rankBattle(r.c, me.code, r.n, me.name, RANK_COLOR, ME.color, 'B', 'replay');
+}
+function rankPractice(m) {
+  if (!myRobot) { $('rankmsg').textContent = 'れんしゅうじあいは モンスターを つくってから'; return; }
+  TR('rankpractice', null);
+  rankBattle(plainCode(myRobot), m.code, ME.name, m.name, ME.color, RANK_COLOR, 'A', 'practice');
+}
+onTap($('rankbtn'), () => showRank());
+onTap($('rankregbtn'), rankRegister);
+onTap($('rankdraw'), showDraw);
+onTap($('rankback'), showTitle);
 // ---------- うら 5 人抜き: 王冠・でんどういり・エンディング ----------
 let endT0 = 0, confetti = [];
 function onUraClear() {
@@ -708,7 +836,7 @@ function renderEnding(now) {
   if (t > 1.2) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = '700 14px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('タップで つぎへ', W / 2, H - 40); ctx.globalAlpha = 1; }
 }
 onTap($('vs'), startVsMode);
-onTap($('vstitle'), exitVs);
+onTap($('vstitle'), () => { if (S && S.side === 'rank') showRank(); else exitVs(); });
 onTap($('handoffgo'), () => { vs.step = 2; loadInto(vsLast(2)); showDraw(); });
 // ---------- ふたりで たたかう ----------
 function padColor() { return vs && vs.step === 2 ? P2.color : ME.color; }
@@ -792,7 +920,7 @@ function updateSideUi() {
 onTap($('sidebtn'), () => { const order = ['omote'].concat(uraOpen ? ['ura'] : [], MINNA_OPEN ? ['minna'] : []); side = order[(order.indexOf(side) + 1) % order.length]; lsSet('side', side); loadSide(); updateSideUi(); if (side === 'minna' && lsGet('minna.intro') !== '1') showMinnaInfo(); setHint(side === 'ura' ? 'うら かちぬき：とんでもなく つよい 5 たい' : side === 'minna' ? 'みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい' : ''); });
 onTap($('fast'), () => { fast = !fast; TR('fast', { on: fast }); lsSet('fast', fast ? '1' : '0'); updateFastBtn(); });
 // 戦いの途中で もどる（勝ち抜きの途中経過は そのまま。戦いは決定的なので やめても 得はしない）
-onTap($('quit'), () => { if (mode === 'battle' || mode === 'pause') { TR('quit', { side: S && S.side, stage: S && S.stage, t: S && Math.round(S.t * 10) / 10 }); showDraw(); } });
+onTap($('quit'), () => { if ((mode === 'battle' || mode === 'pause') && S && S.side === 'rank') { showRank(); return; } if (mode === 'battle' || mode === 'pause') { TR('quit', { side: S && S.side, stage: S && S.stage, t: S && Math.round(S.t * 10) / 10 }); showDraw(); } });
 onTap($('closeshare'), () => { $('sharebox').hidden = true; });
 onTap($('copy'), () => {
   const ta = $('sharetext'); ta.select();
@@ -833,6 +961,7 @@ showTitle();
   if (q.has('beaten')) beaten = [true, true, true, true, true];   // 開発用: 早送りボタンを見る
   if (q.get('use')) { const d = RB.decodeDesign(q.get('use')); if (d) { myRobot = withCrown(d); strokes = { body: d.body, arm: d.arm, leg: d.leg }; lsSet('robot', RB.encodeDesign(myRobot)); resetAllRuns(); showTitle(); } }   // オーナーの 確認用: その モンスターを じぶんの モンスターに
   if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
+  if (q.has('rankdev') && RANK_ON) { if (!myRobot) sample(); showRank(); if (q.get('rankdev') === 'replay') setTimeout(() => { if (rankMe && rankMe.recent[0]) { rankReplay(rankMe, rankMe.recent[0]); } }, 3000); }   // 開発用: ランクせん
   if (q.has('minnainfo')) showMinnaInfo();   // 開発用: しょうかい 画面
   if (q.has('certpreview')) { if (!myRobot) sample(); openCertBox(makeCert(plainCode(myRobot), '2026/9/27')); }   // オーナーの 確認用: でんせつ しょうめいしょ
   if (q.has('minna') && MINNA_OPEN) { side = 'minna'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: みんな

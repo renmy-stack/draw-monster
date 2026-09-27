@@ -18,11 +18,11 @@ button { font: inherit; }
 #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 
 /* パネル */
-#title, #result, #sharebox {
+#title, #result, #sharebox, #rank {
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 16px; background: rgba(10, 12, 30, .55);
 }
-#hallbox[hidden], #minnainfo[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
+#hallbox[hidden], #rank[hidden], #rankreg[hidden], #rankchamp[hidden], #minnainfo[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
 .panel {
   width: min(92vw, 400px); max-height: calc(100% - 20px); overflow-y: auto;
   background: var(--paper); border: 4px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow);
@@ -220,3 +220,28 @@ button:disabled { opacity: .45; }
 .mf-arrow { color: #26a69a; font-size: 11px; line-height: 1.2; }
 .mf-proof { margin-top: 8px; padding: 6px 8px; border: 2px solid #ffd54f; border-radius: 10px; background: #fff8dc; font-size: 13px; font-weight: 700; line-height: 1.45; }
 .mf-end { margin-top: 8px; font-size: 13px; font-weight: 700; line-height: 1.45; }
+
+/* モンスター ランクせん */
+#rank .panel { max-height: 100%; overflow-y: auto; }
+.rankbtn { background: #fff3e0; border-color: #ef6c00; color: #bf360c; }
+.rk-sub { font-size: 12px; color: #555; margin-top: 2px; }
+.rk-h { margin: 12px 0 4px; font-weight: 900; font-size: 14px; color: #ef6c00; text-align: left; }
+.rk-champ { display: flex; align-items: center; gap: 10px; margin-top: 8px; padding: 6px 10px; border: 2px solid #ffb300; border-radius: 12px; background: #fff8e1; text-align: left; font-size: 13px; }
+.rk-champ canvas { width: 56px; height: 56px; border-radius: 8px; background: #1f2250; flex: none; }
+.rk-mehead { display: flex; align-items: center; gap: 12px; text-align: left; }
+.rk-mehead canvas { width: 72px; height: 72px; border-radius: 10px; background: #1f2250; flex: none; }
+.rk-name { font-weight: 900; font-size: 18px; }
+.rk-stat { font-size: 13px; color: #444; }
+.rk-note { font-size: 12px; color: #666; margin-top: 4px; }
+.rk-msg { min-height: 1.3em; font-size: 13px; font-weight: 700; color: #bf360c; margin-top: 6px; }
+.rk-row { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 4px; padding: 6px 8px; border: 1px solid #e0d8cc; border-radius: 10px; background: #fff; font-size: 13px; text-align: left; box-shadow: none; }
+.rk-row.mine { border-color: #1e88e5; background: #e3f2fd; }
+.rk-row canvas { width: 36px; height: 36px; border-radius: 6px; background: #1f2250; flex: none; }
+.rk-opp { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 700; }
+.rk-d { font-family: ui-monospace, monospace; font-size: 12px; color: #555; white-space: nowrap; }
+.rk-pos { width: 2em; text-align: center; font-weight: 900; color: #ef6c00; }
+.rk-chip { font-size: 11px; font-weight: 900; border-radius: 999px; padding: 1px 8px; color: #fff; background: #9e9e9e; }
+.rk-chip.W { background: #43a047; } .rk-chip.L { background: #e53935; }
+#rankprev { width: 90px; height: 90px; display: block; margin: 6px auto 0; }
+.rk-label { display: block; font-size: 12px; font-weight: 700; color: #555; margin-top: 4px; }
+#rankname { width: 100%; max-width: 240px; font-size: 16px; padding: 6px 10px; border: 2px solid #ef6c00; border-radius: 10px; margin-top: 2px; }
