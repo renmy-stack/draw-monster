@@ -1,4 +1,4 @@
-# モンスター ランクせん: 5 分ごとに 登録中の モンスターどうしを 対戦させて 点数・順位を 書き戻す（tools/rank_batch.js）
+# モンスター ランクせん: 5 分ごとに まだの 組み合わせを 総当たりで 計算して 勝率・順位を 書き戻す（tools/rank_batch.js）
 # 管理の 合言葉は リポジトリの Secrets の RANK_ADMIN
 name: rank
 on:
@@ -17,6 +17,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+      # 計算ずみの 組み合わせ（.rankcache/pairs.json）を 前の 回から 引きつぐ
+      - uses: actions/cache@v4
+        with:
+          path: .rankcache
+          key: rank-pairs-${{ github.run_id }}
+          restore-keys: rank-pairs-
       - run: node tools/rank_batch.js
         env:
           RANK_ADMIN: ${{ secrets.RANK_ADMIN }}

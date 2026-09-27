@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '56';
+const VERSION = '57';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -591,7 +591,7 @@ onTap($('next'), () => { if (!vs && goMinna) { toMinna('result'); startBattle(fa
 onTap($('again'), () => { if (S && S.side === 'rank' && rankLast) { rankBattle(...rankLast); return; } if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 // ---------- モンスター ランクせん（みんなの モンスターと 自動で 対戦）----------
-// 登録（形と 名前）だけ ゲームから 送る。対戦・点数は サーバー（5 分ごと、シーズンは 1 日）が 決める ＝ ずる できない
+// 登録（形と 名前）だけ ゲームから 送る。順位は サーバーが みんなと 総当たり（左右 入れかえて 2 戦）した 勝率で 決める ＝ 運も ずるも ない
 // リプレイと 練習試合は この 端末で 計算（同じ 2 体・同じ 左右なら 同じ 試合に なる）。まずは ?ranktest の 端末だけ
 const RANK_API = 'https://renmy-rank.renmy-stack.workers.dev';
 if (/[?&]ranktest(=|&|$)/.test(location.search)) lsSet('ranktest', '1');
@@ -618,10 +618,10 @@ function showRank(msg) {
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
-  $('ranksub').textContent = t ? 'きょう（' + seasonRange(t.season) + '）の シーズン・' + t.count + ' たい さんか・5 ふんごとに じどうで たいせん・よる 0 じに リセット' : 'よみこみちゅう…';
+  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなと そうあたりの しょうりつで じゅんい・5 ふんごとに こうしん・よる 0 じの 1 いが チャンピオン' : 'よみこみちゅう…';
   // 先週の チャンピオン
   const ch = t && t.champion, cb = $('rankchamp'); cb.hidden = !ch; cb.innerHTML = '';
-  if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（' + ch.w + 'しょう ' + ch.l + 'はい）')); cb.append(s); }
+  if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.rating + '%）')); cb.append(s); }
   // 自分の モンスター
   const box = $('rankme'); box.innerHTML = '';
   if (me) {
@@ -630,30 +630,30 @@ function renderRank() {
     const info = document.createElement('div');
     const nm = document.createElement('div'); nm.className = 'rk-name'; nm.textContent = me.name;
     const st = document.createElement('div'); st.className = 'rk-stat';
-    st.textContent = (me.pos ? me.pos + ' い / ' + (t ? t.count : '?') + ' たい' : 'じゅんいは つぎの たいせん から') + '　てん ' + Math.round(me.rating) + '　' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '');
+    st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'みんなとの たいせんを けいさんちゅう…（5 ふん くらい）';
     info.append(nm, st); head.append(info); box.append(head);
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'この モンスターは ひょうじされて いません'; box.append(h); }
     const rec = me.recent || [];
     if (rec.length) {
-      const lt = document.createElement('div'); lt.className = 'rk-h'; lt.textContent = 'さいきんの たいせん（タップで リプレイ）'; box.append(lt);
+      const lt = document.createElement('div'); lt.className = 'rk-h'; lt.textContent = 'つよい あいてとの たいせん（タップで リプレイ）'; box.append(lt);
       for (const r of rec) {
         const row = document.createElement('button'); row.className = 'rk-row';
         const chip = document.createElement('span'); chip.className = 'rk-chip ' + r.r; chip.textContent = r.r === 'W' ? 'かち' : r.r === 'L' ? 'まけ' : 'わけ';
         const nmm = document.createElement('span'); nmm.className = 'rk-opp'; nmm.textContent = 'vs ' + r.n;
-        const dd = document.createElement('span'); dd.className = 'rk-d'; dd.textContent = (r.d >= 0 ? '+' : '') + r.d;
+        const dd = document.createElement('span'); dd.className = 'rk-d'; dd.textContent = r.s === 'A' ? 'ひだり' : 'みぎ';
         row.append(chip, nmm, dd); row.addEventListener('click', () => rankReplay(me, r)); box.append(row);
       }
-    } else { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'つぎの たいせんまで 5 ふん くらい まってね'; box.append(n); }
+    } else { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'みんなとの たいせんを けいさんちゅう。5 ふん くらい まってね'; box.append(n); }
   } else {
     const n = document.createElement('div'); n.className = 'rk-note';
-    n.textContent = myRobot ? 'いまの モンスターを とうろくすると、5 ふんごとに みんなの モンスターと じどうで たたかうよ' : 'まず モンスターを つくってね';
+    n.textContent = myRobot ? 'いまの モンスターを とうろくすると、みんなの モンスター ぜんいんと じどうで たたかって じゅんいが きまるよ' : 'まず モンスターを つくってね';
     box.append(n);
   }
   // 登録（いまの モンスター）
   const same = me && myRobot && plainCode(myRobot) === me.code;
   $('rankreg').hidden = !myRobot || same;
   $('rankregbtn').textContent = me ? 'いまの モンスターで とうろくしなおす' : 'いまの モンスターで とうろく';
-  $('rankreghint').textContent = me ? 'とうろくしなおすと てんすうは 1000 から やりなおし' : '';
+  $('rankreghint').textContent = me ? 'とうろくしなおすと みんなと たたかい なおして じゅんいが きまるよ' : '';
   if (myRobot) drawPreview($('rankprev'), myRobot, ME.color);
   if (!$('rankname').value && me) $('rankname').value = me.name;
   // ランキング
@@ -662,7 +662,7 @@ function renderRank() {
     const row = document.createElement('button'); row.className = 'rk-row rk-top' + (me && m.id === me.id ? ' mine' : '');
     const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = ti + 1;
     const nm = document.createElement('span'); nm.className = 'rk-opp'; nm.textContent = m.name;
-    const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = Math.round(m.rating) + '　' + m.w + '-' + m.l;
+    const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = m.pct + '%';
     row.append(p, miniPreview(m.code, RANK_COLOR, 64), nm, sc);
     row.addEventListener('click', () => rankPractice(m)); list.append(row);
   }
@@ -676,7 +676,7 @@ async function rankRegister() {
   try {
     const r = await (await fetch(RANK_API + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: plainCode(myRobot), name }) })).json();
     if (r.error) $('rankmsg').textContent = r.error;
-    else { TR('rankreg', { me: plainCode(myRobot) }); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ 5 ふん くらいで たいせんが はじまるよ'; }
+    else { TR('rankreg', { me: plainCode(myRobot) }); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ 5 ふん くらいで みんなとの たいせん けっかが でるよ'; }
   } catch (e) { $('rankmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   rankBusy = false; if (mode === 'rank') renderRank();
 }
@@ -692,10 +692,13 @@ function rankBattle(leftCode, rightCode, leftName, rightName, leftColor, rightCo
   mode = 'battle'; show('none');
 }
 let rankLast = null;
-function rankReplay(me, r) {
+async function rankReplay(me, r) {
   TR('rankreplay', null);
-  if (r.s === 'A') rankBattle(me.code, r.c, me.name, r.n, ME.color, RANK_COLOR, 'A', 'replay');
-  else rankBattle(r.c, me.code, r.n, me.name, RANK_COLOR, ME.color, 'B', 'replay');
+  let c = r.c;
+  if (!c) { try { c = (await (await fetch(RANK_API + '/mon?id=' + encodeURIComponent(r.o))).json()).code; } catch (e) {} }
+  if (!c) { $('rankmsg').textContent = 'あいてが みつからなかった'; return; }
+  if (r.s === 'A') rankBattle(me.code, c, me.name, r.n, ME.color, RANK_COLOR, 'A', 'replay');
+  else rankBattle(c, me.code, r.n, me.name, RANK_COLOR, ME.color, 'B', 'replay');
 }
 function rankPractice(m) {
   if (!myRobot) { $('rankmsg').textContent = 'れんしゅうじあいは モンスターを つくってから'; return; }
@@ -710,11 +713,11 @@ async function titleRank() {
   const me = rankMe, cur = myRobot && plainCode(myRobot);
   if (me && me.pos) {
     const prev = +(lsGet('rank.lastpos') || 0);
-    cap.textContent = 'いま ' + me.pos + ' い（' + (rankTop ? rankTop.count : '?') + ' たい）' + (prev && me.pos < prev ? '　↑ あがった！' : '');
+    cap.textContent = 'いま ' + me.pos + ' い（' + me.count + ' たい）しょうりつ ' + me.pct + '%' + (prev && me.pos < prev ? '　↑ あがった！' : '');
     lsSet('rank.lastpos', String(me.pos));
-  } else cap.textContent = me ? 'とうろく ずみ・もうすぐ たいせん' : 'とうろくして じどうで たいせん！';
+  } else cap.textContent = me ? 'とうろく ずみ・けいさんちゅう' : 'とうろくして みんなと じどうで たいせん！';
   $('rankbtn').classList.toggle('new', !me);
-  tr.hidden = !me; tr.textContent = me ? 'ランクせん ' + (me.pos ? me.pos + ' い' : 'たいせん まち') + (cur && cur !== me.code ? '（べつの モンスターで とうろくちゅう）' : '') : '';
+  tr.hidden = !me; tr.textContent = me ? 'ランクせん ' + (me.pos ? me.pos + ' い・しょうりつ ' + me.pct + '%' : 'けいさんちゅう') + (cur && cur !== me.code ? '（べつの モンスターで とうろくちゅう）' : '') : '';
 }
 onTap($('torank'), () => { TR('torank', null); showRank('いまの モンスターで とうろく できるよ'); });
 onTap($('rankregbtn'), rankRegister);
