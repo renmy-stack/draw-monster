@@ -11,7 +11,7 @@ const { Worker, isMainThread, parentPort, workerData } = require('worker_threads
 const RB = require('../sim.js');
 const API = 'https://renmy-rank.renmy-stack.workers.dev';
 const KEY = process.env.RANK_ADMIN;
-const BUDGET = 8000, TOP_N = 30, CHAMP_MIN = 20;
+const BUDGET = 8000, TOP_N = 30, CHAMP_MIN = 20;   // チャンピオンは 20 戦 以上（登録が 少なくて 総当たりが 20 戦 未満 なら 全員と 戦い おわって いれば よい）
 const CACHE = path.join(__dirname, '..', '.rankcache', 'pairs.json');
 
 const seasonOf = t => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
@@ -90,7 +90,7 @@ async function main() {
   // 4) チャンピオン（前の 順位表が きのうの もの なら、その 1 位）
   let champion = null;
   const prev = act.board;
-  if (prev && prev.t && seasonOf(prev.t) !== season && prev.top && prev.top[0] && prev.top[0].pl >= CHAMP_MIN && byId.has(prev.top[0].id)) {
+  if (prev && prev.t && seasonOf(prev.t) !== season && prev.top && prev.top[0] && prev.top[0].pl >= Math.min(CHAMP_MIN, prev.top[0].tot) && byId.has(prev.top[0].id)) {
     const c = prev.top[0];
     champion = { season: seasonOf(prev.t), id: c.id, name: c.name, code: byId.get(c.id).code, pct: c.pct, w: 0, l: 0, d: 0, n: prev.n };
   }
