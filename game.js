@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '54';
+const VERSION = '55';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -580,7 +580,7 @@ onTap($('next'), () => { if (!vs && goMinna) { toMinna('result'); startBattle(fa
 onTap($('again'), () => { if (S && S.side === 'rank' && rankLast) { rankBattle(...rankLast); return; } if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 // ---------- モンスター ランクせん（みんなの モンスターと 自動で 対戦）----------
-// 登録（形と 名前）だけ ゲームから 送る。対戦・点数・順位は サーバー（1 時間ごと）が 決める ＝ ずる できない
+// 登録（形と 名前）だけ ゲームから 送る。対戦・点数は サーバー（5 分ごと、シーズンは 1 日）が 決める ＝ ずる できない
 // リプレイと 練習試合は この 端末で 計算（同じ 2 体・同じ 左右なら 同じ 試合に なる）。まずは ?ranktest の 端末だけ
 const RANK_API = 'https://renmy-rank.renmy-stack.workers.dev';
 if (/[?&]ranktest(=|&|$)/.test(location.search)) lsSet('ranktest', '1');
@@ -588,7 +588,7 @@ const RANK_ON = lsGet('ranktest') === '1';
 const RANK_COLOR = '#ef6c00';
 let rankTop = null, rankMe = null, rankBusy = false;
 function rankDev() { let d = lsGet('rank.dev'); if (!d) { d = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); lsSet('rank.dev', d); } return d; }
-function seasonRange(s) { const a = new Date(s + 'T00:00:00Z'), b = new Date(a.getTime() + 6 * 864e5); return (a.getUTCMonth() + 1) + '/' + a.getUTCDate() + '〜' + (b.getUTCMonth() + 1) + '/' + b.getUTCDate(); }
+function seasonRange(s) { const a = new Date(s + 'T00:00:00Z'); return (a.getUTCMonth() + 1) + '/' + a.getUTCDate(); }
 async function loadRank() {
   try {
     const [t, m] = await Promise.all([fetch(RANK_API + '/top').then(r => r.json()), fetch(RANK_API + '/me?dev=' + rankDev()).then(r => r.json())]);
@@ -607,10 +607,10 @@ function showRank(msg) {
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
-  $('ranksub').textContent = t ? 'こんしゅうの シーズン ' + seasonRange(t.season) + '・' + t.count + ' たい さんか・1 じかんごとに じどうで たいせん' : 'よみこみちゅう…';
+  $('ranksub').textContent = t ? 'きょう（' + seasonRange(t.season) + '）の シーズン・' + t.count + ' たい さんか・5 ふんごとに じどうで たいせん・よる 0 じに リセット' : 'よみこみちゅう…';
   // 先週の チャンピオン
   const ch = t && t.champion, cb = $('rankchamp'); cb.hidden = !ch; cb.innerHTML = '';
-  if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 せんしゅうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（' + ch.w + 'しょう ' + ch.l + 'はい）')); cb.append(s); }
+  if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（' + ch.w + 'しょう ' + ch.l + 'はい）')); cb.append(s); }
   // 自分の モンスター
   const box = $('rankme'); box.innerHTML = '';
   if (me) {
@@ -632,10 +632,10 @@ function renderRank() {
         const dd = document.createElement('span'); dd.className = 'rk-d'; dd.textContent = (r.d >= 0 ? '+' : '') + r.d;
         row.append(chip, nmm, dd); row.addEventListener('click', () => rankReplay(me, r)); box.append(row);
       }
-    } else { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'つぎの たいせんは まいじ 7 ふん ごろ。すこし まってね'; box.append(n); }
+    } else { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'つぎの たいせんまで 5 ふん くらい まってね'; box.append(n); }
   } else {
     const n = document.createElement('div'); n.className = 'rk-note';
-    n.textContent = myRobot ? 'いまの モンスターを とうろくすると、1 じかんごとに みんなの モンスターと じどうで たたかうよ' : 'まず モンスターを つくってね';
+    n.textContent = myRobot ? 'いまの モンスターを とうろくすると、5 ふんごとに みんなの モンスターと じどうで たたかうよ' : 'まず モンスターを つくってね';
     box.append(n);
   }
   // 登録（いまの モンスター）
@@ -647,9 +647,9 @@ function renderRank() {
   if (!$('rankname').value && me) $('rankname').value = me.name;
   // ランキング
   const list = $('ranklist'); list.innerHTML = '';
-  for (const m of (t && t.top) || []) {
+  for (const [ti, m] of ((t && t.top) || []).entries()) {
     const row = document.createElement('button'); row.className = 'rk-row rk-top' + (me && m.id === me.id ? ' mine' : '');
-    const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = m.pos || '-';
+    const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = ti + 1;
     const nm = document.createElement('span'); nm.className = 'rk-opp'; nm.textContent = m.name;
     const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = Math.round(m.rating) + '　' + m.w + '-' + m.l;
     row.append(p, miniPreview(m.code, RANK_COLOR, 64), nm, sc);
@@ -665,7 +665,7 @@ async function rankRegister() {
   try {
     const r = await (await fetch(RANK_API + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: plainCode(myRobot), name }) })).json();
     if (r.error) $('rankmsg').textContent = r.error;
-    else { TR('rankreg', { me: plainCode(myRobot) }); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ つぎの たいせんは まいじ 7 ふん ごろ'; }
+    else { TR('rankreg', { me: plainCode(myRobot) }); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ 5 ふん くらいで たいせんが はじまるよ'; }
   } catch (e) { $('rankmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   rankBusy = false; if (mode === 'rank') renderRank();
 }

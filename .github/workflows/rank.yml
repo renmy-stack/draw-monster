@@ -1,9 +1,9 @@
-# モンスター ランクせん: 1 時間ごとに 登録中の モンスターどうしを 対戦させて 点数・順位を 書き戻す（tools/rank_batch.js）
+# モンスター ランクせん: 5 分ごとに 登録中の モンスターどうしを 対戦させて 点数・順位を 書き戻す（tools/rank_batch.js）
 # 管理の 合言葉は リポジトリの Secrets の RANK_ADMIN
 name: rank
 on:
   schedule:
-    - cron: '7 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
 permissions:
   contents: read
@@ -11,7 +11,7 @@ concurrency: rank
 jobs:
   batch:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 4
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

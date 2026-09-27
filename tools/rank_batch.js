@@ -1,13 +1,13 @@
-// node tools/rank_batch.js — モンスター ランクせん の 1 時間ごとの 計算（GitHub Actions が 実行。RANK_ADMIN が いる）
+// node tools/rank_batch.js — モンスター ランクせん の 5 分ごとの 計算（GitHub Actions が 実行。RANK_ADMIN が いる）
 // 1. 登録中の モンスターを ぜんぶ 受け取る
-// 2. 週が かわっていたら、先週の 1 位を チャンピオンに 記録して、点数・勝ち負けを 0 から
-// 3. 点数の 近い 相手と 自動で 対戦（1 体 あたり 約 FIGHTS 戦）。点数は イロレーティング
-// 4. 点数・順位・最近の 10 戦を 書き戻す
+// 2. 日が かわっていたら、きのうの 1 位を チャンピオンに 記録して、点数・勝ち負けを 0 から
+// 3. 点数の 近い 相手と 自動で 対戦（1 回 最大 MAXF 戦。登録が 少なければ 1 体 あたり 2 戦 前後）。点数は イロレーティング
+// 4. 戦った モンスターだけ 点数・最近の 10 戦を 書き戻す（順位は 見るときに 数える。書きこみ枠の 節約）
 'use strict';
 const RB = require('../sim.js');
 const API = 'https://renmy-rank.renmy-stack.workers.dev';
 const KEY = process.env.RANK_ADMIN;
-const FIGHTS = 4, WINDOW = 8, RECENT = 10, CHAMP_MIN = 5;
+const MAXF = 60, WINDOW = 8, RECENT = 10, CHAMP_MIN = 5;
 const H = { Authorization: 'Bearer ' + KEY, 'Content-Type': 'application/json' };
 
 async function main() {
@@ -32,35 +32,30 @@ async function main() {
   live.sort((a, b) => b.rating - a.rating);
   let fights = 0;
   if (live.length >= 2) {
-    const played = new Map(live.map(r => [r.id, 0]));
-    for (let i = 0; i < live.length; i++) {
+    // ならびを まぜて、ひとりずつ 近い 点数の 相手と 1 戦（上限 MAXF 戦）
+    const order = live.map((r, i) => i).sort(() => Math.random() - 0.5);
+    for (let rep = 0; rep < 2 && fights < MAXF; rep++) for (const i of order) {
+      if (fights >= MAXF) break;
       const a = live[i];
-      for (let k = 0; k < FIGHTS / 2; k++) {
-        // 点数の 近い 相手（上下 WINDOW 位 以内）から ランダム。同じ 端末の モンスターとは 戦わない
-        const lo = Math.max(0, i - WINDOW), hi = Math.min(live.length - 1, i + WINDOW);
-        const pool = []; for (let j = lo; j <= hi; j++) if (j !== i && live[j].dev !== a.dev) pool.push(live[j]);
-        if (!pool.length) break;
-        const b = pool[Math.floor(Math.random() * pool.length)];
-        const left = Math.random() < 0.5 ? a : b, right = left === a ? b : a;   // 左右は ランダム
-        const W = RB.fight(dec.get(left.id), dec.get(right.id)).winner;
-        const sL = W === 'A' ? 1 : W === 'B' ? 0 : 0.5;
-        elo(left, right, sL, now);
-        played.set(left.id, played.get(left.id) + 1); played.set(right.id, played.get(right.id) + 1);
-        fights++;
-      }
+      const lo = Math.max(0, i - WINDOW), hi = Math.min(live.length - 1, i + WINDOW);
+      const pool = []; for (let j = lo; j <= hi; j++) if (j !== i && live[j].dev !== a.dev) pool.push(live[j]);
+      if (!pool.length) continue;
+      const b = pool[Math.floor(Math.random() * pool.length)];
+      const left = Math.random() < 0.5 ? a : b, right = left === a ? b : a;   // 左右は ランダム
+      const W = RB.fight(dec.get(left.id), dec.get(right.id)).winner;
+      elo(left, right, W === 'A' ? 1 : W === 'B' ? 0 : 0.5, now);
+      fights++;
     }
   }
 
-  // 4) 順位
-  rows.sort((a, b) => b.rating - a.rating);
-  rows.forEach((r, i) => { if (r.pos !== i + 1) { r.pos = i + 1; r.changed = true; } });
-  const out = rows.filter(r => r.changed).map(r => ({ id: r.id, season: r.season, rating: Math.round(r.rating * 10) / 10, w: r.w, l: r.l, d: r.d, pos: r.pos, recent: r.recent }));
+  // 4) 戦った モンスターだけ 書き戻す
+  const out = rows.filter(r => r.changed).map(r => ({ id: r.id, season: r.season, rating: Math.round(r.rating * 10) / 10, w: r.w, l: r.l, d: r.d, recent: r.recent }));
   for (let i = 0; i < out.length || (i === 0 && champion); i += 200) {
     const body = { rows: out.slice(i, i + 200) }; if (i === 0 && champion) body.champion = champion;
     const res = await (await fetch(API + '/admin/update', { method: 'POST', headers: H, body: JSON.stringify(body) })).json();
     if (!res.ok) throw new Error('update 失敗 ' + JSON.stringify(res));
   }
-  console.log('シーズン ' + season + '・登録 ' + rows.length + ' 体・対戦 ' + fights + ' 戦・書き戻し ' + out.length + ' 体' + (champion ? '・先週の チャンピオン ' + champion.name : ''));
+  console.log('シーズン ' + season + '・登録 ' + rows.length + ' 体・対戦 ' + fights + ' 戦・書き戻し ' + out.length + ' 体' + (champion ? '・きのうの チャンピオン ' + champion.name : ''));
 }
 
 // イロレーティング（はじめの 20 戦は 大きく 動く）。最近の 10 戦も 記録（リプレイ用に 相手の 形と 左右）
