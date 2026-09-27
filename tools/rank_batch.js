@@ -102,8 +102,7 @@ async function main() {
   const before = fs.existsSync(CACHE) ? fs.readFileSync(CACHE, 'utf8') : '', after = JSON.stringify(cache);
   fs.mkdirSync(path.dirname(CACHE), { recursive: true }); fs.writeFileSync(CACHE, after);
   // GitHub Actions に「キャッシュが 変わったか」を 知らせる（変わった ときだけ 保存）
-  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'changed=' + (before !== after ? 1 : 0) + '
-');
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'changed=' + (before !== after ? 1 : 0) + String.fromCharCode(10));
   const allPairs = list.reduce((a, m) => a + st.get(m.id).tot, 0) / 2;
   console.log('登録 ' + list.length + ' 体・今回 ' + todo.length + ' 戦（' + ((Date.now() - t0) / 1000).toFixed(1) + ' 秒）・計算ずみ ' + Object.keys(cache.pairs).length + ' / ' + allPairs + ' 戦・書きこみ ' + res.written + ' 行' + (champion ? '・きのうの チャンピオン ' + champion.name : ''));
 }
