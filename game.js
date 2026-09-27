@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '55';
+const VERSION = '56';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -91,14 +91,23 @@ function showTitle() {
   $('friendbox').hidden = !friendRobot;
   if (friendRobot) drawPreview($('friendprev'), friendRobot, FRIEND.color);
   renderHall();
+  // じぶんの モンスター（絵・すすみぐあい・ランクせん）
+  $('tmycard').hidden = !myRobot;
+  if (myRobot) drawPreview($('tmon'), withCrown(myRobot), ME.color);
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0), mb = +(lsGet('minna.best') || 0);
-  $('tprog').textContent = (ob > 0 ? 'おもて さいこう ' + ob + ' にんぬき' + (uraOpen ? '（たっせい！）' : '') : '') + (uraOpen ? '　うら さいこう ' + ub + ' にんぬき' + (lsGet('ura.cleared') === '1' ? '（たっせい！！）' : '') : '') + (MINNA_OPEN ? '　みんな さいこう ' + mb + ' にんぬき' + (lsGet('minna.cleared') === '1' ? '（たっせい！！！）' : '') : '');
-  $('start').textContent = myRobot ? 'モンスターを えらぶ' : 'モンスターを つくる';
-  $('minnabtn').hidden = !MINNA_OPEN || lsGet('minna.cleared') === '1';
+  const chip = (label, n, done, cls) => '<span class="chip ' + cls + (done ? ' done' : '') + '">' + label + ' ' + (done ? 'クリア' : n + '/5') + '</span>';
+  $('tprog').innerHTML = chip('おもて', ob, uraOpen, 'c-omote') + (uraOpen ? chip('うら', ub, lsGet('ura.cleared') === '1', 'c-ura') : '') + (MINNA_OPEN ? chip('みんな', mb, lsGet('minna.cleared') === '1', 'c-minna') : '');
+  $('start').textContent = myRobot ? 'たたかう・なおす' : 'モンスターを つくる';
+  // モード
+  $('minnabtn').hidden = !MINNA_OPEN;
+  $('minnacap').textContent = lsGet('minna.cleared') === '1' ? 'たおした！ もういちど ちょうせん' : 'うらを クリアした みんなの 5 たい';
   $('minnaabout').hidden = !MINNA_OPEN;
   $('rankbtn').hidden = !RANK_ON;
-  $('minnaabout').textContent = $('minnabtn').hidden ? 'みんなの さいきょう ぐんだん って？' : 'どんな 5 たい？';   // 大きな ボタンが ない（クリアした）ときは 名前ごと
-
+  if (RANK_ON) titleRank();
+  // コレクション（でんせつ・でんどういり）
+  let nl = 0, nh = 0; try { nl = JSON.parse(lsGet('legendhall') || '[]').length; nh = JSON.parse(lsGet('hall') || '[]').length; } catch (e) {}
+  $('collection').hidden = !nl && !nh;
+  $('collsum').textContent = 'コレクション　' + (nl ? '⭐ でんせつ ' + nl + '　' : '') + (nh ? '👑 でんどういり ' + nh : '');
   drawTitleBg();
 }
 function showDraw() {
@@ -484,7 +493,7 @@ function showResult() {
   mode = 'result'; show('result');
   TR('result', { side: S.side, stage: S.stage, opp: opp && opp.name, win: S.winner === 'A' ? 'win' : S.winner === 'B' ? 'lose' : 'draw', reason: S.reason, t: Math.round(S.t * 10) / 10, hp: [Math.ceil(S.A.hp), Math.ceil(S.B.hp)], hits: [S.A.hits, S.B.hits], dmg: [Math.round(S.A.dealt), Math.round(S.B.dealt)], fast: fast });
   $('share').hidden = false; $('vstitle').hidden = true; $('redraw').hidden = false; $('redraw').textContent = 'モンスターを なおす';
-  $('cert').hidden = true;
+  $('cert').hidden = true; $('torank').hidden = true;
   $('next').textContent = 'つぎの あいてへ'; $('next').classList.remove('ura', 'minna'); $('again').className = 'main'; goUra = false; goMinna = false;
   if (S.side === 'vs') {
     $('rtitle').textContent = S.winner === 'A' ? '1P の かち！' : S.winner === 'B' ? '2P の かち！' : 'ひきわけ';
@@ -533,6 +542,7 @@ function showResult() {
   $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
   $('next').hidden = !showNext && !goUra && !goMinna;
   $('again').hidden = showNext;
+  if (RANK_ON && !isFriend && win && S.stage === 4 && (!rankMe || rankMe.code !== plainCode(myRobot))) $('torank').hidden = false;
   if (goUra) { $('next').innerHTML = 'うら かちぬき へ！<small>とんでもなく つよい 5 たい</small>'; $('next').classList.add('ura'); $('again').className = 'sub'; $('again').textContent = 'おもてを もういちど'; }
   if (goMinna) { $('next').innerHTML = 'みんなの さいきょう ぐんだん へ！<small>うらを クリアした みんなの モンスター 5 たい</small>'; $('next').classList.add('minna'); $('again').className = 'sub'; }
   $('again').textContent = isFriend ? 'もういちど' : goUra ? 'おもてを もういちど' : goMinna ? 'うらを もういちど' : '1 たいめから もういちど';
@@ -552,6 +562,7 @@ function showShareBox(text) { $('sharetext').value = text; $('sharebox').hidden 
 // ---------- ボタン ----------
 function onTap(el, fn) { el.addEventListener('click', e => { e.preventDefault(); fn(); }); }
 onTap($('start'), showDraw);
+onTap($('tmycard'), showDraw);
 onTap($('minnaabout'), showMinnaInfo);
 onTap($('minnabtn'), () => { toMinna('title'); showDraw(); setHint('みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい'); });
 // タイトルの文字を 5 回つづけてタップ → うら テストの印（ホーム画面のアプリは Safari と保存場所が別なので）
@@ -692,6 +703,20 @@ function rankPractice(m) {
   rankBattle(plainCode(myRobot), m.code, ME.name, m.name, ME.color, RANK_COLOR, 'A', 'practice');
 }
 onTap($('rankbtn'), () => showRank());
+// タイトルの ランクせん の 一言（とうろく して いれば 順位、あがったら おしらせ）
+async function titleRank() {
+  const cap = $('rankcap'), tr = $('trank');
+  if (!rankMe) await loadRank();
+  const me = rankMe, cur = myRobot && plainCode(myRobot);
+  if (me && me.pos) {
+    const prev = +(lsGet('rank.lastpos') || 0);
+    cap.textContent = 'いま ' + me.pos + ' い（' + (rankTop ? rankTop.count : '?') + ' たい）' + (prev && me.pos < prev ? '　↑ あがった！' : '');
+    lsSet('rank.lastpos', String(me.pos));
+  } else cap.textContent = me ? 'とうろく ずみ・もうすぐ たいせん' : 'とうろくして じどうで たいせん！';
+  $('rankbtn').classList.toggle('new', !me);
+  tr.hidden = !me; tr.textContent = me ? 'ランクせん ' + (me.pos ? me.pos + ' い' : 'たいせん まち') + (cur && cur !== me.code ? '（べつの モンスターで とうろくちゅう）' : '') : '';
+}
+onTap($('torank'), () => { TR('torank', null); showRank('いまの モンスターで とうろく できるよ'); });
 onTap($('rankregbtn'), rankRegister);
 onTap($('rankdraw'), showDraw);
 onTap($('rankback'), showTitle);

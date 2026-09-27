@@ -6,14 +6,14 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=55">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=56">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=55">
-<script src="/t.js?v=4"></script>
+<link rel="stylesheet" href="style.css?v=56">
+<script src="/t.js?v=5"></script>
 </head>
 <body>
 <canvas id="game"></canvas>
@@ -28,23 +28,32 @@
       <div class="fb-title">ともだちの モンスター が とどいた！</div>
       <canvas id="friendprev" width="240" height="240"></canvas>
     </div>
-    <div id="tprog"></div>
+    <button id="tmycard" class="mycard" hidden aria-label="じぶんの モンスターを えらぶ・なおす">
+      <canvas id="tmon" width="200" height="200"></canvas>
+      <span class="mc-body"><span class="mc-h">じぶんの モンスター</span><span id="tprog"></span><span id="trank" hidden></span></span>
+    </button>
     <div class="tbtns">
-      <button id="minnabtn" class="main minna" hidden>みんなの さいきょう ぐんだん<small>に ちょうせん！</small></button>
-      <button id="minnaabout" class="linkbtn" hidden>どんな 5 たい？</button>
       <button id="start" class="main">モンスターを つくる</button>
-      <button id="vs" class="sub vsbtn">ふたりで たたかう</button>
-      <button id="rankbtn" class="sub vsbtn rankbtn" hidden>ランクせん（みんなと たいせん）</button>
     </div>
-    <div id="legendbox" hidden>
-      <div class="legend-title">⭐ でんせつ（タップで しょうめいしょ）</div>
-      <div id="legendlist"></div>
+    <div class="modes">
+      <button id="minnabtn" class="mode m-minna" hidden><b>みんなの さいきょう ぐんだん</b><small id="minnacap">うらを クリアした みんなの 5 たい</small></button>
+      <button id="rankbtn" class="mode m-rank" hidden><b>ランクせん</b><small id="rankcap">みんなの モンスターと じどうで たいせん</small></button>
+      <button id="vs" class="mode m-vs"><b>ふたりで たたかう</b><small>1 だいで 2 にんで しょうぶ</small></button>
     </div>
-    <div id="hallbox" hidden>
-      <div class="hall-title">👑 でんどういり</div>
-      <div id="halllist"></div>
-    </div>
-    <div class="howto">
+    <button id="minnaabout" class="linkbtn" hidden>どんな 5 たい？</button>
+    <details id="collection" class="fold" hidden>
+      <summary id="collsum">コレクション</summary>
+      <div id="legendbox" hidden>
+        <div class="legend-title">⭐ でんせつ（タップで しょうめいしょ）</div>
+        <div id="legendlist"></div>
+      </div>
+      <div id="hallbox" hidden>
+        <div class="hall-title">👑 でんどういり</div>
+        <div id="halllist"></div>
+      </div>
+    </details>
+    <details class="fold howto">
+      <summary>あそびかた・つよさ</summary>
       <h3>つくりかた</h3>
       <p><b>からだ</b> → <b>うで</b> → <b>あし</b> の じゅんに<br>1 本ずつ かく</p>
       <p>うでは <b>かた</b>、あしは <b>こし</b> に つく</p>
@@ -61,7 +70,7 @@
       <p>5 たい かちぬくと… <b>なにかが おこる！？</b></p>
       <p><b>ふたりで たたかう</b> で<br>ひとつの スマホで たいせん</p>
       <p>モンスターを <b>ともだちに おくって</b><br>しょうぶ</p>
-    </div>
+    </details>
   </div>
 </div>
 
@@ -129,6 +138,7 @@
     <div class="rbtns small">
       <button id="redraw" class="sub">モンスターを なおす</button>
       <button id="cert" class="sub certbtn" hidden>でんせつ しょうめいしょ</button>
+      <button id="torank" class="sub rankbtn" hidden>この モンスターで ランクせんに でる</button>
       <button id="share" class="sub">モンスターを おくる</button>
       <button id="vstitle" class="sub" hidden>タイトルへ</button>
     </div>
@@ -193,7 +203,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=55"></script>
-<script src="game.js?v=55"></script>
+<script src="sim.js?v=56"></script>
+<script src="game.js?v=56"></script>
 </body>
 </html>

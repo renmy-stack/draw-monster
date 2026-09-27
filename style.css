@@ -22,7 +22,7 @@ button { font: inherit; }
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 16px; background: rgba(10, 12, 30, .55);
 }
-#hallbox[hidden], #rank[hidden], #rankreg[hidden], #rankchamp[hidden], #minnainfo[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
+#hallbox[hidden], #tmycard[hidden], #trank[hidden], #collection[hidden], #rank[hidden], #rankreg[hidden], #rankchamp[hidden], #minnainfo[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
 .panel {
   width: min(92vw, 400px); max-height: calc(100% - 20px); overflow-y: auto;
   background: var(--paper); border: 4px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow);
@@ -245,3 +245,33 @@ button:disabled { opacity: .45; }
 #rankprev { width: 90px; height: 90px; display: block; margin: 6px auto 0; }
 .rk-label { display: block; font-size: 12px; font-weight: 700; color: #555; margin-top: 4px; }
 #rankname { width: 100%; max-width: 240px; font-size: 16px; padding: 6px 10px; border: 2px solid #ef6c00; border-radius: 10px; margin-top: 2px; }
+
+/* タイトル（整理版）: じぶんの モンスター → たたかう → モード → コレクション・あそびかた（たたみ） */
+.lead { margin-top: 4px; }
+.mycard { display: flex; align-items: center; gap: 10px; width: 100%; margin: 10px 0 0; padding: 8px 10px; border: 2px solid var(--ink); border-radius: 14px; background: #fff; box-shadow: 0 3px 0 var(--ink); text-align: left; cursor: pointer; }
+.mycard canvas { width: 64px; height: 64px; border-radius: 10px; background: #1f2250; flex: none; }
+.mc-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.mc-h { font-size: 11px; font-weight: 800; color: #777; }
+#tprog { margin: 0; display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; }
+.chip { font-size: 11px; font-weight: 800; padding: 1px 7px; border-radius: 999px; background: #eee; color: #555; white-space: nowrap; }
+.chip.done.c-omote { background: #ede7f6; color: #5e35b1; }
+.chip.done.c-ura { background: #ffebee; color: #b71c1c; }
+.chip.done.c-minna { background: #e0f2f1; color: #00695c; }
+#trank { font-size: 12px; font-weight: 800; color: #ef6c00; }
+.tbtns { margin: 12px 0 8px; }
+.modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+.mode { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 2px solid var(--ink); border-radius: 14px; background: #fff; box-shadow: 0 3px 0 var(--ink); text-align: left; font-size: 14px; position: relative; }
+.mode b { font-size: 14px; line-height: 1.3; }
+.mode small { font-size: 11px; font-weight: 700; color: #666; line-height: 1.35; }
+.mode.m-minna { background: #e0f2f1; border-color: #00695c; }
+.mode.m-minna b { color: #00695c; }
+.mode.m-rank { background: #fff3e0; border-color: #ef6c00; }
+.mode.m-rank b { color: #bf360c; }
+.mode.m-rank.new::after { content: 'NEW'; position: absolute; top: -8px; right: 8px; font-size: 10px; font-weight: 900; color: #fff; background: #e53935; border-radius: 999px; padding: 1px 6px; }
+.mode.m-vs { background: #f3f3fb; }
+#minnaabout { margin-top: 4px; }
+.fold { margin-top: 12px; text-align: left; border-radius: 12px; background: rgba(27, 29, 58, .05); padding: 8px 12px; }
+.fold > summary { cursor: pointer; font-weight: 900; font-size: 14px; color: #444; list-style-position: inside; }
+.fold[open] > summary { margin-bottom: 6px; }
+#title details.howto { margin-top: 10px; }
+.modes > .mode:not([hidden]):last-child:nth-child(odd) { grid-column: 1 / -1; }   /* 3 つの ときは 最後を 横いっぱいに */
