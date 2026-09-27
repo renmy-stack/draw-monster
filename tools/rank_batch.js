@@ -90,8 +90,10 @@ async function main() {
   // 4) チャンピオン（前の 順位表が きのうの もの なら、その 1 位）
   let champion = null;
   const prev = act.board;
-  if (prev && prev.t && seasonOf(prev.t) !== season && prev.top && prev.top[0] && prev.top[0].pl >= Math.min(CHAMP_MIN, prev.top[0].tot) && byId.has(prev.top[0].id)) {
-    const c = prev.top[0];
+  // CPU（はじめの 相手として 入れて いる 表の CPU）は チャンピオンに しない
+  const cc = prev && prev.top ? prev.top.find(x => byId.has(x.id) && !byId.get(x.id).dev.startsWith('testdev')) : null;
+  if (prev && prev.t && seasonOf(prev.t) !== season && cc && cc.pl >= Math.min(CHAMP_MIN, cc.tot)) {
+    const c = cc;
     champion = { season: seasonOf(prev.t), id: c.id, name: c.name, code: byId.get(c.id).code, pct: c.pct, w: 0, l: 0, d: 0, n: prev.n };
   }
   const body = { top, buckets: changed }; if (champion) body.champion = champion;
