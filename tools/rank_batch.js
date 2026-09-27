@@ -1,7 +1,8 @@
 // node tools/rank_batch.js — モンスター ランクせん の 計算（GitHub Actions が 実行。起動は Cloudflare の 受付係から 15 分に 1 回まで。RANK_ADMIN が いる）
 // 順位 ＝ 登録中の みんなと 総当たり（左右 入れかえて 2 戦）した 勝率。同じ 2 体・同じ 左右は いつも 同じ 結果 なので 運が 入らない
 // 1. 登録中の モンスターを 受け取る
-// 2. まだ 戦って いない 組み合わせを、戦った 数が 少ない モンスター（＝ 新しく 登録された）から 最大 BUDGET 戦 計算（CPU の 数だけ 並列）
+// 2. まだ 戦って いない 組み合わせを、戦った 数が 少ない モンスター（＝ 新しく 登録された）から TIME_LIMIT（8 分）まで 計算（CPU の 数だけ 並列、
+//    WAVE 戦ずつ 区切って 時間を 見る。のこりは 次の 回に つづき から）
 //    結果は .rankcache/pairs.json に のこす（GitHub Actions の キャッシュ。次の 回は 新しい 組み合わせ だけ）
 //    形: { v: 2, ids: [登録の ID], res: base64（左 i × 右 j の 結果を 1 組 2 ビット: 0 まだ / 1 左の 勝ち / 2 右の 勝ち / 3 ひきわけ）, bh }
 // 3. 勝率・順位・対戦の 例（強い 相手に かった／まけた）を 出して、順位表を まとめて 書き戻す（上位 30 と、64 の かたまりの うち 変わった ものだけ）
@@ -12,7 +13,7 @@ const { Worker, isMainThread, parentPort, workerData } = require('worker_threads
 const RB = require('../sim.js');
 const API = 'https://renmy-rank.renmy-stack.workers.dev';
 const KEY = process.env.RANK_ADMIN;
-const BUDGET = 8000, TOP_N = 30, CHAMP_MIN = 20;   // チャンピオンは 20 戦 以上（登録が 少なくて 総当たりが 20 戦 未満 なら 全員と 戦い おわって いれば よい）
+const TIME_LIMIT = +(process.env.RANK_TIME || 8 * 60e3), MAX_TODO = 400000, TOP_N = 30, CHAMP_MIN = 20;   // チャンピオンは 20 戦 以上（登録が 少なくて 総当たりが 20 戦 未満 なら 全員と 戦い おわって いれば よい）
 const CACHE = path.join(__dirname, '..', '.rankcache', 'pairs.json');
 
 const seasonOf = t => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
@@ -58,18 +59,22 @@ async function main() {
   const order = list.map((m, i) => i).sort((a, b) => done[a] - done[b]);
   const todo = [], want = new Set();
   for (const a of order) {
-    if (todo.length >= BUDGET) break;
-    for (let b = 0; b < n && todo.length < BUDGET; b++) {
+    if (todo.length >= MAX_TODO) break;
+    for (let b = 0; b < n && todo.length < MAX_TODO; b++) {
       if (!can(a, b)) continue;
       for (const [i, j] of [[a, b], [b, a]]) { const k = i * n + j; if (!R[k] && !want.has(k)) { want.add(k); todo.push([i, j, list[i].code, list[j].code]); } }
     }
   }
-  const t0 = Date.now();
-  if (todo.length) {
-    const nt = Math.max(1, Math.min(os.cpus().length, Math.ceil(todo.length / 50)));
-    const parts = Array.from({ length: nt }, (_, t) => todo.filter((x, q) => q % nt === t));
+  const t0 = Date.now(), cores = Math.max(1, os.cpus().length), WAVE = +(process.env.RANK_WAVE || cores * 400);
+  let fought = 0;
+  // WAVE 戦ずつ 並列で 計算。8 分を すぎたら そこまで（のこりは 次の 回）
+  for (let w0 = 0; w0 < todo.length && Date.now() - t0 < TIME_LIMIT; w0 += WAVE) {
+    const wave = todo.slice(w0, w0 + WAVE);
+    const nt = Math.max(1, Math.min(cores, Math.ceil(wave.length / 50)));
+    const parts = Array.from({ length: nt }, (_, t) => wave.filter((x, q) => q % nt === t));
     const res = await Promise.all(parts.map(p => new Promise((ok, ng) => { const w = new Worker(__filename, { workerData: p }); w.on('message', ok); w.on('error', ng); })));
     for (const r of res) for (const [k, W] of r) { const [i, j] = k.split('|').map(Number); R[i * n + j] = CODE[W] || 3; }
+    fought += wave.length;
   }
 
   // 3) 勝率と 順位
@@ -122,5 +127,5 @@ async function main() {
   let computed = 0; for (let k = 0; k < n * n; k++) if (R[k]) computed++;
   const allPairs = list.reduce((a, m) => a + st.get(m.id).tot, 0) / 2;
   const kb = (after.length / 1024).toFixed(1);
-  console.log('登録 ' + list.length + ' 体・今回 ' + todo.length + ' 戦（' + ((Date.now() - t0) / 1000).toFixed(1) + ' 秒）・計算ずみ ' + computed + ' / ' + allPairs + ' 戦・キャッシュ ' + kb + ' KB・書きこみ ' + res.written + ' 行' + (champion ? '・きのうの チャンピオン ' + champion.name : ''));
+  console.log('登録 ' + list.length + ' 体・今回 ' + fought + ' 戦' + (fought < todo.length ? '（のこり ' + (todo.length - fought) + ' 戦は 次の 回）' : '') + '（' + ((Date.now() - t0) / 1000).toFixed(1) + ' 秒）・計算ずみ ' + computed + ' / ' + allPairs + ' 戦・キャッシュ ' + kb + ' KB・書きこみ ' + res.written + ' 行' + (champion ? '・きのうの チャンピオン ' + champion.name : ''));
 }

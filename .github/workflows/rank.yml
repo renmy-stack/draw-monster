@@ -10,7 +10,7 @@ concurrency: rank
 jobs:
   batch:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 12   # 計算は 8 分まで（起動は 15 分に 1 回まで なので 次の 回と ぶつからない）
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
