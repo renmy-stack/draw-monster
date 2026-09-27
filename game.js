@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '61';
+const VERSION = '62';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -106,6 +106,7 @@ function showTitle() {
   $('minnaabout').hidden = !MINNA_OPEN;
   $('rankbtn').hidden = !RANK_ON;
   if (RANK_ON) titleRank();
+  { const n = [...document.querySelectorAll('.modes > .mode')].filter(el => !el.hidden).length; document.querySelector('.modes').classList.toggle('odd', n % 2 === 1); }
   // コレクション（でんせつ・でんどういり）
   let nl = 0, nh = 0; try { nl = JSON.parse(lsGet('legendhall') || '[]').length; nh = JSON.parse(lsGet('hall') || '[]').length; } catch (e) {}
   $('collection').hidden = !nl && !nh;
@@ -616,10 +617,9 @@ onTap($('again'), () => { if (S && S.side === 'rank' && rankLast) { rankBattle(.
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 // ---------- モンスター ランクせん（みんなの モンスターと 自動で 対戦）----------
 // 登録（形と 名前）だけ ゲームから 送る。順位は サーバー（登録が あれば 15 分に 1 回まで 計算）が みんなと 総当たり（左右 入れかえて 2 戦）した 勝率で 決める ＝ 運も ずるも ない
-// リプレイと 練習試合は この 端末で 計算（同じ 2 体・同じ 左右なら 同じ 試合に なる）。まずは ?ranktest の 端末だけ
+// リプレイと 練習試合は この 端末で 計算（同じ 2 体・同じ 左右なら 同じ 試合に なる）
 const RANK_API = 'https://renmy-rank.renmy-stack.workers.dev';
-if (/[?&]ranktest(=|&|$)/.test(location.search)) lsSet('ranktest', '1');
-const RANK_ON = lsGet('ranktest') === '1';
+const RANK_ON = true;   // 2026-09-28 全員に 公開（前は ?ranktest の 端末だけ）
 const RANK_COLOR = '#ef6c00';
 let rankTop = null, rankMe = null, rankBusy = false, rankGotMedal = 0;
 function rankDev() { let d = lsGet('rank.dev'); if (!d) { d = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); lsSet('rank.dev', d); } return d; }
@@ -628,6 +628,7 @@ async function loadRank() {
   try {
     const [t, m] = await Promise.all([fetch(RANK_API + '/top').then(r => r.json()), fetch(RANK_API + '/me?dev=' + rankDev()).then(r => r.json())]);
     rankTop = t; rankMe = m.me;
+    if (rankMe) lsSet('rank.reg', '1');
     if (rankMe && rankMe.champDays) { const cm = champMap(), had = cm[rankMe.code] || 0; if (rankMe.champDays > had) { cm[rankMe.code] = rankMe.champDays; lsSet('champ', JSON.stringify(cm)); rankGotMedal = rankMe.champDays; if (myRobot && plainCode(myRobot) === rankMe.code) { myRobot.champ = rankMe.champDays; lsSet('robot', RB.encodeDesign(myRobot)); } TR('rankmedal', { n: rankMe.champDays }); } }
   } catch (e) { rankTop = null; }
 }
@@ -704,7 +705,7 @@ async function rankRegister() {
   try {
     const r = await (await fetch(RANK_API + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: plainCode(myRobot), name }) })).json();
     if (r.error) $('rankmsg').textContent = r.error;
-    else { TR('rankreg', { me: plainCode(myRobot) }); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ 15 ふん いないに みんなとの たいせん けっかが でるよ'; }
+    else { TR('rankreg', { me: plainCode(myRobot) }); lsSet('rank.reg', '1'); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ 15 ふん いないに みんなとの たいせん けっかが でるよ'; }
   } catch (e) { $('rankmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   rankBusy = false; if (mode === 'rank') renderRank();
 }
@@ -737,7 +738,9 @@ onTap($('rankbtn'), () => showRank());
 // タイトルの ランクせん の 一言（とうろく して いれば 順位、あがったら おしらせ）
 async function titleRank() {
   const cap = $('rankcap'), tr = $('trank');
-  if (!rankMe) await loadRank();
+  // 登録した ことが ない 端末は 通信しない（受け付け回数の 節約）。登録した 端末は 自分の ぶん（/me）だけ
+  if (lsGet('rank.reg') !== '1') { cap.textContent = 'とうろくして みんなと じどうで たいせん！'; $('rankbtn').classList.add('new'); tr.hidden = true; return; }
+  if (!rankMe) { try { rankMe = (await (await fetch(RANK_API + '/me?dev=' + rankDev())).json()).me; } catch (e) {} }
   const me = rankMe, cur = myRobot && plainCode(myRobot);
   if (me && me.pos) {
     const prev = +(lsGet('rank.lastpos') || 0);
