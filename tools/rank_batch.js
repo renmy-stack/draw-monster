@@ -99,7 +99,11 @@ async function main() {
   const body = { top, buckets: changed }; if (champion) body.champion = champion;
   const res = await (await fetch(API + '/admin/board', { method: 'POST', headers: H, body: JSON.stringify(body) })).json();
   if (!res.ok) throw new Error('board 失敗 ' + JSON.stringify(res));
-  fs.mkdirSync(path.dirname(CACHE), { recursive: true }); fs.writeFileSync(CACHE, JSON.stringify(cache));
+  const before = fs.existsSync(CACHE) ? fs.readFileSync(CACHE, 'utf8') : '', after = JSON.stringify(cache);
+  fs.mkdirSync(path.dirname(CACHE), { recursive: true }); fs.writeFileSync(CACHE, after);
+  // GitHub Actions に「キャッシュが 変わったか」を 知らせる（変わった ときだけ 保存）
+  if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'changed=' + (before !== after ? 1 : 0) + '
+');
   const allPairs = list.reduce((a, m) => a + st.get(m.id).tot, 0) / 2;
   console.log('登録 ' + list.length + ' 体・今回 ' + todo.length + ' 戦（' + ((Date.now() - t0) / 1000).toFixed(1) + ' 秒）・計算ずみ ' + Object.keys(cache.pairs).length + ' / ' + allPairs + ' 戦・書きこみ ' + res.written + ' 行' + (champion ? '・きのうの チャンピオン ' + champion.name : ''));
 }

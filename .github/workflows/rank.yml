@@ -17,11 +17,18 @@ jobs:
         with:
           node-version: 22
       # 計算ずみの 組み合わせ（.rankcache/pairs.json）を 前の 回から 引きつぐ
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         with:
           path: .rankcache
           key: rank-pairs-${{ github.run_id }}
           restore-keys: rank-pairs-
-      - run: node tools/rank_batch.js
+      - id: batch
+        run: node tools/rank_batch.js
         env:
           RANK_ADMIN: ${{ secrets.RANK_ADMIN }}
+      # 新しい 組み合わせを 計算した ときだけ 保存（同じ 中身の キャッシュを 積み上げない）
+      - if: steps.batch.outputs.changed == '1'
+        uses: actions/cache/save@v4
+        with:
+          path: .rankcache
+          key: rank-pairs-${{ github.run_id }}
