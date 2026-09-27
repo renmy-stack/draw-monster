@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=62">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=63">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=62">
+<link rel="stylesheet" href="style.css?v=63">
 <script src="/t.js?v=5"></script>
 </head>
 <body>
@@ -30,8 +30,9 @@
     </div>
     <button id="tmycard" class="mycard" hidden aria-label="じぶんの モンスターを えらぶ・なおす">
       <canvas id="tmon" width="200" height="200"></canvas>
-      <span class="mc-body"><span class="mc-h">じぶんの モンスター</span><span id="tprog"></span><span id="trank" hidden></span></span>
+      <span class="mc-body"><span class="mc-h">じぶんの モンスター</span><span id="trank" hidden></span><span id="tmchint" class="mc-hint">タップで えらぶ・なおす</span></span>
     </button>
+    <div id="trecord" class="trecord" hidden><span class="tr-h">この スマホの きろく</span><span id="tprog"></span></div>
     <div class="tbtns">
       <button id="start" class="main">モンスターを つくる</button>
     </div>
@@ -203,7 +204,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=62"></script>
-<script src="game.js?v=62"></script>
+<script src="sim.js?v=63"></script>
+<script src="game.js?v=63"></script>
 </body>
 </html>

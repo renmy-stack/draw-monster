@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '62';
+const VERSION = '63';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -98,6 +98,7 @@ function showTitle() {
   if (myRobot) drawPreview($('tmon'), withCrown(myRobot), ME.color);
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0), mb = +(lsGet('minna.best') || 0);
   const chip = (label, n, done, cls) => '<span class="chip ' + cls + (done ? ' done' : '') + '">' + label + ' ' + (done ? 'クリア' : n + '/5') + '</span>';
+  $('trecord').hidden = !ob && !uraOpen;   // この スマホで どこまで 進んだか（モンスター ごとでは ない）
   $('tprog').innerHTML = chip('おもて', ob, uraOpen, 'c-omote') + (uraOpen ? chip('うら', ub, lsGet('ura.cleared') === '1', 'c-ura') : '') + (MINNA_OPEN ? chip('みんな', mb, lsGet('minna.cleared') === '1', 'c-minna') : '');
   $('start').textContent = myRobot ? 'たたかう・なおす' : 'モンスターを つくる';
   // モード
@@ -748,6 +749,7 @@ async function titleRank() {
     lsSet('rank.lastpos', String(me.pos));
   } else cap.textContent = me ? 'とうろく ずみ・けいさんちゅう' : 'とうろくして みんなと じどうで たいせん！';
   $('rankbtn').classList.toggle('new', !me);
+  $('tmchint').hidden = !!me;
   tr.hidden = !me; tr.textContent = me ? 'ランクせん ' + (me.pos ? me.pos + ' い・しょうりつ ' + me.pct + '%' : 'けいさんちゅう') + (cur && cur !== me.code ? '（べつの モンスターで とうろくちゅう）' : '') : '';
 }
 onTap($('torank'), () => { TR('torank', null); showRank('いまの モンスターで とうろく できるよ'); });
