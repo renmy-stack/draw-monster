@@ -322,7 +322,20 @@ button:disabled { opacity: .45; }
 #kzprev { width: 120px; height: 120px; border-radius: 12px; background: #1f2250; flex: none; }
 .kz-side { flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 0; }
 #kzpull { margin: 0; display: flex; flex-direction: column; align-items: center; }
-#kzpull small { font-size: 12px; }
+#kzpull small, #kzpull10 small { font-size: 12px; }
+#kzpull10 { margin: 0; display: flex; flex-direction: column; align-items: center; padding: 6px 10px; font-size: 16px; background: linear-gradient(135deg, #ff6f00, #ff1744 55%, #d500f9); }
+#kzpull10:disabled, #kzpull:disabled { filter: grayscale(.7); opacity: .6; }
+/* 10 連の 結果: 11 こを 星の 色の マスで */
+#kzrgrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin: 0 0 10px; }
+#kzrgrid[hidden] { display: none; }
+.kzg { position: relative; border: 2px solid var(--ink); border-radius: 10px; padding: 5px 2px; font-size: 10px; font-weight: 800; line-height: 1.25; background: #fff; animation: kzpop .35s cubic-bezier(.2, 1.6, .4, 1) both; }
+.kzg b { display: block; font-size: 11px; letter-spacing: 1px; }
+.kzg.r1 b { color: #9e9e9e; }
+.kzg.r2 { background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-color: #1565c0; } .kzg.r2 b { color: #1565c0; }
+.kzg.r3 { background: linear-gradient(135deg, #fff8e1, #ffe082 45%, #fce4ec); border-color: #c2185b; box-shadow: 0 0 12px rgba(255, 193, 7, .9); } .kzg.r3 b { color: #c2185b; }
+.kzg.dup { opacity: .55; }
+.kzg i { position: absolute; top: -7px; right: -5px; font-style: normal; font-size: 8px; font-weight: 900; color: #fff; background: #ff1744; border-radius: 999px; padding: 0 4px; }
+#kzreveal.multi #kzrcv { width: 140px; height: 140px; }
 #kzpull.spin { animation: kzspin .6s ease-in-out; }
 @keyframes kzspin { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-6deg) scale(1.05); } 75% { transform: rotate(6deg) scale(1.05); } }
 .kz-msg { font-size: 13px; font-weight: 800; min-height: 34px; line-height: 1.35; }

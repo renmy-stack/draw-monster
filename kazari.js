@@ -126,6 +126,17 @@ function winReward(st, code, side, stage, clear) {
 function pull(st, rand) {
   if (st.coins() < PRICE) return null;
   st.addCoins(-PRICE);
+  return roll(st, rand);
+}
+// 10 連＋1: 1000 コインで 11 回（1 回ずつより 100 コイン おとく）
+const MULTI_PRICE = 1000, MULTI_N = 11;
+function pullMulti(st, rand) {
+  if (st.coins() < MULTI_PRICE) return null;
+  st.addCoins(-MULTI_PRICE);
+  const out = []; for (let i = 0; i < MULTI_N; i++) out.push(roll(st, rand));
+  return out;
+}
+function roll(st, rand) {
   const u = rand(); const r = u < RATE[3] ? 3 : u < RATE[3] + RATE[2] ? 2 : 1;
   const pool = ITEMS.filter(it => it && it.r === r), it = pool[Math.floor(rand() * pool.length) % pool.length];
   const own = st.own(), dup = own.includes(it.id);
@@ -797,5 +808,5 @@ function drawPart(g, p) {
   g.restore(); return true;
 }
 
-root.KZ = { SLOTS, SLOT_LABEL, ITEMS, PRICE, DUP_BACK, RATE, WIN, CLEAR, store, earn, winReward, pull, drawHead, drawFace, drawBody, fxBack, fxFront, drawPart, star, heart, twinkle };
+root.KZ = { SLOTS, SLOT_LABEL, ITEMS, PRICE, DUP_BACK, RATE, WIN, CLEAR, MULTI_PRICE, MULTI_N, store, earn, winReward, pull, pullMulti, drawHead, drawFace, drawBody, fxBack, fxFront, drawPart, star, heart, twinkle };
 })(typeof module !== 'undefined' ? module.exports : window);

@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '86';
+const VERSION = '87';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -730,6 +730,7 @@ function showKz(msg) {
   $('kzbox').hidden = false;
   $('kzcoins2').textContent = '🪙 ' + kzs.coins();
   $('kzpull').disabled = kzs.coins() < KZ.PRICE;
+  $('kzpull10').disabled = kzs.coins() < KZ.MULTI_PRICE;
   if (msg != null) $('kzmsg').innerHTML = msg;
   if (myRobot) drawPreview($('kzprev'), withKz(withCrown(myRobot)), ME.color);
   const own = kzs.own(), eq = kzs.eq(), seen = kzSeen(), list = $('kzlist'); list.innerHTML = '';
@@ -771,7 +772,7 @@ onTap($('kzpull'), () => {
     const si = KZ.SLOTS.indexOf(r.item.slot);
     kzOpen.add(r.item.slot);   // 当たった 場所は 開いて 見せる
     if (!r.dup) { const e = kzs.eq(); e[si] = r.item.id; kzs.setEq(e); }   // あたらしい かざりは すぐ つけて みせる
-    const rv = $('kzreveal'); rv.className = 'r' + r.item.r; rv.hidden = false;
+    const rv = $('kzreveal'); rv.className = 'r' + r.item.r; rv.hidden = false; $('kzrgrid').hidden = true;
     $('kzrstars').textContent = '★'.repeat(r.item.r);
     $('kzrname').textContent = r.item.name;
     $('kzrsub').textContent = (r.dup ? 'もう もってた… 🪙 +' + KZ.DUP_BACK + ' もどったよ' : 'NEW！ ' + KZ.SLOT_LABEL[r.item.slot] + 'に つけたよ') + (r.item.desc ? '\n' + r.item.desc : '');
@@ -780,6 +781,30 @@ onTap($('kzpull'), () => {
   }, wait);
 });
 onTap($('kzrok'), () => { $('kzreveal').hidden = true; kzShow = null; });
+// 10 連＋1: 11 こ いっぺんに。演出は いちばん 高い 星に 合わせる。自動では つけない（NEW が つく ので 一覧から えらぶ）
+onTap($('kzpull10'), () => {
+  const rs = KZ.pullMulti(kzs, Math.random); if (!rs) { showKz(); return; }
+  for (const r of rs) TR('gacha', { id: r.item.id, dup: r.dup ? 1 : 0, m: 1 });
+  const top = Math.max(...rs.map(r => r.item.r));
+  const best = rs.filter(r => r.item.r === top).sort((a, b) => (a.dup - b.dup))[0];
+  const btn = $('kzpull10'), cls = top === 3 ? 'spin3' : 'spin', wait = top === 3 ? 1500 : top === 2 ? 1000 : 750;
+  btn.disabled = true; $('kzpull').disabled = true; btn.classList.remove('spin', 'spin3'); void btn.offsetWidth; btn.classList.add(cls);
+  $('kzmsg').textContent = top === 3 ? 'ガラガラガラ… …!? ひかってる！' : top === 2 ? 'ガラガラガラ… …おっ？' : 'ガラガラガラ…';
+  setTimeout(() => {
+    btn.classList.remove('spin', 'spin3');
+    if (top === 3) { const f = $('kzflash'); f.hidden = true; void f.offsetWidth; f.hidden = false; setTimeout(() => { f.hidden = true; }, 520); }
+    for (const r of rs) kzOpen.add(r.item.slot);
+    const rv = $('kzreveal'); rv.className = 'r' + top + ' multi'; rv.hidden = false;
+    $('kzrstars').textContent = '★'.repeat(top);
+    $('kzrname').textContent = best.item.name;
+    const nNew = rs.filter(r => !r.dup).length, back = rs.filter(r => r.dup).length * KZ.DUP_BACK;
+    $('kzrsub').textContent = 'NEW ' + nNew + ' こ' + (back ? '・かぶり 🪙 +' + back : '') + '\n' + '★★★ ' + rs.filter(r => r.item.r === 3).length + '・★★ ' + rs.filter(r => r.item.r === 2).length + '・★ ' + rs.filter(r => r.item.r === 1).length;
+    const grid = $('kzrgrid'); grid.innerHTML = ''; grid.hidden = false;
+    rs.forEach((r, i) => { const d = document.createElement('div'); d.className = 'kzg r' + r.item.r + (r.dup ? ' dup' : ''); d.style.animationDelay = (i * 0.07) + 's'; d.innerHTML = '<b>' + '★'.repeat(r.item.r) + '</b>' + r.item.name + (r.dup ? '' : '<i>NEW</i>'); grid.appendChild(d); });
+    kzShow = best.item;
+    showKz('10れん ＋1 の けっか：NEW ' + nNew + ' こ');
+  }, wait);
+});
 // かざりの 一覧（オーナーの 確認用）: 場所ごとに 20 こを 並べて 動かす。上の ボタンで 場所を かえる・とじる
 let kzGal = null;
 function kzGallery(slot, nocrown) {
