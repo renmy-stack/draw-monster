@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '66';
+const VERSION = '67';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -555,8 +555,8 @@ function showResult() {
       else {
         cleared = true; lsSet(sk('cleared'), '1'); resetRun();
         if (side === 'ura') { onUraClear(); }
-        if (side === 'minna') { onMinnaClear(); $('rsub').textContent += '\nみんなの さいきょう ぐんだん を たおした！！！\nでんせつ の モンスター に なった！'; }
-        if (side === 'ura') { $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！ すごすぎる！'; const firstM = !MINNA_OPEN; MINNA_OPEN = true; $('rsub').textContent += firstM ? '\n…みんなの さいきょう ぐんだん が あらわれた！' : '\nみんなの さいきょう ぐんだん が まってるぞ…！'; goMinna = true; }
+        if (side === 'minna') { onMinnaClear(); $('rsub').textContent += '\nみんなの さいきょう ぐんだん を\nたおした！！！\nでんせつ の モンスター に なった！'; }
+        if (side === 'ura') { $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！\nすごすぎる！'; const firstM = !MINNA_OPEN; MINNA_OPEN = true; $('rsub').textContent += firstM ? '\n…みんなの さいきょう ぐんだん が\nあらわれた！' : '\nみんなの さいきょう ぐんだん が\nまってるぞ…！'; goMinna = true; }
         else if (side === 'omote') { $('rsub').textContent += '\n5 たい かちぬき たっせい！'; const firstUra = !uraOpen; uraOpen = true; $('rsub').textContent += firstUra ? '\n…うら かちぬき が あらわれた！' : '\nうら かちぬき が まってるぞ…！'; goUra = true; }
       }
     } else {
@@ -570,7 +570,7 @@ function showResult() {
   $('again').hidden = showNext;
   if (RANK_ON && !isFriend && win && S.stage === 4 && (!rankMe || rankMe.code !== plainCode(myRobot))) $('torank').hidden = false;
   if (goUra) { $('next').innerHTML = 'うら かちぬき へ！<small>とんでもなく つよい 5 たい</small>'; $('next').classList.add('ura'); $('again').className = 'sub'; $('again').textContent = 'おもてを もういちど'; }
-  if (goMinna) { $('next').innerHTML = 'みんなの さいきょう ぐんだん へ！<small>うらを クリアした みんなの モンスター 5 たい</small>'; $('next').classList.add('minna'); $('again').className = 'sub'; }
+  if (goMinna) { $('next').innerHTML = 'みんなの さいきょう<br>ぐんだん へ！<small>うらを クリアした みんなの 5 たい</small>'; $('next').classList.add('minna'); $('again').className = 'sub'; }
   $('again').textContent = isFriend ? 'もういちど' : goUra ? 'おもてを もういちど' : goMinna ? 'うらを もういちど' : '1 たいめから もういちど';
   $('redraw').textContent = !isFriend && stage > 0 ? 'モンスターを なおす（1 たいめから）' : 'モンスターを なおす';
   if (endingPending) startEnding();
