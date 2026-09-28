@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '92';
+const VERSION = '93';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -58,9 +58,10 @@ let MINNA_OPEN = lsGet('minnatest') === '1' || lsGet('ura.cleared') === '1';   /
 const SIDE_LABEL = { omote: 'おもて', ura: 'うら', minna: 'みんな' };
 // タイトルの 整理（v75）: おもて → うら → みんな を「ぼうけん」の 1 本道に。v77 で 全員に 公開（前は ?titletest の 端末だけ）
 const TITLE_TEST = true;
-// かざり（v78）: コインと ガチャで 見た目だけの かざり。?gachatest を開いた 端末だけ（オーナーの 確認用）
+// かざり（v78〜）: コインと ガチャで 見た目だけの かざり。v93 で 全員に 公開（オーナー OK）
+// ?gachatest を 開いた 端末（オーナー）だけ 確認用の 一覧（?kzgallery）と 当たりの 見本（?kzreveal）が 使える
 if (/[?&]gachatest(=|&|$)/.test(location.search)) lsSet('gachatest', '1');
-const KZ_ON = lsGet('gachatest') === '1';
+const KZ_ON = true, KZ_OWNER = lsGet('gachatest') === '1';
 const kzs = KZ.store(k => lsGet(k), (k, v) => lsSet(k, v));
 function withKz(d) { if (d && KZ_ON) { const e = kzs.eq(); d.kz = e.some(Boolean) ? e : null; } return d; }
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
@@ -1284,13 +1285,8 @@ showTitle();
   if (q.has('stage') && !q.has('shot')) stage = +q.get('stage');
   if (q.has('beaten')) beaten = [true, true, true, true, true];   // 開発用: 早送りボタンを見る
   if (q.get('use')) { const d = RB.decodeDesign(q.get('use')); if (d) { myRobot = withCrown(d); strokes = { body: d.body, arm: d.arm, leg: d.leg }; lsSet('robot', RB.encodeDesign(myRobot)); resetAllRuns(); showTitle(); } }   // オーナーの 確認用: その モンスターを じぶんの モンスターに
-  if (KZ_ON && q.has('kzdev')) {   // 開発用: ?kzdev=コイン&kzeq=あたま,かお,からだ,えふぇくと（見本の 画面を 撮る ため）
-    lsSet('kz.coins', q.get('kzdev') || '0');
-    if (q.get('kzeq')) { const e = q.get('kzeq').split(',').map(Number); kzs.setEq(e); kzs.setOwn([...new Set(kzs.own().concat(e.filter(Boolean)))]); }
-    showTitle(); if (q.has('kzopen')) { showKz(''); requestAnimationFrame(kzAnim); }
-  }
-  if (KZ_ON && q.has('kzgallery')) kzGallery(q.get('kzgallery') || 'head', q.has('nocrown'));   // オーナーの 確認用: ?gachatest&kzgallery=head|face|body|fx（&nocrown で 王冠なし）
-  if (KZ_ON) {
+  if (KZ_OWNER && q.has('kzgallery')) kzGallery(q.get('kzgallery') || 'head', q.has('nocrown'));   // オーナーの 確認用: ?gachatest&kzgallery=head|face|body|fx（&nocrown で 王冠なし）
+  if (KZ_OWNER) {
     if (q.get('kzreveal')) { const it = KZ.ITEMS[+q.get('kzreveal')]; showKz(''); const rv = $('kzreveal'); rv.className = 'r' + it.r; rv.hidden = false; $('kzrstars').textContent = '★'.repeat(it.r); $('kzrname').textContent = it.name; $('kzrsub').textContent = '👀 おためし（まだ つけて ないよ）\nNEW！ ' + KZ.SLOT_LABEL[it.slot] + 'の いちらんから つけてね' + (it.desc ? '\n' + it.desc : ''); kzShow = it; requestAnimationFrame(kzAnim); }
   }
   if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
