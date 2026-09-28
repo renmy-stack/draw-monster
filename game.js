@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '64';
+const VERSION = '65';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -697,6 +697,21 @@ function renderRank() {
     row.addEventListener('click', () => rankPractice(m)); list.append(row);
   }
   if (t && !(t.top || []).length) list.textContent = 'まだ だれも とうろく して いないよ';
+  // 30 位より 下の ときは「⋮」の 下に 自分と 前後 2 体（タップで れんしゅうじあい）
+  const shown = (t && t.top || []).length;
+  if (me && me.pos && me.pos > shown && me.nb && me.nb.length) {
+    const gap = document.createElement('div'); gap.className = 'rk-gap'; gap.textContent = '⋮'; list.append(gap);
+    for (const x of me.nb) {
+      const row = document.createElement('button'); row.className = 'rk-row rk-top' + (x.id === me.id ? ' mine' : '');
+      const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = x.pos;
+      const nm = document.createElement('span'); nm.className = 'rk-opp'; nm.textContent = x.name + (x.id === me.id ? '（あなた）' : '');
+      const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = x.pct + '%';
+      const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+      row.append(p, cv, nm, sc); list.append(row);
+      // 絵は 形を もらって から
+      fetch(RANK_API + '/mon?id=' + encodeURIComponent(x.id)).then(r => r.json()).then(m => { const d = m.code && RB.decodeDesign(m.code); if (d) drawPreview(cv, d, x.id === me.id ? ME.color : RANK_COLOR); if (x.id !== me.id && m.code) row.addEventListener('click', () => rankPractice({ name: x.name, code: m.code })); }).catch(() => {});
+    }
+  }
 }
 async function rankRegister() {
   if (!myRobot || rankBusy) return;

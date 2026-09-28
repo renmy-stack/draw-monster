@@ -282,3 +282,5 @@ button:disabled { opacity: .45; }
 .trecord { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; margin-top: 8px; font-size: 12px; }
 .tr-h { font-weight: 800; color: #777; }
 .mc-hint { font-size: 12px; color: #999; font-weight: 700; }
+
+.rk-gap { text-align: center; font-size: 20px; font-weight: 900; color: #bbb; line-height: 1; margin: 4px 0; }

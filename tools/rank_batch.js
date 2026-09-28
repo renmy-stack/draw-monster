@@ -140,7 +140,9 @@ async function main() {
     const s = st[i];
     // 対戦の 例: 強い 相手に かった 3 戦・まけた 3 戦（リプレイ用に 自分が 左か 右か も）
     const pickx = (arr, res) => arr.slice().sort((x, y) => pctOf(st[y[0]]) - pctOf(st[x[0]])).slice(0, 3).map(([o, side]) => [list[o].id, list[o].name, res, side]);
-    return { pos: s.pos || null, pct: Math.round(pctOf(s) * 1000) / 10, pl: playedOf(s), tot: s.tot, w: s.w, l: s.l, d: s.d, rec: pickx(s.beat, 'W').concat(pickx(s.lost, 'L')) };
+    // 順位表で 自分の 前後 2 体（自分も ふくむ）: [順位, ID, 名前, 勝率]。30 位より 下の 人に ランキングの 下で 見せる
+    const nb = s.pos ? ranked.slice(Math.max(0, s.pos - 3), s.pos + 2).map(k => [st[k].pos, list[k].id, list[k].name, Math.round(pctOf(st[k]) * 1000) / 10]) : [];
+    return { pos: s.pos || null, pct: Math.round(pctOf(s) * 1000) / 10, pl: playedOf(s), tot: s.tot, w: s.w, l: s.l, d: s.d, rec: pickx(s.beat, 'W').concat(pickx(s.lost, 'L')), nb };
   };
   const top = { t: now, n, reps: reps.length, top: ranked.slice(0, TOP_N).map(i => { const e = entry(i); return { id: list[i].id, name: list[i].name, pos: e.pos, pct: e.pct, pl: e.pl, tot: e.tot }; }) };
   const buckets = {};
