@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '72';
+const VERSION = '73';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -624,16 +624,16 @@ onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 const RANK_API = 'https://renmy-rank.renmy-stack.workers.dev';
 const RANK_ON = true;   // 2026-09-28 全員に 公開（前は ?ranktest の 端末だけ）
 const RANK_COLOR = '#ef6c00';
-let rankTop = null, rankMe = null, rankBusy = false, rankGotMedal = 0;
+let rankTop = null, rankMe = null, rankBusy = false, rankGotMedal = 0, rankDown = false;
 function rankDev() { let d = lsGet('rank.dev'); if (!d) { d = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); lsSet('rank.dev', d); } return d; }
 function seasonRange(s) { const a = new Date(s + 'T00:00:00Z'); return (a.getUTCMonth() + 1) + '/' + a.getUTCDate(); }
 async function loadRank() {
   try {
     const [t, m] = await Promise.all([fetch(RANK_API + '/top').then(r => r.json()), fetch(RANK_API + '/me?dev=' + rankDev()).then(r => r.json())]);
-    rankTop = t; rankMe = m.me;
+    rankTop = t; rankMe = m.me; rankDown = false;
     if (rankMe) lsSet('rank.reg', '1');
     if (rankMe && rankMe.champDays) { const cm = champMap(), had = cm[rankMe.code] || 0; if (rankMe.champDays > had) { cm[rankMe.code] = rankMe.champDays; lsSet('champ', JSON.stringify(cm)); rankGotMedal = rankMe.champDays; if (myRobot && plainCode(myRobot) === rankMe.code) { myRobot.champ = rankMe.champDays; lsSet('robot', RB.encodeDesign(myRobot)); } TR('rankmedal', { n: rankMe.champDays }); } }
-  } catch (e) { rankTop = null; }
+  } catch (e) { rankTop = null; rankDown = true; }   // サーバーが 休み（読み取り枠 など）
 }
 function miniPreview(code, color, size) {
   const c = document.createElement('canvas'); c.width = c.height = size || 96;
@@ -647,7 +647,7 @@ function showRank(msg) {
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
-  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなの モンスターと たたかった しょうりつで じゅんい・だいたい 20 ぷんで こうしん・よる 0 じの 1 いが チャンピオン・7 にち あそばないと おやすみ' : 'よみこみちゅう…';
+  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなの モンスターと たたかった しょうりつで じゅんい・だいたい 20 ぷんで こうしん・よる 0 じの 1 いが チャンピオン・7 にち あそばないと おやすみ' : rankDown ? 'いま ランクせんに つながらないよ。しばらく してから また きてね' : 'よみこみちゅう…';
   // 先週の チャンピオン
   const ch = t && t.champion, cb = $('rankchamp'); cb.hidden = !ch; cb.innerHTML = '';
   if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.rating + '%）' + (ch.streak >= 2 ? '　' + ch.streak + ' にち れんぞく！' : ''))); cb.append(s); }
