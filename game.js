@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '84';
+const VERSION = '85';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -723,19 +723,23 @@ onTap($('tmycard'), showDraw);
 onTap($('minnaabout'), showMinnaInfo);
 // ---------- かざり（ガチャ・かざる）----------
 const kzOpen = new Set((() => { try { return JSON.parse(lsGet('kz.open') || '[]'); } catch (e) { return []; } })());
+// NEW: 手に 入れて から まだ 一覧で タップして いない かざり（ガチャで 自動で ついた ぶんも まだ NEW）。はじめは 持っている ものを ぜんぶ 見た ことに
+function kzSeen() { try { const v = lsGet('kz.seen'); if (v == null) { const o = kzs.own(); lsSet('kz.seen', JSON.stringify(o)); return o; } return JSON.parse(v); } catch (e) { return []; } }
+function kzMarkSeen(id) { const s = kzSeen(); if (!s.includes(id)) { s.push(id); lsSet('kz.seen', JSON.stringify(s)); } }
 function showKz(msg) {
   $('kzbox').hidden = false;
   $('kzcoins2').textContent = '🪙 ' + kzs.coins();
   $('kzpull').disabled = kzs.coins() < KZ.PRICE;
   if (msg != null) $('kzmsg').innerHTML = msg;
   if (myRobot) drawPreview($('kzprev'), withKz(withCrown(myRobot)), ME.color);
-  const own = kzs.own(), eq = kzs.eq(), list = $('kzlist'); list.innerHTML = '';
+  const own = kzs.own(), eq = kzs.eq(), seen = kzSeen(), list = $('kzlist'); list.innerHTML = '';
   KZ.SLOTS.forEach((slot, si) => {
     // 場所ごとに 折りたたみ（見出しに 集めた数 と いま つけている もの）。開いて いるかは おぼえておく
     const box = document.createElement('details'); box.className = 'kz-slot'; box.open = kzOpen.has(slot);
     box.addEventListener('toggle', () => { if (box.open) kzOpen.add(slot); else kzOpen.delete(slot); lsSet('kz.open', JSON.stringify([...kzOpen])); });
     const cur = KZ.ITEMS[eq[si]], total = KZ.ITEMS.filter(it => it && it.slot === slot), got = total.filter(it => own.includes(it.id)).length;
-    box.innerHTML = '<summary><b>' + KZ.SLOT_LABEL[slot] + '</b><span class="kz-cnt">' + got + ' / ' + total.length + '</span><span class="kz-cur">' + (cur ? 'いま: ' + cur.name : 'なし') + '</span></summary>' + (cur && cur.desc ? '<small class="kz-desc">' + cur.desc + '</small>' : '') + '<div class="kz-items"></div>';
+    const nNew = total.filter(it => own.includes(it.id) && !seen.includes(it.id)).length;
+    box.innerHTML = '<summary><b>' + KZ.SLOT_LABEL[slot] + '</b><span class="kz-cnt">' + got + ' / ' + total.length + '</span>' + (nNew ? '<span class="kz-new">NEW ' + nNew + '</span>' : '') + '<span class="kz-cur">' + (cur ? 'いま: ' + cur.name : 'なし') + '</span></summary>' + (cur && cur.desc ? '<small class="kz-desc">' + cur.desc + '</small>' : '') + '<div class="kz-items"></div>';
     const row = box.querySelector('.kz-items');
     const none = document.createElement('button'); none.textContent = 'なし'; none.className = eq[si] ? '' : 'on';
     onTap(none, () => { const e = kzs.eq(); e[si] = 0; kzs.setEq(e); showKz(); }); row.appendChild(none);
@@ -744,7 +748,8 @@ function showKz(msg) {
       const has = own.includes(it.id), b = document.createElement('button');
       b.className = 'r' + it.r + (eq[si] === it.id ? ' on' : '') + (has ? '' : ' no');
       b.textContent = has ? '★'.repeat(it.r) + ' ' + it.name : '？？？';
-      if (has) onTap(b, () => { const e = kzs.eq(); e[si] = e[si] === it.id ? 0 : it.id; kzs.setEq(e); TR('kzeq', { s: slot, id: e[si] }); showKz(); });
+      if (has && !seen.includes(it.id)) { const nb = document.createElement('i'); nb.className = 'kz-nb'; nb.textContent = 'NEW'; b.appendChild(nb); }
+      if (has) onTap(b, () => { kzMarkSeen(it.id); const e = kzs.eq(); e[si] = e[si] === it.id ? 0 : it.id; kzs.setEq(e); TR('kzeq', { s: slot, id: e[si] }); showKz(); });
       else b.disabled = true;
       row.appendChild(b);
     }

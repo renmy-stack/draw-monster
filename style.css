@@ -334,7 +334,14 @@ button:disabled { opacity: .45; }
 .kz-slot summary::before { content: '▶'; font-size: 10px; transition: transform .15s; }
 .kz-slot[open] summary::before { transform: rotate(90deg); }
 .kz-cnt { font-size: 12px; font-weight: 900; color: #ef6c00; font-variant-numeric: tabular-nums; }
-.kz-cur { margin-left: auto; font-size: 11px; font-weight: 700; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%; }
+.kz-new, .kz-nb { font-style: normal; font-size: 10px; font-weight: 900; color: #fff; background: #ff1744; border-radius: 999px; padding: 1px 6px; }
+.kz-items button { position: relative; }
+.kz-nb { position: absolute; top: -8px; right: -6px; font-size: 9px; padding: 0 5px; box-shadow: 0 1px 0 var(--ink); }
+/* 見本と コインは 上に のこす（下に スクロールしても 付けかえた 結果が 見える） */
+#kzbox .kz-top { position: sticky; top: -16px; z-index: 2; background: var(--paper); margin: 6px -18px 0; padding: 10px 18px 8px; box-shadow: 0 6px 8px -6px rgba(0, 0, 0, .35); }
+.kz-cur { flex: 1 1 auto; min-width: 0; text-align: right; font-size: 11px; font-weight: 700; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kz-slot summary b, .kz-cnt, .kz-new { flex: none; white-space: nowrap; }
+.kz-slot summary::before { flex: none; }
 .kz-slot .kz-desc { margin: -2px 0 6px; }
 .kz-items { display: flex; flex-wrap: wrap; gap: 5px; }
 .kz-items button { margin: 0; padding: 4px 8px; font-size: 12px; font-weight: 800; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); box-shadow: 0 2px 0 var(--ink); }
