@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '65';
+const VERSION = '66';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -645,7 +645,7 @@ function showRank(msg) {
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
-  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなの モンスターと たたかった しょうりつで じゅんい・15 ふんごとに こうしん・よる 0 じの 1 いが チャンピオン・7 にち あそばないと おやすみ' : 'よみこみちゅう…';
+  $('ranksub').textContent = t ? t.count + ' たい さんか・みんなの モンスターと たたかった しょうりつで じゅんい・だいたい 20 ぷんで こうしん・よる 0 じの 1 いが チャンピオン・7 にち あそばないと おやすみ' : 'よみこみちゅう…';
   // 先週の チャンピオン
   const ch = t && t.champion, cb = $('rankchamp'); cb.hidden = !ch; cb.innerHTML = '';
   if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.rating + '%）' + (ch.streak >= 2 ? '　' + ch.streak + ' にち れんぞく！' : ''))); cb.append(s); }
@@ -657,11 +657,11 @@ function renderRank() {
     const info = document.createElement('div');
     const nm = document.createElement('div'); nm.className = 'rk-name'; nm.textContent = me.name;
     const st = document.createElement('div'); st.className = 'rk-stat';
-    st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'みんなとの たいせんを けいさんちゅう…（15 ふん いないに でるよ）';
+    st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'みんなとの たいせんを けいさんちゅう…（だいたい 20 ぷんで でるよ）';
     info.append(nm, st);
     if (me.champ) { const c = document.createElement('div'); c.className = 'rk-champbadge'; c.textContent = '👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく！）' : '！'); info.append(c); }
     head.append(info); box.append(head);
-    if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。15 ふん いないに ランキングに もどるよ'; box.append(b); }
+    if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。だいたい 20 ぷんで ランキングに もどるよ'; box.append(b); }
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'この モンスターは ひょうじされて いません'; box.append(h); }
     const rec = me.recent || [];
     if (rec.length) {
@@ -673,7 +673,7 @@ function renderRank() {
         const dd = document.createElement('span'); dd.className = 'rk-d'; dd.textContent = r.s === 'A' ? 'ひだり' : 'みぎ';
         row.append(chip, nmm, dd); row.addEventListener('click', () => rankReplay(me, r)); box.append(row);
       }
-    } else { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'みんなとの たいせんを けいさんちゅう。15 ふん いないに でるよ'; box.append(n); }
+    } else { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'みんなとの たいせんを けいさんちゅう。だいたい 20 ぷんで でるよ'; box.append(n); }
   } else {
     const n = document.createElement('div'); n.className = 'rk-note';
     n.textContent = myRobot ? 'いまの モンスターを とうろくすると、みんなの モンスターと じどうで たたかって じゅんいが きまるよ' : 'まず モンスターを つくってね';
@@ -721,7 +721,7 @@ async function rankRegister() {
   try {
     const r = await (await fetch(RANK_API + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: plainCode(myRobot), name }) })).json();
     if (r.error) $('rankmsg').textContent = r.error;
-    else { TR('rankreg', { me: plainCode(myRobot) }); lsSet('rank.reg', '1'); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ 15 ふん いないに みんなとの たいせん けっかが でるよ'; }
+    else { TR('rankreg', { me: plainCode(myRobot) }); lsSet('rank.reg', '1'); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ だいたい 20 ぷんで みんなとの たいせん けっかが でるよ'; }
   } catch (e) { $('rankmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   rankBusy = false; if (mode === 'rank') renderRank();
 }
