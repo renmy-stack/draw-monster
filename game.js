@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '81';
+const VERSION = '82';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -771,6 +771,34 @@ onTap($('kzpull'), () => {
   }, wait);
 });
 onTap($('kzrok'), () => { $('kzreveal').hidden = true; kzShow = null; });
+// かざりの 一覧（オーナーの 確認用）: 場所ごとに 20 こを 並べて 動かす。上の ボタンで 場所を かえる・とじる
+let kzGal = null;
+function kzGallery(slot, nocrown) {
+  if (kzGal) kzGal.box.remove();
+  const base = myRobot || (() => { const c = RB.CPU[2]; return RB.design(c.body, c.arm, c.leg); })();
+  const si = Math.max(0, KZ.SLOTS.indexOf(slot)), items = KZ.ITEMS.filter(it => it && it.slot === KZ.SLOTS[si]);
+  const box = document.createElement('div'); box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#15173a;overflow:auto;padding:6px 4px calc(env(safe-area-inset-bottom) + 10px)';
+  const bar = document.createElement('div'); bar.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin:calc(env(safe-area-inset-top) + 4px) 0 6px';
+  const btn = (label, on, fn) => { const b = document.createElement('button'); b.textContent = label; b.style.cssText = 'margin:0;padding:6px 10px;font:800 13px sans-serif;border:2px solid #fff;border-radius:10px;box-shadow:none;background:' + (on ? '#ff4d4d' : '#2b2f6b') + ';color:#fff'; b.addEventListener('click', e => { e.preventDefault(); fn(); }); bar.appendChild(b); };
+  KZ.SLOTS.forEach((s, i) => btn(KZ.SLOT_LABEL[s], i === si, () => kzGallery(s, nocrown)));
+  btn(nocrown ? '王冠 なし' : '王冠 あり', false, () => kzGallery(KZ.SLOTS[si], !nocrown));
+  btn('とじる', false, () => { box.remove(); kzGal = null; });
+  box.appendChild(bar);
+  const grid = document.createElement('div'); grid.style.cssText = 'display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px'; box.appendChild(grid);
+  const cells = items.map(it => {
+    const c = document.createElement('div'); c.style.cssText = 'color:#fff;font:700 10px sans-serif;text-align:center;line-height:1.25';
+    const cv = document.createElement('canvas'); cv.width = 200; cv.height = 200; cv.style.cssText = 'width:100%;display:block;background:#1f2250;border-radius:6px';
+    c.appendChild(cv); c.appendChild(document.createTextNode('★'.repeat(it.r) + ' ' + it.name)); grid.appendChild(c); return { it, cv };
+  });
+  document.body.appendChild(box);
+  kzGal = { box };
+  const me = kzGal, loop = () => {
+    if (kzGal !== me) return;
+    for (const { it, cv } of cells) { const d = Object.assign({}, base, nocrown ? { crown: false, legend: false, champ: 0 } : {}), e = [0, 0, 0, 0]; e[si] = it.id; d.kz = e; drawPreview(cv, d, ME.color, true); }
+    requestAnimationFrame(loop);
+  };
+  loop();
+}
 // ガチャ画面を 開いている 間は 見本を 動かす（★★ ★★★ の かざりは ずっと 動いている）
 let kzShow = null;
 function kzAnim() {
@@ -1234,14 +1262,9 @@ showTitle();
     lsSet('kz.coins', q.get('kzdev') || '0');
     if (q.get('kzeq')) { const e = q.get('kzeq').split(',').map(Number); kzs.setEq(e); kzs.setOwn([...new Set(kzs.own().concat(e.filter(Boolean)))]); }
     showTitle(); if (q.has('kzopen')) { showKz(''); requestAnimationFrame(kzAnim); }
-    if (q.get('kzgallery') && myRobot) {   // 開発用: ?kzgallery=head|face|body|fx で その場所の 20 こを 並べて 動かす
-      const slot = q.get('kzgallery'), items = KZ.ITEMS.filter(it => it && it.slot === slot), si = KZ.SLOTS.indexOf(slot);
-      const box = document.createElement('div'); box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#15173a;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding:2px;overflow:auto';
-      const cells = items.map(it => { const c = document.createElement('div'); c.style.cssText = 'color:#fff;font:700 10px sans-serif;text-align:center'; const cv = document.createElement('canvas'); cv.width = 180; cv.height = 180; cv.style.cssText = 'width:100%;background:#1f2250;border-radius:6px'; c.appendChild(cv); c.appendChild(document.createTextNode('★'.repeat(it.r) + ' ' + it.name)); box.appendChild(c); return { it, cv }; });
-      document.body.appendChild(box);
-      const loop = () => { for (const { it, cv } of cells) { const d = Object.assign({}, myRobot, q.has('nocrown') ? { crown: false, legend: false, champ: 0 } : {}), e = [0, 0, 0, 0]; e[si] = it.id; d.kz = e; drawPreview(cv, d, ME.color, true); } requestAnimationFrame(loop); };
-      loop();
-    }
+  }
+  if (KZ_ON && q.has('kzgallery')) kzGallery(q.get('kzgallery') || 'head', q.has('nocrown'));   // オーナーの 確認用: ?gachatest&kzgallery=head|face|body|fx（&nocrown で 王冠なし）
+  if (KZ_ON) {
     if (q.get('kzreveal')) { const it = KZ.ITEMS[+q.get('kzreveal')]; showKz(''); const rv = $('kzreveal'); rv.className = 'r' + it.r; rv.hidden = false; $('kzrstars').textContent = '★'.repeat(it.r); $('kzrname').textContent = it.name; $('kzrsub').textContent = 'NEW！ ' + KZ.SLOT_LABEL[it.slot] + 'に つけたよ' + (it.desc ? '\n' + it.desc : ''); kzShow = it; requestAnimationFrame(kzAnim); }
   }
   if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
