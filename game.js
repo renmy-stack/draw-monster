@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '88';
+const VERSION = '89';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -771,11 +771,11 @@ onTap($('kzpull'), () => {
     if (r.item.r === 3) { const f = $('kzflash'); f.hidden = true; void f.offsetWidth; f.hidden = false; setTimeout(() => { f.hidden = true; }, 520); }
     const si = KZ.SLOTS.indexOf(r.item.slot);
     kzOpen.add(r.item.slot);   // 当たった 場所は 開いて 見せる
-    if (!r.dup) { const e = kzs.eq(); e[si] = r.item.id; kzs.setEq(e); }   // あたらしい かざりは すぐ つけて みせる
+    // 当たっても 自動では つけない（オーナー判断）。カードの 絵は おためし
     const rv = $('kzreveal'); rv.className = 'r' + r.item.r; rv.hidden = false; $('kzrgrid').hidden = true;
     $('kzrstars').textContent = '★'.repeat(r.item.r);
     $('kzrname').textContent = r.item.name;
-    $('kzrsub').textContent = (r.dup ? 'もう もってた… 🪙 +' + KZ.DUP_BACK + ' もどったよ' : 'NEW！ ' + KZ.SLOT_LABEL[r.item.slot] + 'に つけたよ') + (r.item.desc ? '\n' + r.item.desc : '');
+    $('kzrsub').textContent = '👀 おためし（まだ つけて ないよ）\n' + (r.dup ? 'もう もってた… 🪙 +' + KZ.DUP_BACK + ' もどったよ' : 'NEW！ ' + KZ.SLOT_LABEL[r.item.slot] + 'の いちらんから つけてね') + (r.item.desc ? '\n' + r.item.desc : '');
     kzShow = r.item;
     showKz('<span class="r' + r.item.r + '">' + '★'.repeat(r.item.r) + ' ' + r.item.name + '</span>' + (r.dup ? '<br>かぶり 🪙 +' + KZ.DUP_BACK : '<br>ゲット！'));
   }, wait);
@@ -1299,7 +1299,7 @@ showTitle();
   }
   if (KZ_ON && q.has('kzgallery')) kzGallery(q.get('kzgallery') || 'head', q.has('nocrown'));   // オーナーの 確認用: ?gachatest&kzgallery=head|face|body|fx（&nocrown で 王冠なし）
   if (KZ_ON) {
-    if (q.get('kzreveal')) { const it = KZ.ITEMS[+q.get('kzreveal')]; showKz(''); const rv = $('kzreveal'); rv.className = 'r' + it.r; rv.hidden = false; $('kzrstars').textContent = '★'.repeat(it.r); $('kzrname').textContent = it.name; $('kzrsub').textContent = 'NEW！ ' + KZ.SLOT_LABEL[it.slot] + 'に つけたよ' + (it.desc ? '\n' + it.desc : ''); kzShow = it; requestAnimationFrame(kzAnim); }
+    if (q.get('kzreveal')) { const it = KZ.ITEMS[+q.get('kzreveal')]; showKz(''); const rv = $('kzreveal'); rv.className = 'r' + it.r; rv.hidden = false; $('kzrstars').textContent = '★'.repeat(it.r); $('kzrname').textContent = it.name; $('kzrsub').textContent = '👀 おためし（まだ つけて ないよ）\nNEW！ ' + KZ.SLOT_LABEL[it.slot] + 'の いちらんから つけてね' + (it.desc ? '\n' + it.desc : ''); kzShow = it; requestAnimationFrame(kzAnim); }
   }
   if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
   if (q.has('rankdev') && RANK_ON) { if (!myRobot) sample(); showRank(); if (q.get('rankdev') === 'replay') setTimeout(() => { if (rankMe && rankMe.recent[0]) { rankReplay(rankMe, rankMe.recent[0]); } }, 3000); }   // 開発用: ランクせん
