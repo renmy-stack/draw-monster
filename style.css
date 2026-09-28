@@ -363,7 +363,8 @@ button:disabled { opacity: .45; }
 #kzreveal.r2 .kzr-name { color: #1565c0; }
 #kzreveal.r3 .kzr-name { font-size: 28px; background: linear-gradient(90deg, #ff5252, #ffab40, #ffd740, #69f0ae, #40c4ff, #b388ff, #ff5252); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: kzrainbow 2s linear infinite; }
 @keyframes kzrainbow { to { background-position: 200% 0; } }
-.kzr-sub { font-size: 13px; font-weight: 800; color: #666; min-height: 18px; margin: 4px 0 10px; }
+.kzr-sub { font-size: 13px; font-weight: 800; color: #666; min-height: 18px; margin: 4px 0 10px; white-space: pre-line; line-height: 1.5; }
+.kz-desc { display: block; font-size: 11px; font-weight: 700; color: #7b1fa2; margin-top: 1px; }
 #kzrok { margin: 0 auto; }
 #kzflash { position: fixed; inset: 0; z-index: 45; background: #fff; pointer-events: none; animation: kzflash .5s ease-out forwards; }
 @keyframes kzflash { from { opacity: 1; } to { opacity: 0; } }

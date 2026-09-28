@@ -26,12 +26,12 @@ const ITEMS = [
   { id: 16, slot: 'body', name: 'きんいろ', r: 2 },
   { id: 17, slot: 'body', name: 'にじいろ', r: 3 },
   { id: 18, slot: 'body', name: 'クリスタル', r: 3 },
-  { id: 19, slot: 'fx', name: 'あしあとに はな', r: 1 },
-  { id: 20, slot: 'fx', name: 'パンチで ほし', r: 1 },
-  { id: 21, slot: 'fx', name: 'あせ', r: 1 },
-  { id: 22, slot: 'fx', name: 'ほのお', r: 2 },
-  { id: 23, slot: 'fx', name: 'かみなり', r: 2 },
-  { id: 24, slot: 'fx', name: 'オーラ', r: 3 },
+  { id: 19, slot: 'fx', name: 'あしあとに はな', r: 1, desc: 'あるくと あしあとに はなが さく' },
+  { id: 20, slot: 'fx', name: 'パンチで ほし', r: 1, desc: 'パンチが あたると ほしが とびちる' },
+  { id: 21, slot: 'fx', name: 'あせ', r: 1, desc: 'たたかって いると あせが とぶ' },
+  { id: 22, slot: 'fx', name: 'ほのお', r: 2, desc: 'からだから ほのおが もえあがる' },
+  { id: 23, slot: 'fx', name: 'かみなり', r: 2, desc: 'でんきが はしって ときどき かみなりが おちる' },
+  { id: 24, slot: 'fx', name: 'オーラ', r: 3, desc: 'むらさきの オーラが あふれだす' },
 ];
 const PRICE = 100, DUP_BACK = 30, RATE = [0, 0.6, 0.3, 0.1];
 const WIN = { omote: 10, ura: 30, minna: 60 }, CLEAR = { omote: 50, ura: 150, minna: 300 }, HIST_MAX = 30;
