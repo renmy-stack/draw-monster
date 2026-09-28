@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '87';
+const VERSION = '88';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -798,7 +798,7 @@ onTap($('kzpull10'), () => {
     $('kzrstars').textContent = '★'.repeat(top);
     $('kzrname').textContent = best.item.name;
     const nNew = rs.filter(r => !r.dup).length, back = rs.filter(r => r.dup).length * KZ.DUP_BACK;
-    $('kzrsub').textContent = 'NEW ' + nNew + ' こ' + (back ? '・かぶり 🪙 +' + back : '') + '\n' + '★★★ ' + rs.filter(r => r.item.r === 3).length + '・★★ ' + rs.filter(r => r.item.r === 2).length + '・★ ' + rs.filter(r => r.item.r === 1).length;
+    $('kzrsub').textContent = '👀 おためし（まだ つけて ないよ）\n' + 'NEW ' + nNew + ' こ' + (back ? '・かぶり 🪙 +' + back : '') + '\n' + '★★★ ' + rs.filter(r => r.item.r === 3).length + '・★★ ' + rs.filter(r => r.item.r === 2).length + '・★ ' + rs.filter(r => r.item.r === 1).length;
     const grid = $('kzrgrid'); grid.innerHTML = ''; grid.hidden = false;
     rs.forEach((r, i) => { const d = document.createElement('div'); d.className = 'kzg r' + r.item.r + (r.dup ? ' dup' : ''); d.style.animationDelay = (i * 0.07) + 's'; d.innerHTML = '<b>' + '★'.repeat(r.item.r) + '</b>' + r.item.name + (r.dup ? '' : '<i>NEW</i>'); grid.appendChild(d); });
     kzShow = best.item;
