@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '76';
+const VERSION = '77';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -56,9 +56,8 @@ let uraOpen = URA_TEST || lsGet('cleared') === '1';   // おもてを クリア�
 if (/[?&]minnatest(=|&|$)/.test(location.search)) lsSet('minnatest', '1');
 let MINNA_OPEN = lsGet('minnatest') === '1' || lsGet('ura.cleared') === '1';   // うらを クリアしたら 出る
 const SIDE_LABEL = { omote: 'おもて', ura: 'うら', minna: 'みんな' };
-// タイトルの 整理（v75）: おもて → うら → みんな を「ぼうけん」の 1 本道に。?titletest を開いた 端末だけ（オーナーの 確認用）
-if (/[?&]titletest(=|&|$)/.test(location.search)) lsSet('titletest', '1');
-const TITLE_TEST = lsGet('titletest') === '1';
+// タイトルの 整理（v75）: おもて → うら → みんな を「ぼうけん」の 1 本道に。v77 で 全員に 公開（前は ?titletest の 端末だけ）
+const TITLE_TEST = true;
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
 const sk = n => (side === 'omote' ? '' : side + '.') + n;
 function CPUS() { return side === 'ura' ? RB.URA : side === 'minna' ? RB.MINNA : RB.CPU; }
