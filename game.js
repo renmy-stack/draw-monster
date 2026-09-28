@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '74';
+const VERSION = '75';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -56,6 +56,9 @@ let uraOpen = URA_TEST || lsGet('cleared') === '1';   // おもてを クリア�
 if (/[?&]minnatest(=|&|$)/.test(location.search)) lsSet('minnatest', '1');
 let MINNA_OPEN = lsGet('minnatest') === '1' || lsGet('ura.cleared') === '1';   // うらを クリアしたら 出る
 const SIDE_LABEL = { omote: 'おもて', ura: 'うら', minna: 'みんな' };
+// タイトルの 整理（v75）: おもて → うら → みんな を「ぼうけん」の 1 本道に。?titletest を開いた 端末だけ（オーナーの 確認用）
+if (/[?&]titletest(=|&|$)/.test(location.search)) lsSet('titletest', '1');
+const TITLE_TEST = lsGet('titletest') === '1';
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
 const sk = n => (side === 'omote' ? '' : side + '.') + n;
 function CPUS() { return side === 'ura' ? RB.URA : side === 'minna' ? RB.MINNA : RB.CPU; }
@@ -104,12 +107,14 @@ function showTitle() {
   $('trecord').hidden = !ob && !uraOpen;   // この スマホで どこまで 進んだか（モンスター ごとでは ない）
   $('tprog').innerHTML = chip('おもて', ob, uraOpen, 'c-omote') + (uraOpen ? chip('うら', ub, lsGet('ura.cleared') === '1', 'c-ura') : '') + (MINNA_OPEN ? chip('みんな', mb, lsGet('minna.cleared') === '1', 'c-minna') : '');
   $('start').textContent = myRobot ? 'たたかう・なおす' : 'モンスターを つくる';
+  if (TITLE_TEST) renderRoad();
   // モード
   $('minnabtn').hidden = !MINNA_OPEN;
   $('minnacap').textContent = lsGet('minna.cleared') === '1' ? 'たおした！ もういちど ちょうせん' : 'うらを クリアした みんなの 5 たい';
   $('minnaabout').hidden = !MINNA_OPEN;
   $('rankbtn').hidden = !RANK_ON;
   if (RANK_ON) titleRank();
+  if (TITLE_TEST) { $('minnabtn').hidden = true; $('minnaabout').hidden = !MINNA_OPEN || side !== 'minna'; }
   { const n = [...document.querySelectorAll('.modes > .mode')].filter(el => !el.hidden).length; document.querySelector('.modes').classList.toggle('odd', n % 2 === 1); }
   // コレクション（でんせつ・でんどういり）
   let nl = 0, nh = 0; try { nl = JSON.parse(lsGet('legendhall') || '[]').length; nh = JSON.parse(lsGet('hall') || '[]').length; } catch (e) {}
@@ -117,6 +122,35 @@ function showTitle() {
   $('collsum').textContent = 'コレクション　' + (nl ? '⭐ でんせつ ' + nl + '　' : '') + (nh ? '👑 でんどういり ' + nh : '');
   drawTitleBg();
 }
+// ぼうけんの 道: 出ている 段は タップで えらべる（えらんだ 段が「たたかう」の 相手）。まだの 段は ？？？
+function renderRoad() {
+  $('trecord').hidden = true; $('start').parentNode.style.display = 'none'; $('adv').hidden = false;
+  $('tmchint').textContent = '✏ タップで なおす・えらぶ';
+  const open = { omote: true, ura: uraOpen, minna: MINNA_OPEN };
+  const road = $('road'); road.innerHTML = '';
+  ['omote', 'ura', 'minna'].forEach((s, i) => {
+    if (i) { const ln = document.createElement('i'); ln.className = 'rd-line' + (open[s] ? ' on' : ''); road.appendChild(ln); }
+    const k = n => (s === 'omote' ? '' : s + '.') + n;
+    const done = lsGet(k('cleared')) === '1' || (s === 'omote' && uraOpen && !URA_TEST);
+    const b = document.createElement('button');
+    b.className = 'rd-node rd-' + s + (open[s] ? '' : ' locked') + (done ? ' done' : '') + (open[s] && side === s ? ' sel' : '');
+    const st = +(lsGet(k('stage')) || 0);
+    b.innerHTML = open[s] ? '<b>' + SIDE_LABEL[s] + '</b><small>' + (done ? '✓ クリア' : (st + 1) + ' / 5') + '</small>' : '<b>？？？</b><small>&nbsp;</small>';
+    b.disabled = !open[s];
+    if (open[s]) onTap(b, () => { if (side === s) return; side = s; lsSet('side', s); loadSide(); TR('road', { s }); showTitle(); });
+    road.appendChild(b);
+  });
+  const go = $('advgo');
+  if (!myRobot) { go.innerHTML = 'モンスターを つくる'; go.className = 'main advgo'; return; }
+  go.innerHTML = '▶ たたかう<small>' + SIDE_LABEL[side] + ' ' + (stage + 1) + ' / ' + CPUS().length + ' ' + CPUS()[stage].name + '</small>';
+  go.className = 'main advgo' + (side === 'ura' ? ' ura' : side === 'minna' ? ' minna' : '');
+}
+onTap($('advgo'), () => {
+  if (!myRobot) { showDraw(); return; }
+  TR('advgo', { side, stage });
+  if (side === 'minna' && lsGet('minna.intro') !== '1') { minnaStartAfterInfo = true; showMinnaInfo(); return; }
+  startBattle(false);
+});
 function showDraw() {
   TR('draw', null);
   mode = 'draw'; show('draw');
