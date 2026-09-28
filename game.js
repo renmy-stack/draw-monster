@@ -7,7 +7,7 @@ function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
 function stat4(d) { const st = RB.robotStats(d); return [st.hp, Math.round(st.punch * 10) / 10, Math.round(st.reach), Math.round(st.speed * 10) / 10]; }
 // ホーム画面から開いていないとき（Safari の中）は 下のバーぶん あける
 if (!(window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches))) document.body.classList.add('browser');   // version.txt と合わせる。更新したら index.html の ?v= も上げる
-const SITE_URL = 'https://renmy-stack.github.io/draw-monster/';
+const SITE_URL = 'https://renmygames.com/draw-monster/';
 
 const $ = id => document.getElementById(id);
 const cv = $('game'), ctx = cv.getContext('2d');
