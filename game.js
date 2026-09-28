@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '78';
+const VERSION = '79';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -232,8 +232,7 @@ function kzBodyFace(g, pts, kz, facing, local, down, t) {
   const path = () => { g.beginPath(); g.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y); g.closePath(); };
   if (kz[2]) {
     g.save(); path(); g.clip();
-    if (kz[2] === 18) { g.fillStyle = 'rgba(200,240,255,.35)'; g.fillRect(x0 - 5, y0 - 5, x1 - x0 + 10, y1 - y0 + 10); }
-    else KZ.drawBody(g, kz[2], x0, y0, x1, y1, t);
+    KZ.drawBody(g, kz[2], x0, y0, x1, y1);
     g.restore();
     path(); g.strokeStyle = '#0d1030'; g.lineWidth = 4; g.stroke();
     if (local) { const w = x1 - x0; face(g, (x, y) => [x, y], x0 + w * 0.62, y0 + Math.min(22, w * 0.3 + 8), Math.max(3.5, Math.min(8, w * 0.1)), 1, false); }
@@ -499,12 +498,9 @@ function renderBattle(dt) {
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = parts[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 900 * (p.g == null ? 1 : p.g) * dt; p.vx *= 0.96;
     if (--p.life <= 0 || p.y > 0.5) { parts.splice(i, 1); continue; }
+    if (p.k && KZ.drawPart(ctx, p)) continue;   // かざりの かけら（ほし・はな・あせ・火の粉・気）
     ctx.fillStyle = p.c; ctx.globalAlpha = Math.min(1, p.life / 15);
-    if (p.k === 'star') KZ.star(ctx, p.x, p.y, 7, p.c, '#b8860b');
-    else if (p.k === 'flower') { for (let a = 0; a < 5; a++) { ctx.beginPath(); ctx.arc(p.x + Math.cos(a * 1.257) * 4, p.y - 3 + Math.sin(a * 1.257) * 4, 3, 0, 7); ctx.fill(); } ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(p.x, p.y - 3, 2.2, 0, 7); ctx.fill(); }
-    else if (p.k === 'drop') { ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(p.x - 3.4, p.y - 1); ctx.lineTo(p.x, p.y - 8); ctx.lineTo(p.x + 3.4, p.y - 1); ctx.fill(); }
-    else if (p.k === 'ember') { ctx.beginPath(); ctx.arc(p.x, p.y, 3 * Math.min(1, p.life / 20), 0, 7); ctx.fill(); }
-    else ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
+    ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
   }
   ctx.globalAlpha = 1;
   for (let i = pops.length - 1; i >= 0; i--) {
@@ -517,19 +513,20 @@ function renderBattle(dt) {
   ctx.restore();
   drawHud();
 }
-// かざりの えふぇくと（バトル中だけ。見た目の かけらを parts に 足す。強さには 関係ない）
-function kzFx(b, fx, tf, x0, w, topY, ex, ey, legA, legB) {
-  if (fx === 22 && rnd() < 0.35) { const p = tf(x0 + rnd() * w, topY + rnd() * 25); parts.push({ x: p[0], y: p[1], vx: (rnd() - 0.5) * 40, vy: -40 - rnd() * 60, g: -0.08, c: rnd() < 0.5 ? '#ff9800' : '#ffcc80', life: 35, k: 'ember' }); }   // ひのこ
-  else if (fx === 21 && rnd() < 0.05) { const s = rnd() < 0.5 ? -1 : 1, p = tf(ex + s * w * 0.35, ey - 4); parts.push({ x: p[0], y: p[1], vx: s * 90, vy: -150, c: '#81d4fa', life: 40, k: 'drop' }); }   // あせ
-  else if (fx === 19) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && rnd() < 0.1) parts.push({ x: f[0], y: 0, vx: 0, vy: 0, g: 0, c: rnd() < 0.5 ? '#f48fb1' : '#ce93d8', life: 90, k: 'flower' }); } }   // あしあとに はな
-  else if (fx === 23) {   // かみなり: ときどき 頭の 上に いなずま
-    b._bolt = (b._bolt || 0) + 1;
-    if (b._bolt % 55 < 6) {
-      const c = tf(x0 + w * (0.3 + ((b._bolt / 55 | 0) % 3) * 0.2), topY);
-      ctx.save(); ctx.strokeStyle = '#fff176'; ctx.lineWidth = 4; ctx.shadowColor = '#ffeb3b'; ctx.shadowBlur = 14; ctx.lineJoin = 'miter';
-      ctx.beginPath(); ctx.moveTo(c[0] - 6, c[1] - 90); ctx.lineTo(c[0] + 8, c[1] - 60); ctx.lineTo(c[0] - 4, c[1] - 52); ctx.lineTo(c[0] + 6, c[1] - 18); ctx.stroke(); ctx.restore();
-    }
-  }
+// かざりの えふぇくと（バトル中だけ。見た目だけで 強さには 関係ない）: 足もと・あせ は ここで、ほのお・かみなり・オーラ は kazari.js の fxBack / fxFront
+function kzFx(fx, tf, w, ex, ey, legA, legB) {
+  if (fx === 21 && Math.random() < 0.06) { const s = Math.random() < 0.5 ? -1 : 1, p = tf(ex + s * w * 0.35, ey - 4); parts.push({ x: p[0], y: p[1], vx: s * 90, vy: -150, c: '#81d4fa', life: 40, k: 'drop' }); }   // あせ
+  else if (fx === 19) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.12) parts.push({ x: f[0], y: 0, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 110, k: 'flower', rot: Math.random() * 6 }); } }   // あしあとに はな
+}
+// かざりの ほのお・かみなり・オーラを 体の 座標で（back: 体の うしろ / front: まえ）
+function kzFxLayer(b, fx, front) {
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const p of b.bodyPts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
+  const co = Math.cos(b.th), si = Math.sin(b.th);
+  const spawn = (lx, ly, q) => parts.push(Object.assign({ x: b.x + lx * co - ly * si, y: b.y + lx * si + ly * co }, q));
+  ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.th);
+  (front ? KZ.fxFront : KZ.fxBack)(ctx, fx, { x0, x1, y0, y1, pts: b.bodyPts, spawn });
+  ctx.restore();
 }
 // モンスターを ワールドに（シミュレーションの点を そのまま使う）
 function drawRobotWorld(b, color, flash, crown) {
@@ -550,8 +547,8 @@ function drawRobotWorld(b, color, flash, crown) {
   if (S.side === 'ura' && b === S.B) { ctx.shadowColor = '#ff1744'; ctx.shadowBlur = 26; }
   if ((S.side === 'minna' && b === S.B) || (b === S.A && S.legendA) || (b === S.B && S.legendB)) { ctx.shadowColor = '#ffd54f'; ctx.shadowBlur = 26; }   // みんなの 敵と でんせつの モンスターは 金に 光る   // みんなの 敵は 金に 光る   // うらの敵は 赤く光る
   const kz = (b === S.A ? S.kzA : S.kzB) || null;
-  if (kz && kz[3] === 24 && !ctx.shadowBlur) { ctx.shadowColor = '#b388ff'; ctx.shadowBlur = 20 + Math.sin(performance.now() / 180) * 8; }   // かざり: オーラ
-  if (kz && kz[2] === 18) ctx.globalAlpha = 0.45;   // かざり: すけすけ
+  if (kz && kz[3] && (mode === 'battle' || mode === 'pause')) { const sc = ctx.shadowColor, sb = ctx.shadowBlur; ctx.shadowBlur = 0; kzFxLayer(b, kz[3], false); ctx.shadowColor = sc; ctx.shadowBlur = sb; }   // かざり: 体の うしろの えふぇくと
+  if (kz && kz[2] === 18) ctx.globalAlpha = 0.45;   // かざり: クリスタル（すきとおる）
   pline(ctx, poly); ctx.closePath(); ctx.fillStyle = bodyCol; ctx.fill();
   ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
@@ -570,11 +567,12 @@ function drawRobotWorld(b, color, flash, crown) {
   if (kz && kz[1]) { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.th); kzBodyFace(ctx, b.bodyPts, [0, kz[1], 0, 0], b.facing, false, down); ctx.restore(); }
   const legend = (b === S.A && S.legendA) || (b === S.B && S.legendB), hat = kz ? kz[0] : 0;
   if (crown || legend || hat) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); const hh = hat ? KZ.drawHead(ctx, hat, 0, -1, cs.s) : 0; if (crown) drawCrown(ctx, 0, -1 - hh, cs.s); if (legend) drawStar(ctx, 0, -1 - hh - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
-  if (kz && kz[3] && mode === 'battle') kzFx(b, kz[3], tf, x0, w, top.y, ex, ey, legA, legB);
+  if (kz && kz[3] && (mode === 'battle' || mode === 'pause')) kzFx(kz[3], tf, w, ex, ey, legA, legB);
   const champ = b === S.A ? S.champA : S.champB;
   if (champ) { const ms = medalSpot(b.bodyPts, b.facing, false), c = tf(ms.x, ms.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawMedal(ctx, 0, 0, ms.r); ctx.restore(); }
   limb(ctx, legA, '#455a64', 1);
   arm(ctx, joint(b.arm), color);
+  if (kz && kz[3] && (mode === 'battle' || mode === 'pause')) kzFxLayer(b, kz[3], true);   // かざり: 体の まえの えふぇくと
 }
 function drawHud() {
   const top = 12, bw = (W - 110) / 2;
@@ -719,20 +717,39 @@ function showKz(msg) {
     list.appendChild(box);
   });
 }
-onTap($('kzopen'), () => showKz(''));
+onTap($('kzopen'), () => { showKz(''); requestAnimationFrame(kzAnim); });
 onTap($('kzclose'), () => { $('kzbox').hidden = true; showTitle(); });
 onTap($('kzpull'), () => {
   if (kzs.coins() < KZ.PRICE) return;
-  const btn = $('kzpull'); btn.disabled = true; btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin');
-  $('kzmsg').textContent = 'ガラガラ…';
+  const r = KZ.pull(kzs, Math.random); if (!r) { showKz(); return; }   // 先に 引いて、星の 数で 演出を 変える
+  TR('gacha', { id: r.item.id, dup: r.dup ? 1 : 0 });
+  const btn = $('kzpull'), cls = r.item.r === 3 ? 'spin3' : 'spin', wait = r.item.r === 3 ? 1300 : r.item.r === 2 ? 900 : 650;
+  btn.disabled = true; btn.classList.remove('spin', 'spin3'); void btn.offsetWidth; btn.classList.add(cls);
+  $('kzmsg').textContent = r.item.r === 3 ? 'ガラガラ… …!? ひかってる！' : r.item.r === 2 ? 'ガラガラ… …おっ？' : 'ガラガラ…';
   setTimeout(() => {
-    btn.classList.remove('spin');
-    const r = KZ.pull(kzs, Math.random); if (!r) { showKz(); return; }
-    TR('gacha', { id: r.item.id, dup: r.dup ? 1 : 0 });
-    if (!r.dup) { const e = kzs.eq(); e[KZ.SLOTS.indexOf(r.item.slot)] = r.item.id; kzs.setEq(e); }   // あたらしい かざりは すぐ つけて みせる
-    showKz('<span class="r' + r.item.r + '">' + '★'.repeat(r.item.r) + ' ' + r.item.name + '</span>' + (r.dup ? '<br>もう もってた… 🪙 +' + KZ.DUP_BACK : '<br>ゲット！ つけてみたよ'));
-  }, 650);
+    btn.classList.remove('spin', 'spin3');
+    if (r.item.r === 3) { const f = $('kzflash'); f.hidden = true; void f.offsetWidth; f.hidden = false; setTimeout(() => { f.hidden = true; }, 520); }
+    const si = KZ.SLOTS.indexOf(r.item.slot);
+    if (!r.dup) { const e = kzs.eq(); e[si] = r.item.id; kzs.setEq(e); }   // あたらしい かざりは すぐ つけて みせる
+    const rv = $('kzreveal'); rv.className = 'r' + r.item.r; rv.hidden = false;
+    $('kzrstars').textContent = '★'.repeat(r.item.r);
+    $('kzrname').textContent = r.item.name;
+    $('kzrsub').textContent = (r.dup ? 'もう もってた… 🪙 +' + KZ.DUP_BACK + ' もどったよ' : 'NEW！ ' + KZ.SLOT_LABEL[r.item.slot] + 'に つけたよ');
+    kzShow = r.item;
+    showKz('<span class="r' + r.item.r + '">' + '★'.repeat(r.item.r) + ' ' + r.item.name + '</span>' + (r.dup ? '<br>かぶり 🪙 +' + KZ.DUP_BACK : '<br>ゲット！'));
+  }, wait);
 });
+onTap($('kzrok'), () => { $('kzreveal').hidden = true; kzShow = null; });
+// ガチャ画面を 開いている 間は 見本を 動かす（★★ ★★★ の かざりは ずっと 動いている）
+let kzShow = null;
+function kzAnim() {
+  if ($('kzbox').hidden) return;
+  if (myRobot) {
+    drawPreview($('kzprev'), withKz(withCrown(myRobot)), ME.color);
+    if (kzShow) { const d = Object.assign({}, myRobot), e = kzs.eq(); e[KZ.SLOTS.indexOf(kzShow.slot)] = kzShow.id; d.kz = e; drawPreview($('kzrcv'), d, ME.color); }
+  }
+  requestAnimationFrame(kzAnim);
+}
 onTap($('minnabtn'), () => { toMinna('title'); showDraw(); setHint('みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい'); });
 // タイトルの文字を 5 回つづけてタップ → うら テストの印（ホーム画面のアプリは Safari と保存場所が別なので）
 { let n = 0, t0 = 0; $('title').querySelector('.logo').addEventListener('click', () => { const now = Date.now(); n = now - t0 < 800 ? n + 1 : 1; t0 = now; if (n >= 5) { n = 0; lsSet('uratest', '1'); URA_TEST = true; uraOpen = true; showTitle(); } }); }
@@ -1185,7 +1202,8 @@ showTitle();
   if (KZ_ON && q.has('kzdev')) {   // 開発用: ?kzdev=コイン&kzeq=あたま,かお,からだ,えふぇくと（見本の 画面を 撮る ため）
     lsSet('kz.coins', q.get('kzdev') || '0');
     if (q.get('kzeq')) { const e = q.get('kzeq').split(',').map(Number); kzs.setEq(e); kzs.setOwn([...new Set(kzs.own().concat(e.filter(Boolean)))]); }
-    showTitle(); if (q.has('kzopen')) showKz('');
+    showTitle(); if (q.has('kzopen')) { showKz(''); requestAnimationFrame(kzAnim); }
+    if (q.get('kzreveal')) { const it = KZ.ITEMS[+q.get('kzreveal')]; showKz(''); const rv = $('kzreveal'); rv.className = 'r' + it.r; rv.hidden = false; $('kzrstars').textContent = '★'.repeat(it.r); $('kzrname').textContent = it.name; $('kzrsub').textContent = 'NEW！ ' + KZ.SLOT_LABEL[it.slot] + 'に つけたよ'; kzShow = it; requestAnimationFrame(kzAnim); }
   }
   if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
   if (q.has('rankdev') && RANK_ON) { if (!myRobot) sample(); showRank(); if (q.get('rankdev') === 'replay') setTimeout(() => { if (rankMe && rankMe.recent[0]) { rankReplay(rankMe, rankMe.recent[0]); } }, 3000); }   // 開発用: ランクせん

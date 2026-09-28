@@ -334,3 +334,38 @@ button:disabled { opacity: .45; }
 .kz-items button.on { background: #ffe082; }
 .kz-items button.no { opacity: .35; border-style: dashed; box-shadow: none; }
 .kz-items .r2, .kz-msg .r2 { color: #1565c0; } .kz-items .r3, .kz-msg .r3 { color: #c2185b; }
+/* 星が 上がるほど ボタンも 豪華に */
+.kz-items button.r2:not(.no) { background: linear-gradient(135deg, #e3f2fd, #bbdefb); border-color: #1565c0; }
+.kz-items button.r3:not(.no) { background: linear-gradient(135deg, #fff8e1, #ffe082 45%, #fce4ec); border-color: #c2185b; box-shadow: 0 2px 0 #c2185b, 0 0 10px rgba(255, 193, 7, .7); animation: kzglow 1.6s ease-in-out infinite; }
+.kz-items button.on { outline: 3px solid var(--hot); outline-offset: 1px; }
+@keyframes kzglow { 50% { box-shadow: 0 2px 0 #c2185b, 0 0 18px rgba(255, 64, 129, .8); } }
+
+/* ガチャの 当たり: ★ しろ / ★★ あおい 光 / ★★★ 金の 光の すじが 回る */
+#kzreveal { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 40; overflow: hidden; background: rgba(10, 12, 40, .9); }
+#kzreveal[hidden], #kzflash[hidden] { display: none; }
+#kzreveal.r2 { background: radial-gradient(circle at 50% 45%, #1e88e5 0%, #0d47a1 45%, #0a0c28 80%); }
+#kzreveal.r3 { background: radial-gradient(circle at 50% 45%, #ffe082 0%, #ff6f00 30%, #6a1b9a 65%, #0a0c28 95%); }
+.kzr-rays { position: absolute; left: 50%; top: 45%; width: 220vmax; height: 220vmax; margin: -110vmax 0 0 -110vmax; opacity: 0; pointer-events: none; }
+#kzreveal.r2 .kzr-rays { opacity: .35; background: repeating-conic-gradient(rgba(255,255,255,.5) 0 6deg, transparent 6deg 24deg); animation: kzrot 14s linear infinite; }
+#kzreveal.r3 .kzr-rays { opacity: .6; background: repeating-conic-gradient(rgba(255,255,220,.8) 0 8deg, transparent 8deg 20deg); animation: kzrot 6s linear infinite; }
+@keyframes kzrot { to { transform: rotate(360deg); } }
+.kzr-card { position: relative; width: min(84vw, 330px); padding: 14px; border-radius: 20px; background: var(--paper); border: 4px solid var(--ink); text-align: center; animation: kzpop .45s cubic-bezier(.2, 1.6, .4, 1); }
+#kzreveal.r2 .kzr-card { border-color: #1565c0; box-shadow: 0 0 30px rgba(100, 181, 246, .9); }
+#kzreveal.r3 .kzr-card { border-color: #ffd54f; box-shadow: 0 0 40px rgba(255, 215, 64, 1), 0 0 90px rgba(255, 64, 129, .7); animation: kzpop .6s cubic-bezier(.2, 1.8, .4, 1), kzcard 1.8s ease-in-out .6s infinite; }
+@keyframes kzpop { 0% { transform: scale(.2) rotate(-12deg); opacity: 0; } 100% { transform: scale(1) rotate(0); opacity: 1; } }
+@keyframes kzcard { 50% { box-shadow: 0 0 55px rgba(255, 235, 59, 1), 0 0 120px rgba(255, 64, 129, .9); } }
+.kzr-stars { font-size: 26px; letter-spacing: 4px; color: #9e9e9e; }
+#kzreveal.r2 .kzr-stars { color: #1e88e5; text-shadow: 0 0 10px #90caf9; }
+#kzreveal.r3 .kzr-stars { color: #ffc400; text-shadow: 0 0 12px #fff176, 0 0 24px #ff4081; font-size: 32px; animation: kzstar 1s ease-in-out infinite; }
+@keyframes kzstar { 50% { transform: scale(1.15); } }
+#kzrcv { width: 200px; height: 200px; display: block; margin: 4px auto; border-radius: 14px; background: #1f2250; }
+.kzr-name { font-size: 24px; font-weight: 900; }
+#kzreveal.r2 .kzr-name { color: #1565c0; }
+#kzreveal.r3 .kzr-name { font-size: 28px; background: linear-gradient(90deg, #ff5252, #ffab40, #ffd740, #69f0ae, #40c4ff, #b388ff, #ff5252); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; color: transparent; animation: kzrainbow 2s linear infinite; }
+@keyframes kzrainbow { to { background-position: 200% 0; } }
+.kzr-sub { font-size: 13px; font-weight: 800; color: #666; min-height: 18px; margin: 4px 0 10px; }
+#kzrok { margin: 0 auto; }
+#kzflash { position: fixed; inset: 0; z-index: 45; background: #fff; pointer-events: none; animation: kzflash .5s ease-out forwards; }
+@keyframes kzflash { from { opacity: 1; } to { opacity: 0; } }
+#kzpull.spin3 { animation: kzspin3 1.3s ease-in-out; }
+@keyframes kzspin3 { 0%, 100% { transform: none; } 10%, 30%, 50%, 70% { transform: rotate(-8deg) scale(1.08); } 20%, 40%, 60%, 80% { transform: rotate(8deg) scale(1.08); } 90% { transform: scale(1.25); filter: brightness(1.8); } }

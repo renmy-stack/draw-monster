@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=78">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=79">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=78">
+<link rel="stylesheet" href="style.css?v=79">
 <script src="/t.js?v=5"></script>
 </head>
 <body>
@@ -202,6 +202,17 @@
     <div id="kzlist"></div>
     <div class="rbtns small"><button id="kzclose" class="sub">とじる</button></div>
   </div>
+  <div id="kzreveal" hidden>
+    <div class="kzr-rays"></div>
+    <div class="kzr-card">
+      <div id="kzrstars" class="kzr-stars"></div>
+      <canvas id="kzrcv" width="320" height="320"></canvas>
+      <div id="kzrname" class="kzr-name"></div>
+      <div id="kzrsub" class="kzr-sub"></div>
+      <button id="kzrok" class="main">やったー！</button>
+    </div>
+  </div>
+  <div id="kzflash" hidden></div>
 </div>
 
 <div id="certbox" hidden>
@@ -225,8 +236,8 @@
   </div>
 </div>
 
-<script src="sim.js?v=78"></script>
-<script src="kazari.js?v=78"></script>
-<script src="game.js?v=78"></script>
+<script src="sim.js?v=79"></script>
+<script src="kazari.js?v=79"></script>
+<script src="game.js?v=79"></script>
 </body>
 </html>
