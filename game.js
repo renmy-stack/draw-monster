@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '80';
+const VERSION = '81';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -255,7 +255,7 @@ function drawRobotLocal(g, d, color, alpha, open) {
   if (d.arm && d.arm.length > 1) arm(g, d.arm, color);
   if ((d.crown || d.legend || kz[0]) && d.body && d.body.length > 2) {
     const c = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] })));
-    const hh = kz[0] ? KZ.drawHead(g, kz[0], c.x, c.y - 1, c.s) : 0;   // かざりの ぼうしの 上に 王冠・星
+    const hh = kz[0] ? KZ.drawHead(g, kz[0], c.x, c.y - 1, c.hs) : 0;   // かざりの ぼうしの 上に 王冠・星
     if (d.crown) drawCrown(g, c.x, c.y - 1 - hh, c.s);
     if (d.legend) drawStar(g, c.x, c.y - 1 - hh - (d.crown ? c.s * 0.8 : 0) - c.s * 0.45, c.s * 0.45);
   }
@@ -286,7 +286,7 @@ function crownSpot(pts) {
   let y0 = Infinity, x0 = Infinity, x1 = -Infinity;
   for (const p of pts) { y0 = Math.min(y0, p.y); x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); }
   let sx = 0, n = 0; for (const p of pts) if (p.y <= y0 + 8) { sx += p.x; n++; }
-  return { x: sx / n, y: y0, s: Math.max(18, Math.min(40, (x1 - x0) * 0.5)) };
+  return { x: sx / n, y: y0, s: Math.max(18, Math.min(40, (x1 - x0) * 0.5)), hs: Math.max(24, Math.min(66, (x1 - x0) * 0.6)) };   // hs = かざりの ぼうしの はば（王冠より 大きめ）
 }
 // 王冠（見た目だけ）: x, y が 下のまんなか、s が はば
 function drawCrown(g, x, y, s) {
@@ -376,9 +376,9 @@ function drawPreview(c, d, color, anim) {
   for (const k of ['body', 'arm', 'leg']) for (const p of d[k]) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
   // 王冠と でんせつの 星の ぶんも 上に 入れる（はみ出さない ように）
   const hat = d.kz && d.kz[0];
-  if ((d.crown || d.legend || hat) && d.body && d.body.length > 2) { const cs = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); y0 = Math.min(y0, cs.y - (d.crown ? cs.s * 0.8 : 0) - (d.legend ? cs.s * 0.95 : 0) - (hat ? cs.s * 0.95 : 0)); }
+  if ((d.crown || d.legend || hat) && d.body && d.body.length > 2) { const cs = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); y0 = Math.min(y0, cs.y - (d.crown ? cs.s * 0.8 : 0) - (d.legend ? cs.s * 0.95 : 0) - (hat ? cs.hs * 1.05 : 0)); }
   const fx = anim && d.kz && d.kz[3] && d.body && d.body.length > 2 ? d.kz[3] : 0;
-  if (fx) { y0 -= 55; x0 -= 30; x1 += 30; y1 += 10; }   // えふぇくとの ぶん 広く
+  if (fx) { const big = [24, 73, 75, 76, 78, 79, 80].includes(fx) ? 60 : 30; y0 -= 55; x0 -= big; x1 += big; y1 += 10; }   // えふぇくとの ぶん 広く（つばさ・ブラックホール などは もっと）
   const s = Math.min(c.width / (x1 - x0 + 40), c.height / (y1 - y0 + 40));
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
   g.setTransform(s, 0, 0, s, c.width / 2 - (x0 + x1) / 2 * s, c.height / 2 - (y0 + y1) / 2 * s);
@@ -394,7 +394,7 @@ function kzPrevFx(c, g, d, fx, front) {
   const pts = d.body.map(p => ({ x: p[0], y: p[1] }));
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (const p of pts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
-  const info = { x0, x1, y0, y1, pts, spawn: (x, y, q) => st.parts.push(Object.assign({ x, y }, q)) };
+  const info = { x0, x1, y0, y1, pts, facing: 1, spawn: (x, y, q) => st.parts.push(Object.assign({ x, y }, q)) };
   if (!front) { KZ.fxBack(g, fx, info); return; }
   KZ.fxFront(g, fx, info);
   let floor = -Infinity; for (const p of d.leg) floor = Math.max(floor, p[1]);
@@ -403,6 +403,7 @@ function kzPrevFx(c, g, d, fx, front) {
   if (fx === 19 && st.n % 10 === 0) st.parts.push({ x: foot[0] + (Math.random() - 0.5) * w * 1.2, y: floor, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 100, k: 'flower', rot: Math.random() * 6 });
   if (fx === 20 && st.n % 35 === 0) for (let i = 0; i < 8; i++) { const a = Math.random() * 6.28, v = 200 * (0.5 + Math.random()); st.parts.push({ x: fist[0], y: fist[1], vx: Math.cos(a) * v, vy: Math.sin(a) * v - 140, c: '#ffeb3b', life: 40, k: 'star' }); }
   if (fx === 21 && st.n % 18 === 0) { const sd = Math.random() < 0.5 ? -1 : 1; st.parts.push({ x: x0 + w * (0.5 + sd * 0.45), y: y0 + 12, vx: sd * 80, vy: -140, c: '#81d4fa', life: 40, k: 'drop' }); }
+  if (fx === 70 && st.n % 7 === 0) st.parts.push({ x: foot[0] + (Math.random() - 0.5) * w * 0.8, y: floor - 2, vx: (Math.random() - 0.5) * 40, vy: -15, g: -0.02, c: '#bcaaa4', life: 30, k: 'dust' });
   for (let i = st.parts.length - 1; i >= 0; i--) {
     const p = st.parts[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 900 * (p.g == null ? 1 : p.g) * dt; p.vx *= 0.96;
     if (--p.life <= 0 || p.y > floor + 1) { st.parts.splice(i, 1); continue; }
@@ -544,6 +545,7 @@ function renderBattle(dt) {
 // かざりの えふぇくと（バトル中だけ。見た目だけで 強さには 関係ない）: 足もと・あせ は ここで、ほのお・かみなり・オーラ は kazari.js の fxBack / fxFront
 function kzFx(fx, tf, w, ex, ey, legA, legB) {
   if (fx === 21 && Math.random() < 0.06) { const s = Math.random() < 0.5 ? -1 : 1, p = tf(ex + s * w * 0.35, ey - 4); parts.push({ x: p[0], y: p[1], vx: s * 90, vy: -150, c: '#81d4fa', life: 40, k: 'drop' }); }   // あせ
+  else if (fx === 70) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.15) parts.push({ x: f[0], y: -2, vx: (Math.random() - 0.5) * 50, vy: -20, g: -0.02, c: '#bcaaa4', life: 30, k: 'dust' }); } }   // すなぼこり
   else if (fx === 19) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.12) parts.push({ x: f[0], y: 0, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 110, k: 'flower', rot: Math.random() * 6 }); } }   // あしあとに はな
 }
 // かざりの ほのお・かみなり・オーラを 体の 座標で（back: 体の うしろ / front: まえ）
@@ -553,7 +555,7 @@ function kzFxLayer(b, fx, front) {
   const co = Math.cos(b.th), si = Math.sin(b.th);
   const spawn = (lx, ly, q) => parts.push(Object.assign({ x: b.x + lx * co - ly * si, y: b.y + lx * si + ly * co }, q));
   ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.th);
-  (front ? KZ.fxFront : KZ.fxBack)(ctx, fx, { x0, x1, y0, y1, pts: b.bodyPts, spawn });
+  (front ? KZ.fxFront : KZ.fxBack)(ctx, fx, { x0, x1, y0, y1, pts: b.bodyPts, spawn, facing: b.facing });
   ctx.restore();
 }
 // モンスターを ワールドに（シミュレーションの点を そのまま使う）
@@ -594,7 +596,7 @@ function drawRobotWorld(b, color, flash, crown) {
   face(ctx, tf, ex, ey, r, b.facing, down);
   if (kz && kz[1]) { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.th); kzBodyFace(ctx, b.bodyPts, [0, kz[1], 0, 0], b.facing, false, down); ctx.restore(); }
   const legend = (b === S.A && S.legendA) || (b === S.B && S.legendB), hat = kz ? kz[0] : 0;
-  if (crown || legend || hat) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); const hh = hat ? KZ.drawHead(ctx, hat, 0, -1, cs.s) : 0; if (crown) drawCrown(ctx, 0, -1 - hh, cs.s); if (legend) drawStar(ctx, 0, -1 - hh - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
+  if (crown || legend || hat) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); const hh = hat ? KZ.drawHead(ctx, hat, 0, -1, cs.hs) : 0; if (crown) drawCrown(ctx, 0, -1 - hh, cs.s); if (legend) drawStar(ctx, 0, -1 - hh - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
   if (kz && kz[3] && (mode === 'battle' || mode === 'pause')) kzFx(kz[3], tf, w, ex, ey, legA, legB);
   const champ = b === S.A ? S.champA : S.champB;
   if (champ) { const ms = medalSpot(b.bodyPts, b.facing, false), c = tf(ms.x, ms.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawMedal(ctx, 0, 0, ms.r); ctx.restore(); }
@@ -1232,6 +1234,14 @@ showTitle();
     lsSet('kz.coins', q.get('kzdev') || '0');
     if (q.get('kzeq')) { const e = q.get('kzeq').split(',').map(Number); kzs.setEq(e); kzs.setOwn([...new Set(kzs.own().concat(e.filter(Boolean)))]); }
     showTitle(); if (q.has('kzopen')) { showKz(''); requestAnimationFrame(kzAnim); }
+    if (q.get('kzgallery') && myRobot) {   // 開発用: ?kzgallery=head|face|body|fx で その場所の 20 こを 並べて 動かす
+      const slot = q.get('kzgallery'), items = KZ.ITEMS.filter(it => it && it.slot === slot), si = KZ.SLOTS.indexOf(slot);
+      const box = document.createElement('div'); box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#15173a;display:grid;grid-template-columns:repeat(4,1fr);gap:2px;padding:2px;overflow:auto';
+      const cells = items.map(it => { const c = document.createElement('div'); c.style.cssText = 'color:#fff;font:700 10px sans-serif;text-align:center'; const cv = document.createElement('canvas'); cv.width = 180; cv.height = 180; cv.style.cssText = 'width:100%;background:#1f2250;border-radius:6px'; c.appendChild(cv); c.appendChild(document.createTextNode('★'.repeat(it.r) + ' ' + it.name)); box.appendChild(c); return { it, cv }; });
+      document.body.appendChild(box);
+      const loop = () => { for (const { it, cv } of cells) { const d = Object.assign({}, myRobot, q.has('nocrown') ? { crown: false, legend: false, champ: 0 } : {}), e = [0, 0, 0, 0]; e[si] = it.id; d.kz = e; drawPreview(cv, d, ME.color, true); } requestAnimationFrame(loop); };
+      loop();
+    }
     if (q.get('kzreveal')) { const it = KZ.ITEMS[+q.get('kzreveal')]; showKz(''); const rv = $('kzreveal'); rv.className = 'r' + it.r; rv.hidden = false; $('kzrstars').textContent = '★'.repeat(it.r); $('kzrname').textContent = it.name; $('kzrsub').textContent = 'NEW！ ' + KZ.SLOT_LABEL[it.slot] + 'に つけたよ' + (it.desc ? '\n' + it.desc : ''); kzShow = it; requestAnimationFrame(kzAnim); }
   }
   if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
