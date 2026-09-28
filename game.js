@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '91';
+const VERSION = '92';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -831,7 +831,7 @@ function kzAnim() {
   if ($('kzbox').hidden) return;
   if (myRobot) {
     drawPreview($('kzprev'), withKz(withCrown(myRobot)), ME.color, true);
-    if (kzShow) { const d = Object.assign({}, myRobot), e = kzs.eq(); e[KZ.SLOTS.indexOf(kzShow.slot)] = kzShow.id; d.kz = e; drawPreview($('kzrcv'), d, ME.color, true); }
+    if (kzShow) { const d = Object.assign({}, myRobot, { crown: false, legend: false, champ: 0 }), e = [0, 0, 0, 0]; e[KZ.SLOTS.indexOf(kzShow.slot)] = kzShow.id; d.kz = e; drawPreview($('kzrcv'), d, ME.color, true); }   // 当たりの おためしは 素の モンスターに その かざりだけ
   }
   requestAnimationFrame(kzAnim);
 }
