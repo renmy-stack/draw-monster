@@ -6,13 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=77">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=78">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=77">
+<link rel="stylesheet" href="style.css?v=78">
 <script src="/t.js?v=5"></script>
 </head>
 <body>
@@ -32,6 +32,7 @@
       <canvas id="tmon" width="200" height="200"></canvas>
       <span class="mc-body"><span class="mc-h">じぶんの モンスター</span><span id="trank" hidden></span><span id="tmchint" class="mc-hint">タップで えらぶ・なおす</span></span>
     </button>
+    <div id="kzrow" hidden><span id="kzcoins">🪙 0</span><button id="kzopen" class="sub">🎁 ガチャ・かざる</button></div>
     <div id="trecord" class="trecord" hidden><span class="tr-h">この スマホの きろく</span><span id="tprog"></span></div>
     <div id="adv" hidden>
       <div class="adv-h">ぼうけん</div>
@@ -190,6 +191,19 @@
   </div>
 </div>
 
+<div id="kzbox" hidden>
+  <div class="panel">
+    <div class="kz-title">ガチャ・かざる</div>
+    <div class="kz-top"><canvas id="kzprev" width="240" height="240"></canvas>
+      <div class="kz-side"><div id="kzcoins2" class="kz-coins">🪙 0</div>
+        <button id="kzpull" class="main">ガチャを ひく<small>🪙 100</small></button>
+        <div id="kzmsg" class="kz-msg"></div></div></div>
+    <div class="kz-note">かったら コインが もらえるよ。おなじ かたちで おなじ あいてに かつと はんぶんずつ へる。かたちを かえると もどる！</div>
+    <div id="kzlist"></div>
+    <div class="rbtns small"><button id="kzclose" class="sub">とじる</button></div>
+  </div>
+</div>
+
 <div id="certbox" hidden>
   <div class="panel">
     <div class="cert-note">でんせつ しょうめいしょ（ながおしで ほぞん）</div>
@@ -211,7 +225,8 @@
   </div>
 </div>
 
-<script src="sim.js?v=77"></script>
-<script src="game.js?v=77"></script>
+<script src="sim.js?v=78"></script>
+<script src="kazari.js?v=78"></script>
+<script src="game.js?v=78"></script>
 </body>
 </html>

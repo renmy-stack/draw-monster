@@ -22,7 +22,7 @@ button { font: inherit; }
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 16px; background: rgba(10, 12, 30, .55);
 }
-#hallbox[hidden], #tmycard[hidden], #trank[hidden], #trecord[hidden], #tmchint[hidden], #collection[hidden], #rank[hidden], #rankreg[hidden], #rankchamp[hidden], #minnainfo[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
+#hallbox[hidden], #tmycard[hidden], #trank[hidden], #trecord[hidden], #tmchint[hidden], #collection[hidden], #rank[hidden], #rankreg[hidden], #rankchamp[hidden], #minnainfo[hidden], #kzbox[hidden], #kzrow[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
 .panel {
   width: min(92vw, 400px); max-height: calc(100% - 20px); overflow-y: auto;
   background: var(--paper); border: 4px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow);
@@ -310,3 +310,27 @@ button:disabled { opacity: .45; }
 .rd-node.rd-minna.sel { background: #e0f2f1; }
 .advgo { display: flex; flex-direction: column; align-items: center; width: 100%; margin: 12px 0 18px; font-size: 20px; }
 .advgo small { font-size: 12px; font-weight: 700; opacity: .9; }
+
+/* かざり（v78、?gachatest の 端末だけ） */
+#kzrow { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 8px; }
+#kzcoins, .kz-coins { font-weight: 900; font-size: 16px; font-variant-numeric: tabular-nums; }
+#kzrow button { margin: 0; font-size: 14px; padding: 6px 12px; }
+#kzbox { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 12px; background: rgba(10, 12, 40, .85); z-index: 30; }
+#kzbox .panel { max-height: 100%; overflow: auto; }
+.kz-title { font-size: 22px; font-weight: 900; color: var(--hot); }
+.kz-top { display: flex; gap: 10px; align-items: center; margin-top: 6px; }
+#kzprev { width: 120px; height: 120px; border-radius: 12px; background: #1f2250; flex: none; }
+.kz-side { flex: 1; display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 0; }
+#kzpull { margin: 0; display: flex; flex-direction: column; align-items: center; }
+#kzpull small { font-size: 12px; }
+#kzpull.spin { animation: kzspin .6s ease-in-out; }
+@keyframes kzspin { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-6deg) scale(1.05); } 75% { transform: rotate(6deg) scale(1.05); } }
+.kz-msg { font-size: 13px; font-weight: 800; min-height: 34px; line-height: 1.35; }
+.kz-note { font-size: 11px; color: #666; margin-top: 8px; text-align: left; line-height: 1.4; }
+.kz-slot { margin-top: 8px; text-align: left; }
+.kz-slot h4 { margin: 0 0 4px; font-size: 13px; }
+.kz-items { display: flex; flex-wrap: wrap; gap: 5px; }
+.kz-items button { margin: 0; padding: 4px 8px; font-size: 12px; font-weight: 800; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); box-shadow: 0 2px 0 var(--ink); }
+.kz-items button.on { background: #ffe082; }
+.kz-items button.no { opacity: .35; border-style: dashed; box-shadow: none; }
+.kz-items .r2, .kz-msg .r2 { color: #1565c0; } .kz-items .r3, .kz-msg .r3 { color: #c2185b; }

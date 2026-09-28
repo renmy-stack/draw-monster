@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '77';
+const VERSION = '78';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -58,6 +58,11 @@ let MINNA_OPEN = lsGet('minnatest') === '1' || lsGet('ura.cleared') === '1';   /
 const SIDE_LABEL = { omote: 'おもて', ura: 'うら', minna: 'みんな' };
 // タイトルの 整理（v75）: おもて → うら → みんな を「ぼうけん」の 1 本道に。v77 で 全員に 公開（前は ?titletest の 端末だけ）
 const TITLE_TEST = true;
+// かざり（v78）: コインと ガチャで 見た目だけの かざり。?gachatest を開いた 端末だけ（オーナーの 確認用）
+if (/[?&]gachatest(=|&|$)/.test(location.search)) lsSet('gachatest', '1');
+const KZ_ON = lsGet('gachatest') === '1';
+const kzs = KZ.store(k => lsGet(k), (k, v) => lsSet(k, v));
+function withKz(d) { if (d && KZ_ON) { const e = kzs.eq(); d.kz = e.some(Boolean) ? e : null; } return d; }
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
 const sk = n => (side === 'omote' ? '' : side + '.') + n;
 function CPUS() { return side === 'ura' ? RB.URA : side === 'minna' ? RB.MINNA : RB.CPU; }
@@ -100,7 +105,9 @@ function showTitle() {
   renderHall();
   // じぶんの モンスター（絵・すすみぐあい・ランクせん）
   $('tmycard').hidden = !myRobot;
-  if (myRobot) drawPreview($('tmon'), withCrown(myRobot), ME.color);
+  if (myRobot) drawPreview($('tmon'), withKz(withCrown(myRobot)), ME.color);
+  $('kzrow').hidden = !KZ_ON || !myRobot;
+  if (KZ_ON) $('kzcoins').textContent = '🪙 ' + kzs.coins();
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0), mb = +(lsGet('minna.best') || 0);
   const chip = (label, n, done, cls) => '<span class="chip ' + cls + (done ? ' done' : '') + '">' + label + ' ' + (done ? 'クリア' : n + '/5') + '</span>';
   $('trecord').hidden = !ob && !uraOpen;   // この スマホで どこまで 進んだか（モンスター ごとでは ない）
@@ -218,18 +225,40 @@ function drawPad() {
     }
   } else if (raw) { g.strokeStyle = padColor(); g.lineWidth = 4; pline(g, RB.cleanStroke(raw, RB.INK.body)); g.stroke(); }
 }
+// かざりの からだの もよう と かお（pts = 体の 点 {x, y}、g は 体の 座標。local: 描く画面・絵 と同じ 目の 位置 / でなければ バトル）
+function kzBodyFace(g, pts, kz, facing, local, down, t) {
+  let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+  for (const p of pts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); y0 = Math.min(y0, p.y); y1 = Math.max(y1, p.y); }
+  const path = () => { g.beginPath(); g.moveTo(pts[0].x, pts[0].y); for (let i = 1; i < pts.length; i++) g.lineTo(pts[i].x, pts[i].y); g.closePath(); };
+  if (kz[2]) {
+    g.save(); path(); g.clip();
+    if (kz[2] === 18) { g.fillStyle = 'rgba(200,240,255,.35)'; g.fillRect(x0 - 5, y0 - 5, x1 - x0 + 10, y1 - y0 + 10); }
+    else KZ.drawBody(g, kz[2], x0, y0, x1, y1, t);
+    g.restore();
+    path(); g.strokeStyle = '#0d1030'; g.lineWidth = 4; g.stroke();
+    if (local) { const w = x1 - x0; face(g, (x, y) => [x, y], x0 + w * 0.62, y0 + Math.min(22, w * 0.3 + 8), Math.max(3.5, Math.min(8, w * 0.1)), 1, false); }
+  }
+  if (kz[1] && !down) {
+    const w = x1 - x0, r = Math.max(3.5, Math.min(8, w * 0.1));
+    const ex = local ? x0 + w * 0.62 : (x0 + x1) / 2 + facing * w * 0.12, ey = y0 + Math.min(22, w * 0.3 + 8);
+    KZ.drawFace(g, kz[1], ex, ey, r, facing);
+  }
+}
 // モンスターをパッド座標のまま描く（まっすぐ立った姿）
 function drawRobotLocal(g, d, color, alpha, open) {
   g.globalAlpha = alpha; g.lineCap = 'round'; g.lineJoin = 'round';
   // うしろの足（180° 反対）
   if (d.leg && d.leg.length > 1) { const back = d.leg.map(p => [2 * d.hip[0] - p[0], 2 * d.hip[1] - p[1]]); limb(g, back, '#37474f', 0.55); }
   body(g, d.body, color, open, d);
+  const kz = d.kz || [0, 0, 0, 0];
+  if (!open && d.body && d.body.length > 2 && (kz[1] || kz[2])) kzBodyFace(g, d.body.map(p => ({ x: p[0], y: p[1] })), kz, 1, true, false);
   if (d.leg && d.leg.length > 1) limb(g, d.leg, '#455a64', 1);
   if (d.arm && d.arm.length > 1) arm(g, d.arm, color);
-  if ((d.crown || d.legend) && d.body && d.body.length > 2) {
+  if ((d.crown || d.legend || kz[0]) && d.body && d.body.length > 2) {
     const c = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] })));
-    if (d.crown) drawCrown(g, c.x, c.y - 1, c.s);
-    if (d.legend) drawStar(g, c.x, c.y - 1 - (d.crown ? c.s * 0.8 : 0) - c.s * 0.45, c.s * 0.45);
+    const hh = kz[0] ? KZ.drawHead(g, kz[0], c.x, c.y - 1, c.s) : 0;   // かざりの ぼうしの 上に 王冠・星
+    if (d.crown) drawCrown(g, c.x, c.y - 1 - hh, c.s);
+    if (d.legend) drawStar(g, c.x, c.y - 1 - hh - (d.crown ? c.s * 0.8 : 0) - c.s * 0.45, c.s * 0.45);
   }
   if (d.champ && d.body && d.body.length > 2) { const m = medalSpot(d.body.map(p => ({ x: p[0], y: p[1] })), 1, true); drawMedal(g, m.x, m.y, m.r); }
   g.globalAlpha = 1;
@@ -346,7 +375,8 @@ function drawPreview(c, d, color) {
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (const k of ['body', 'arm', 'leg']) for (const p of d[k]) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
   // 王冠と でんせつの 星の ぶんも 上に 入れる（はみ出さない ように）
-  if ((d.crown || d.legend) && d.body && d.body.length > 2) { const cs = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); y0 = Math.min(y0, cs.y - (d.crown ? cs.s * 0.8 : 0) - (d.legend ? cs.s * 0.95 : 0)); }
+  const hat = d.kz && d.kz[0];
+  if ((d.crown || d.legend || hat) && d.body && d.body.length > 2) { const cs = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); y0 = Math.min(y0, cs.y - (d.crown ? cs.s * 0.8 : 0) - (d.legend ? cs.s * 0.95 : 0) - (hat ? cs.s * 0.95 : 0)); }
   const s = Math.min(c.width / (x1 - x0 + 40), c.height / (y1 - y0 + 40));
   g.setTransform(s, 0, 0, s, c.width / 2 - (x0 + x1) / 2 * s, c.height / 2 - (y0 + y1) / 2 * s);
   g.clearRect(x0 - 100, y0 - 100, x1 - x0 + 200, y1 - y0 + 200);
@@ -397,6 +427,7 @@ function startBattle(friend) {
   opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: CPUS()[stage].name, color: CPUS()[stage].color, d: CPUS()[stage] };
   S = RB.create(myRobot, opp.d); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend; S.legendB = !!opp.d.legend; S.champA = myRobot.champ || 0; S.champB = opp.d.champ || 0;
   S.d = designRef(myRobot);
+  S.kzA = withKz(myRobot).kz || null; S.kzB = opp.d.kz || null;
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
 }
@@ -407,6 +438,8 @@ function stepBattle() {
       hurt[e.who === 'A' ? 'B' : 'A'] = 10;
       stop = Math.min(10, 3 + Math.round(e.dmg / 2)); shake = Math.max(shake, 3 + e.dmg * 0.6);
       burst(e.x, e.y, '#ffd54f', 10 + Math.round(e.dmg * 1.5), 320);
+      const kzw = e.who === 'A' ? S.kzA : S.kzB;
+      if (kzw && kzw[3] === 20) for (let i = 0; i < 7; i++) { const a = rnd() * 6.28, v = 260 * (0.5 + rnd()); parts.push({ x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 160, c: '#ffeb3b', life: 40, k: 'star' }); }   // かざり: パンチで ほし
       pops.push({ x: e.x, y: e.y - 10, t: e.dmg.toFixed(0), c: e.who === 'A' ? '#ffd54f' : '#ff8a80', life: 55, size: 20 + Math.min(20, e.dmg * 1.2) });
     } else if (e.t === 'down') {
       pops.push({ x: e.x, y: e.y - 90, t: 'ダウン！', c: '#ffffff', life: 60, size: 26 });
@@ -464,9 +497,14 @@ function renderBattle(dt) {
   for (const k of ['A', 'B']) if (hurt[k] > 0) hurt[k]--;
   // かけら・数字
   for (let i = parts.length - 1; i >= 0; i--) {
-    const p = parts[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 900 * dt; p.vx *= 0.96;
-    if (--p.life <= 0 || p.y > 0) { parts.splice(i, 1); continue; }
-    ctx.fillStyle = p.c; ctx.globalAlpha = Math.min(1, p.life / 15); ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
+    const p = parts[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 900 * (p.g == null ? 1 : p.g) * dt; p.vx *= 0.96;
+    if (--p.life <= 0 || p.y > 0.5) { parts.splice(i, 1); continue; }
+    ctx.fillStyle = p.c; ctx.globalAlpha = Math.min(1, p.life / 15);
+    if (p.k === 'star') KZ.star(ctx, p.x, p.y, 7, p.c, '#b8860b');
+    else if (p.k === 'flower') { for (let a = 0; a < 5; a++) { ctx.beginPath(); ctx.arc(p.x + Math.cos(a * 1.257) * 4, p.y - 3 + Math.sin(a * 1.257) * 4, 3, 0, 7); ctx.fill(); } ctx.fillStyle = '#ffeb3b'; ctx.beginPath(); ctx.arc(p.x, p.y - 3, 2.2, 0, 7); ctx.fill(); }
+    else if (p.k === 'drop') { ctx.beginPath(); ctx.arc(p.x, p.y, 3.5, 0, 7); ctx.fill(); ctx.beginPath(); ctx.moveTo(p.x - 3.4, p.y - 1); ctx.lineTo(p.x, p.y - 8); ctx.lineTo(p.x + 3.4, p.y - 1); ctx.fill(); }
+    else if (p.k === 'ember') { ctx.beginPath(); ctx.arc(p.x, p.y, 3 * Math.min(1, p.life / 20), 0, 7); ctx.fill(); }
+    else ctx.fillRect(p.x - 3, p.y - 3, 6, 6);
   }
   ctx.globalAlpha = 1;
   for (let i = pops.length - 1; i >= 0; i--) {
@@ -478,6 +516,20 @@ function renderBattle(dt) {
   ctx.globalAlpha = 1;
   ctx.restore();
   drawHud();
+}
+// かざりの えふぇくと（バトル中だけ。見た目の かけらを parts に 足す。強さには 関係ない）
+function kzFx(b, fx, tf, x0, w, topY, ex, ey, legA, legB) {
+  if (fx === 22 && rnd() < 0.35) { const p = tf(x0 + rnd() * w, topY + rnd() * 25); parts.push({ x: p[0], y: p[1], vx: (rnd() - 0.5) * 40, vy: -40 - rnd() * 60, g: -0.08, c: rnd() < 0.5 ? '#ff9800' : '#ffcc80', life: 35, k: 'ember' }); }   // ひのこ
+  else if (fx === 21 && rnd() < 0.05) { const s = rnd() < 0.5 ? -1 : 1, p = tf(ex + s * w * 0.35, ey - 4); parts.push({ x: p[0], y: p[1], vx: s * 90, vy: -150, c: '#81d4fa', life: 40, k: 'drop' }); }   // あせ
+  else if (fx === 19) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && rnd() < 0.1) parts.push({ x: f[0], y: 0, vx: 0, vy: 0, g: 0, c: rnd() < 0.5 ? '#f48fb1' : '#ce93d8', life: 90, k: 'flower' }); } }   // あしあとに はな
+  else if (fx === 23) {   // かみなり: ときどき 頭の 上に いなずま
+    b._bolt = (b._bolt || 0) + 1;
+    if (b._bolt % 55 < 6) {
+      const c = tf(x0 + w * (0.3 + ((b._bolt / 55 | 0) % 3) * 0.2), topY);
+      ctx.save(); ctx.strokeStyle = '#fff176'; ctx.lineWidth = 4; ctx.shadowColor = '#ffeb3b'; ctx.shadowBlur = 14; ctx.lineJoin = 'miter';
+      ctx.beginPath(); ctx.moveTo(c[0] - 6, c[1] - 90); ctx.lineTo(c[0] + 8, c[1] - 60); ctx.lineTo(c[0] - 4, c[1] - 52); ctx.lineTo(c[0] + 6, c[1] - 18); ctx.stroke(); ctx.restore();
+    }
+  }
 }
 // モンスターを ワールドに（シミュレーションの点を そのまま使う）
 function drawRobotWorld(b, color, flash, crown) {
@@ -497,20 +549,28 @@ function drawRobotWorld(b, color, flash, crown) {
   const bodyCol = flash ? '#ffffff' : color;
   if (S.side === 'ura' && b === S.B) { ctx.shadowColor = '#ff1744'; ctx.shadowBlur = 26; }
   if ((S.side === 'minna' && b === S.B) || (b === S.A && S.legendA) || (b === S.B && S.legendB)) { ctx.shadowColor = '#ffd54f'; ctx.shadowBlur = 26; }   // みんなの 敵と でんせつの モンスターは 金に 光る   // みんなの 敵は 金に 光る   // うらの敵は 赤く光る
+  const kz = (b === S.A ? S.kzA : S.kzB) || null;
+  if (kz && kz[3] === 24 && !ctx.shadowBlur) { ctx.shadowColor = '#b388ff'; ctx.shadowBlur = 20 + Math.sin(performance.now() / 180) * 8; }   // かざり: オーラ
+  if (kz && kz[2] === 18) ctx.globalAlpha = 0.45;   // かざり: すけすけ
   pline(ctx, poly); ctx.closePath(); ctx.fillStyle = bodyCol; ctx.fill();
+  ctx.globalAlpha = 1;
   ctx.shadowBlur = 0;
   ctx.save(); pline(ctx, poly); ctx.closePath(); ctx.clip();
   ctx.fillStyle = 'rgba(255,255,255,.16)'; ctx.fillRect(b.x - 300, b.y - 300, 600, 300 + (-120));
   ctx.restore();
   ctx.strokeStyle = '#0d1030'; ctx.lineWidth = 4; pline(ctx, poly); ctx.closePath(); ctx.stroke();
+  if (kz && kz[2] && !flash) { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.th); kzBodyFace(ctx, b.bodyPts, [0, 0, kz[2], 0], b.facing, false, false, performance.now() / 1000); ctx.restore(); }
   // 目（体の上のほう・前寄り）
   let top = null; for (const p of b.bodyPts) if (!top || p.y < top.y) top = p;
   let x0 = Infinity, x1 = -Infinity; for (const p of b.bodyPts) { x0 = Math.min(x0, p.x); x1 = Math.max(x1, p.x); }
   const w = x1 - x0, r = Math.max(3.5, Math.min(8, w * 0.1));
   const ex = (x0 + x1) / 2 + b.facing * w * 0.12, ey = top.y + Math.min(22, w * 0.3 + 8);
-  face(ctx, tf, ex, ey, r, b.facing, b.downT > 0 || b.hp <= 0);
-  const legend = (b === S.A && S.legendA) || (b === S.B && S.legendB);
-  if (crown || legend) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); if (crown) drawCrown(ctx, 0, -1, cs.s); if (legend) drawStar(ctx, 0, -1 - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
+  const down = b.downT > 0 || b.hp <= 0;
+  face(ctx, tf, ex, ey, r, b.facing, down);
+  if (kz && kz[1]) { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.th); kzBodyFace(ctx, b.bodyPts, [0, kz[1], 0, 0], b.facing, false, down); ctx.restore(); }
+  const legend = (b === S.A && S.legendA) || (b === S.B && S.legendB), hat = kz ? kz[0] : 0;
+  if (crown || legend || hat) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); const hh = hat ? KZ.drawHead(ctx, hat, 0, -1, cs.s) : 0; if (crown) drawCrown(ctx, 0, -1 - hh, cs.s); if (legend) drawStar(ctx, 0, -1 - hh - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
+  if (kz && kz[3] && mode === 'battle') kzFx(b, kz[3], tf, x0, w, top.y, ex, ey, legA, legB);
   const champ = b === S.A ? S.champA : S.champB;
   if (champ) { const ms = medalSpot(b.bodyPts, b.facing, false), c = tf(ms.x, ms.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawMedal(ctx, 0, 0, ms.r); ctx.restore(); }
   limb(ctx, legA, '#455a64', 1);
@@ -600,6 +660,12 @@ function showResult() {
       $('rsub').textContent += '\n' + wins + ' にんぬき で おわり';
     }
     if (wins > best) { best = wins; lsSet(sk('best'), String(best)); $('rsub').textContent += '\nさいこう きろく！'; }
+    // かざりの コイン: 同じ 形で 同じ 相手に 勝つたび 半分（形を 変えれば 元どおり）
+    if (KZ_ON && win) {
+      const rw = KZ.winReward(kzs, plainCode(myRobot), S.side, S.stage, S.stage === CPUS().length - 1);
+      TR('coin', { s: S.side, st: S.stage, got: rw.got, n: rw.n });
+      $('rsub').textContent += '\n🪙 +' + rw.got + (rw.got === 0 ? '（おなじ かたちで かちすぎ！ かたちを かえると もどるよ）' : rw.n > 0 ? '（この かたちで ' + (rw.n + 1) + ' かいめ → へったよ）' : '') + '　もちコイン ' + kzs.coins();
+    }
   }
   $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
   $('next').hidden = !showNext && !goUra && !goMinna;
@@ -613,6 +679,7 @@ function showResult() {
 }
 function shareRobot() {
   if (!myRobot) return;
+  withKz(myRobot);
   TR('share', { me: RB.encodeDesign(myRobot) });
   const url = SITE_URL + '#r=' + RB.encodeDesign(myRobot);
   const text = 'ぼくの モンスター と たたかってみて！（かいて！モンスターバトル）\n' + url;
@@ -626,6 +693,46 @@ function onTap(el, fn) { el.addEventListener('click', e => { e.preventDefault();
 onTap($('start'), showDraw);
 onTap($('tmycard'), showDraw);
 onTap($('minnaabout'), showMinnaInfo);
+// ---------- かざり（ガチャ・かざる）----------
+function showKz(msg) {
+  $('kzbox').hidden = false;
+  $('kzcoins2').textContent = '🪙 ' + kzs.coins();
+  $('kzpull').disabled = kzs.coins() < KZ.PRICE;
+  if (msg != null) $('kzmsg').innerHTML = msg;
+  if (myRobot) drawPreview($('kzprev'), withKz(withCrown(myRobot)), ME.color);
+  const own = kzs.own(), eq = kzs.eq(), list = $('kzlist'); list.innerHTML = '';
+  KZ.SLOTS.forEach((slot, si) => {
+    const box = document.createElement('div'); box.className = 'kz-slot';
+    box.innerHTML = '<h4>' + KZ.SLOT_LABEL[slot] + '</h4><div class="kz-items"></div>';
+    const row = box.querySelector('.kz-items');
+    const none = document.createElement('button'); none.textContent = 'なし'; none.className = eq[si] ? '' : 'on';
+    onTap(none, () => { const e = kzs.eq(); e[si] = 0; kzs.setEq(e); showKz(); }); row.appendChild(none);
+    for (const it of KZ.ITEMS) {
+      if (!it || it.slot !== slot) continue;
+      const has = own.includes(it.id), b = document.createElement('button');
+      b.className = 'r' + it.r + (eq[si] === it.id ? ' on' : '') + (has ? '' : ' no');
+      b.textContent = has ? '★'.repeat(it.r) + ' ' + it.name : '？？？';
+      if (has) onTap(b, () => { const e = kzs.eq(); e[si] = e[si] === it.id ? 0 : it.id; kzs.setEq(e); TR('kzeq', { s: slot, id: e[si] }); showKz(); });
+      else b.disabled = true;
+      row.appendChild(b);
+    }
+    list.appendChild(box);
+  });
+}
+onTap($('kzopen'), () => showKz(''));
+onTap($('kzclose'), () => { $('kzbox').hidden = true; showTitle(); });
+onTap($('kzpull'), () => {
+  if (kzs.coins() < KZ.PRICE) return;
+  const btn = $('kzpull'); btn.disabled = true; btn.classList.remove('spin'); void btn.offsetWidth; btn.classList.add('spin');
+  $('kzmsg').textContent = 'ガラガラ…';
+  setTimeout(() => {
+    btn.classList.remove('spin');
+    const r = KZ.pull(kzs, Math.random); if (!r) { showKz(); return; }
+    TR('gacha', { id: r.item.id, dup: r.dup ? 1 : 0 });
+    if (!r.dup) { const e = kzs.eq(); e[KZ.SLOTS.indexOf(r.item.slot)] = r.item.id; kzs.setEq(e); }   // あたらしい かざりは すぐ つけて みせる
+    showKz('<span class="r' + r.item.r + '">' + '★'.repeat(r.item.r) + ' ' + r.item.name + '</span>' + (r.dup ? '<br>もう もってた… 🪙 +' + KZ.DUP_BACK : '<br>ゲット！ つけてみたよ'));
+  }, 650);
+});
 onTap($('minnabtn'), () => { toMinna('title'); showDraw(); setHint('みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい'); });
 // タイトルの文字を 5 回つづけてタップ → うら テストの印（ホーム画面のアプリは Safari と保存場所が別なので）
 { let n = 0, t0 = 0; $('title').querySelector('.logo').addEventListener('click', () => { const now = Date.now(); n = now - t0 < 800 ? n + 1 : 1; t0 = now; if (n >= 5) { n = 0; lsSet('uratest', '1'); URA_TEST = true; uraOpen = true; showTitle(); } }); }
@@ -1075,6 +1182,11 @@ showTitle();
   if (q.has('stage') && !q.has('shot')) stage = +q.get('stage');
   if (q.has('beaten')) beaten = [true, true, true, true, true];   // 開発用: 早送りボタンを見る
   if (q.get('use')) { const d = RB.decodeDesign(q.get('use')); if (d) { myRobot = withCrown(d); strokes = { body: d.body, arm: d.arm, leg: d.leg }; lsSet('robot', RB.encodeDesign(myRobot)); resetAllRuns(); showTitle(); } }   // オーナーの 確認用: その モンスターを じぶんの モンスターに
+  if (KZ_ON && q.has('kzdev')) {   // 開発用: ?kzdev=コイン&kzeq=あたま,かお,からだ,えふぇくと（見本の 画面を 撮る ため）
+    lsSet('kz.coins', q.get('kzdev') || '0');
+    if (q.get('kzeq')) { const e = q.get('kzeq').split(',').map(Number); kzs.setEq(e); kzs.setOwn([...new Set(kzs.own().concat(e.filter(Boolean)))]); }
+    showTitle(); if (q.has('kzopen')) showKz('');
+  }
   if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
   if (q.has('rankdev') && RANK_ON) { if (!myRobot) sample(); showRank(); if (q.get('rankdev') === 'replay') setTimeout(() => { if (rankMe && rankMe.recent[0]) { rankReplay(rankMe, rankMe.recent[0]); } }, 3000); }   // 開発用: ランクせん
   if (q.has('minnainfo')) showMinnaInfo();   // 開発用: しょうかい 画面

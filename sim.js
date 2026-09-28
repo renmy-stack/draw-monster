@@ -376,6 +376,7 @@ function encodeDesign(d) {
   if (d.crown) s += String.fromCharCode(1);   // 王冠（うら 5 人抜きした モンスター。見た目だけ）
   if (d.legend) s += String.fromCharCode(2);   // でんせつ（みんなの さいきょう ぐんだん を たおした。見た目だけ。前の版は 読まずに むし）
   if (d.champ) s += String.fromCharCode(3) + String.fromCharCode(Math.max(1, Math.min(255, d.champ | 0)));   // チャンピオン メダル（ランクせんで 1 位に なった 日数。見た目だけ）
+  if (d.kz && d.kz.some(Boolean)) s += String.fromCharCode(4) + d.kz.slice(0, 4).map(v => String.fromCharCode(Math.max(0, Math.min(255, v | 0)))).join('');   // かざり（あたま・かお・からだ・えふぇくと。見た目だけ。前の版は むし）
   const b = typeof btoa === 'function' ? btoa(s) : Buffer.from(s, 'binary').toString('base64');
   return b.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
@@ -400,7 +401,8 @@ function decodeDesign(str) {
     const d = design(out.body, out.arm, out.leg);
     if (i < s.length && s.charCodeAt(i) === 1) { d.crown = true; i++; }
     if (i < s.length && s.charCodeAt(i) === 2) { d.legend = true; i++; }
-    if (i + 1 < s.length && s.charCodeAt(i) === 3) d.champ = s.charCodeAt(i + 1) || 1;
+    if (i + 1 < s.length && s.charCodeAt(i) === 3) { d.champ = s.charCodeAt(i + 1) || 1; i += 2; }
+    if (i + 4 < s.length && s.charCodeAt(i) === 4) d.kz = [1, 2, 3, 4].map(k => s.charCodeAt(i + k));
     return validDesign(d) ? d : null;
   } catch (e) { return null; }
 }
