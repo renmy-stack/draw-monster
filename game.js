@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '83';
+const VERSION = '84';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -722,6 +722,7 @@ onTap($('start'), showDraw);
 onTap($('tmycard'), showDraw);
 onTap($('minnaabout'), showMinnaInfo);
 // ---------- かざり（ガチャ・かざる）----------
+const kzOpen = new Set((() => { try { return JSON.parse(lsGet('kz.open') || '[]'); } catch (e) { return []; } })());
 function showKz(msg) {
   $('kzbox').hidden = false;
   $('kzcoins2').textContent = '🪙 ' + kzs.coins();
@@ -730,9 +731,11 @@ function showKz(msg) {
   if (myRobot) drawPreview($('kzprev'), withKz(withCrown(myRobot)), ME.color);
   const own = kzs.own(), eq = kzs.eq(), list = $('kzlist'); list.innerHTML = '';
   KZ.SLOTS.forEach((slot, si) => {
-    const box = document.createElement('div'); box.className = 'kz-slot';
-    const cur = KZ.ITEMS[eq[si]];
-    box.innerHTML = '<h4>' + KZ.SLOT_LABEL[slot] + (cur && cur.desc ? '<small class="kz-desc">いま: ' + cur.desc + '</small>' : '') + '</h4><div class="kz-items"></div>';
+    // 場所ごとに 折りたたみ（見出しに 集めた数 と いま つけている もの）。開いて いるかは おぼえておく
+    const box = document.createElement('details'); box.className = 'kz-slot'; box.open = kzOpen.has(slot);
+    box.addEventListener('toggle', () => { if (box.open) kzOpen.add(slot); else kzOpen.delete(slot); lsSet('kz.open', JSON.stringify([...kzOpen])); });
+    const cur = KZ.ITEMS[eq[si]], total = KZ.ITEMS.filter(it => it && it.slot === slot), got = total.filter(it => own.includes(it.id)).length;
+    box.innerHTML = '<summary><b>' + KZ.SLOT_LABEL[slot] + '</b><span class="kz-cnt">' + got + ' / ' + total.length + '</span><span class="kz-cur">' + (cur ? 'いま: ' + cur.name : 'なし') + '</span></summary>' + (cur && cur.desc ? '<small class="kz-desc">' + cur.desc + '</small>' : '') + '<div class="kz-items"></div>';
     const row = box.querySelector('.kz-items');
     const none = document.createElement('button'); none.textContent = 'なし'; none.className = eq[si] ? '' : 'on';
     onTap(none, () => { const e = kzs.eq(); e[si] = 0; kzs.setEq(e); showKz(); }); row.appendChild(none);
@@ -761,6 +764,7 @@ onTap($('kzpull'), () => {
     btn.classList.remove('spin', 'spin3');
     if (r.item.r === 3) { const f = $('kzflash'); f.hidden = true; void f.offsetWidth; f.hidden = false; setTimeout(() => { f.hidden = true; }, 520); }
     const si = KZ.SLOTS.indexOf(r.item.slot);
+    kzOpen.add(r.item.slot);   // 当たった 場所は 開いて 見せる
     if (!r.dup) { const e = kzs.eq(); e[si] = r.item.id; kzs.setEq(e); }   // あたらしい かざりは すぐ つけて みせる
     const rv = $('kzreveal'); rv.className = 'r' + r.item.r; rv.hidden = false;
     $('kzrstars').textContent = '★'.repeat(r.item.r);
