@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '68';
+const VERSION = '69';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -773,6 +773,7 @@ onTap($('torank'), () => { TR('torank', null); showRank('いまの モンスタ�
 onTap($('rankregbtn'), rankRegister);
 onTap($('rankdraw'), showDraw);
 onTap($('rankback'), showTitle);
+onTap($('ranktop'), showTitle);
 // ---------- うら 5 人抜き: 王冠・でんどういり・エンディング ----------
 let endT0 = 0, confetti = [];
 function onUraClear() {
