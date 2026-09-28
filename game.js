@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '89';
+const VERSION = '90';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -722,6 +722,7 @@ onTap($('start'), showDraw);
 onTap($('tmycard'), showDraw);
 onTap($('minnaabout'), showMinnaInfo);
 // ---------- かざり（ガチャ・かざる）----------
+function kzSorted(slot) { return KZ.ITEMS.filter(it => it && it.slot === slot).sort((a, b) => a.r - b.r || a.id - b.id); }
 const kzOpen = new Set((() => { try { return JSON.parse(lsGet('kz.open') || '[]'); } catch (e) { return []; } })());
 // NEW: 手に 入れて から まだ 一覧で タップして いない かざり（ガチャで 自動で ついた ぶんも まだ NEW）。はじめは 持っている ものを ぜんぶ 見た ことに
 function kzSeen() { try { const v = lsGet('kz.seen'); if (v == null) { const o = kzs.own(); lsSet('kz.seen', JSON.stringify(o)); return o; } return JSON.parse(v); } catch (e) { return []; } }
@@ -744,8 +745,7 @@ function showKz(msg) {
     const row = box.querySelector('.kz-items');
     const none = document.createElement('button'); none.textContent = 'なし'; none.className = eq[si] ? '' : 'on';
     onTap(none, () => { const e = kzs.eq(); e[si] = 0; kzs.setEq(e); showKz(); }); row.appendChild(none);
-    for (const it of KZ.ITEMS) {
-      if (!it || it.slot !== slot) continue;
+    for (const it of kzSorted(slot)) {   // ★ → ★★ → ★★★（同じ 星の 中は 番号じゅん）
       const has = own.includes(it.id), b = document.createElement('button');
       b.className = 'r' + it.r + (eq[si] === it.id ? ' on' : '') + (has ? '' : ' no');
       b.textContent = has ? '★'.repeat(it.r) + ' ' + it.name : '？？？';
@@ -810,7 +810,7 @@ let kzGal = null;
 function kzGallery(slot, nocrown) {
   if (kzGal) kzGal.box.remove();
   const base = myRobot || (() => { const c = RB.CPU[2]; return RB.design(c.body, c.arm, c.leg); })();
-  const si = Math.max(0, KZ.SLOTS.indexOf(slot)), items = KZ.ITEMS.filter(it => it && it.slot === KZ.SLOTS[si]);
+  const si = Math.max(0, KZ.SLOTS.indexOf(slot)), items = kzSorted(KZ.SLOTS[si]);
   const box = document.createElement('div'); box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#15173a;overflow:auto;padding:6px 4px calc(env(safe-area-inset-bottom) + 10px)';
   const bar = document.createElement('div'); bar.style.cssText = 'display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin:calc(env(safe-area-inset-top) + 4px) 0 6px';
   const btn = (label, on, fn) => { const b = document.createElement('button'); b.textContent = label; b.style.cssText = 'margin:0;padding:6px 10px;font:800 13px sans-serif;border:2px solid #fff;border-radius:10px;box-shadow:none;background:' + (on ? '#ff4d4d' : '#2b2f6b') + ';color:#fff'; b.addEventListener('click', e => { e.preventDefault(); fn(); }); bar.appendChild(b); };
