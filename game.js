@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '67';
+const VERSION = '68';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -611,9 +611,11 @@ function showMinnaInfo() {
   });
   $('minnainfo').hidden = false; lsSet('minna.intro', '1'); TR('minnainfo', null);
 }
-onTap($('minnaclose'), () => { $('minnainfo').hidden = true; });
-function toMinna(from) { goMinna = false; side = 'minna'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotominna', { from }); if (lsGet('minna.intro') !== '1') showMinnaInfo(); }
-onTap($('next'), () => { if (!vs && goMinna) { toMinna('result'); startBattle(false); return; } if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
+// 紹介を 閉じたら、待って いた バトルを 始める（紹介を 読んで いる 間に 裏で 戦いが 進まない ように）
+let minnaStartAfterInfo = false;
+onTap($('minnaclose'), () => { $('minnainfo').hidden = true; if (minnaStartAfterInfo) { minnaStartAfterInfo = false; startBattle(false); } });
+function toMinna(from) { goMinna = false; side = 'minna'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotominna', { from }); if (lsGet('minna.intro') !== '1') { showMinnaInfo(); return true; } return false; }
+onTap($('next'), () => { if (!vs && goMinna) { if (toMinna('result')) minnaStartAfterInfo = true; else startBattle(false); return; } if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
 onTap($('again'), () => { if (S && S.side === 'rank' && rankLast) { rankBattle(...rankLast); return; } if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 // ---------- モンスター ランクせん（みんなの モンスターと 自動で 対戦）----------
