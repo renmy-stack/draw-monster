@@ -106,6 +106,7 @@ async function main() {
     }
     reps = [...new Set(fixed.concat(top))];
     rep.fixed = fixed.map(i => list[i].id); rep.top = top.map(i => list[i].id);
+    console.log('代表の ID ' + JSON.stringify({ fixed: rep.fixed, top: rep.top }));   // 手元で 本番と 同じ 相手で 強さを はかる ため
   }
   const isRep = new Uint8Array(n); for (const r of reps) isRep[r] = 1;
 
