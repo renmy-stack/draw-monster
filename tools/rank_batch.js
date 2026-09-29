@@ -97,7 +97,7 @@ async function main() {
     for (let k = pool.length - 1; k > 0; k--) { const r = Math.floor(rnd() * (k + 1)); [pool[k], pool[r]] = [pool[r], pool[k]]; }
     while (fixed.length < REP_MAX - REP_TOP && pool.length) { const i = pool.pop(); fixed.push(i); inFixed.add(i); }
     // その日の 上位 100 体: 日が かわったら 入れかえ（前の 代表での 勝率で）。日の 途中で 引退・お休みで 抜けたら、のこりの 代表での 勝率の 順に 補充
-    let top = (rep.top || []).filter(id => idx.has(id)).map(id => idx.get(id));
+    let top = (rep.top || []).filter(id => idx.has(id)).map(id => idx.get(id)).filter(i => !inFixed.has(i));   // 固定と かさなった ものは 上位から はずして 補充（前の 版で かさなって いた ぶん）
     if (rep.day !== today || top.length < REP_TOP) {
       const prevReps = [...new Set(fixed.concat(top))], st0 = statsOf(prevReps);
       const best = list.map((m, i) => i).filter(i => !inFixed.has(i) && playedOf(st0[i]) > 0).sort((a, b) => pctOf(st0[b]) - pctOf(st0[a]));
