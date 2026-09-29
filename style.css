@@ -148,6 +148,17 @@ button:disabled { opacity: .45; }
 .slot .sbtns { display: flex; flex-direction: column; gap: 6px; }
 .slot .sbtns button { font-size: 14px; padding: 6px 8px; margin: 0; box-shadow: 0 2px 0 var(--ink); }
 .slot .empty { font-size: 12px; opacity: .6; }
+#slotbox .panel { max-height: 100%; overflow: auto; }
+#slotlist.slot12 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.stile { position: relative; display: block; margin: 0; padding: 4px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; box-shadow: none; }
+.stile.sel { border-color: #ff5252; box-shadow: 0 0 0 3px #ff5252; }
+.stile b { position: absolute; left: 6px; top: 3px; font-size: 13px; color: #fff; text-shadow: 0 1px 2px #000; }
+.stile canvas { display: block; width: 100%; aspect-ratio: 1; border-radius: 6px; background: #1f2250; }
+.stile.empty canvas { opacity: .6; }
+.stile .smark { position: absolute; right: 5px; top: 3px; font-size: 13px; }
+.sbar { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; align-items: center; min-height: 44px; font-size: 13px; }
+.sbar button { margin: 0; font-size: 14px; padding: 8px 12px; }
+.sbar .sdel { color: #c62828; }
 #slotmsg { min-height: 1.3em; margin-top: 8px; font-weight: 800; font-size: 13px; color: #d08a00; }
 
 /* ふたりで たたかう */
