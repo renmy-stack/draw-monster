@@ -1,7 +1,7 @@
 // node tools/rank_batch.js — モンスター ランクせん の 計算（GitHub Actions が 実行。起動は Cloudflare の 受付係から 15 分に 1 回まで。RANK_ADMIN が いる）
 // 順位 ＝ 「代表」と 左右 入れかえて 2 戦ずつ した 勝率。同じ 2 体・同じ 左右は いつも 同じ 結果 なので 運が 入らない
 //   代表: 登録が REP_MAX（500）体 までは 全員（＝ 総当たり）。それを こえたら 全員が 同じ 代表 500 体と 戦う
-//         代表 = 固定の ランダム 450 体（引退・お休みの ときだけ 補充）＋ その日の 上位 50 体（日が かわると 入れかえ）
+//         代表 = 固定の ランダム 400 体（引退・お休みの ときだけ 補充）＋ その日の 上位 100 体（日が かわると 入れかえ）
 // 1. 登録中の モンスターを 受け取る（2000 体ずつ）
 // 2. まだの 組み合わせを、計算ずみが 少ない モンスター（＝ 新しく 登録された）から TIME_LIMIT（8 分）まで 計算（CPU の 数だけ 並列、
 //    WAVE 戦ずつ 区切って 時間を 見る。のこりは 次の 回に つづき から）
@@ -16,7 +16,7 @@ const RB = require('../sim.js');
 const API = 'https://renmy-rank.renmy-stack.workers.dev';
 const KEY = process.env.RANK_ADMIN;
 const TIME_LIMIT = +(process.env.RANK_TIME || 8 * 60e3), MAX_TODO = 400000, TOP_N = 30, CHAMP_MIN = 20;   // チャンピオンは 20 戦 以上（総当たりが 20 戦 未満 なら 全員と 戦い おわって いれば よい）
-const REP_MAX = +(process.env.RANK_REP || 500), REP_TOP = Math.round(REP_MAX / 10);
+const REP_MAX = +(process.env.RANK_REP || 500), REP_TOP = Math.round(REP_MAX / 5);
 const CACHE = path.join(__dirname, '..', '.rankcache', 'pairs.json');
 
 const seasonOf = t => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
