@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '105';
+const VERSION = '106';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -87,9 +87,9 @@ if (/[?&]cardtest(=|&|$)/.test(location.search)) lsSet('cardtest', '1');
 const CARD_ON = true;
 // モンスターの ほぞん 12 こ（2026-09-29 全員に。前は 3 こ）
 const SLOT_N = 12;
-// ?backuptest を 開いた 端末（オーナー）だけ「データの ひきつぎ」
+// 「データの ひきつぎ」: 2026-09-29 全員に 公開（前は ?backuptest の 端末だけ）
 if (/[?&]backuptest(=|&|$)/.test(location.search)) lsSet('backuptest', '1');
-const BK_ON = lsGet('backuptest') === '1';
+const BK_ON = true;
 const kzs = KZ.store(k => lsGet(k), (k, v) => lsSet(k, v));
 function withKz(d) { if (d && KZ_ON) { const e = kzs.eq(); d.kz = e.some(Boolean) ? e : null; } return d; }
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
