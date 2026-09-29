@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '114';
+const VERSION = '115';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -150,7 +150,7 @@ function showTitle() {
   $('rankbtn').hidden = !RANK_ON;
   if (RANK_ON) titleRank();
   $('evbtn').hidden = !EV_ON;
-  if (EV_ON) { const t = evTheme(); $('evcap').textContent = '🎀 ' + PART_DAY[t.part] + '「' + t.name + '」'; }
+  if (EV_ON) { const t = evTheme(); $('evcap').textContent = '🎀 ' + PART_DAY[t.part] + evq(t.name); }
   if (TITLE_TEST) { $('minnabtn').hidden = true; $('minnaabout').hidden = !MINNA_OPEN || side !== 'minna'; }
   { const n = [...document.querySelectorAll('.modes > .mode')].filter(el => !el.hidden).length; document.querySelector('.modes').classList.toggle('odd', n % 2 === 1); }
   // コレクション（でんせつ・でんどういり）
@@ -197,19 +197,20 @@ function showDraw() {
   updateSideUi();
   setPart(part);
   if (vs) setHint((vs.step === 1 ? '1P' : '2P') + ' の モンスターを かいてね' + (myRobot ? '（まえの モンスターが はいってるよ）' : ''));
-  else if (evd) setHint('きょうの お題：' + PARTS[evd.t.part] + ' は「' + evd.t.name + '」（かえられない）');
+  else if (evd) setHint('きょうの お題：' + PARTS[evd.t.part] + ' は' + evq(evd.t.name) + '（かえられない）');
   else if (stage > 0) setHint('かちぬき ちゅう：モンスターを かえると 1 たいめから');
   sizePad(); drawPad();   // 文字やボタンが決まってから 測る
 }
 function setPart(p) {
-  if (evd && p === evd.t.part) { setHint('きょうは ' + PARTS[p] + ' は きまった かたち「' + evd.t.name + '」だよ'); return; }
+  if (evd && p === evd.t.part) { setHint('きょうは ' + PARTS[p] + ' は きまった かたち' + evq(evd.t.name) + 'だよ'); return; }
   part = p;
   for (const t of document.querySelectorAll('.tab')) {
     t.classList.toggle('on', t.dataset.part === p);
     t.classList.toggle('done', !!strokes[t.dataset.part]);
     t.classList.toggle('lock', !!evd && t.dataset.part === evd.t.part);
   }
-  $('dhead').innerHTML = PART_HINT[p] + (evd ? '<span class="evlock">🔒 ' + PARTS[evd.t.part] + ' は きょうの お題「' + evd.t.name + '」</span>' : '');
+  $('dhead').innerHTML = PART_HINT[p];
+  if (evd) { const sp = document.createElement('span'); sp.className = 'evlock'; sp.textContent = '🔒 ' + PARTS[evd.t.part] + ' は きょうの お題' + evq(evd.t.name); $('dhead').append(sp); }
   setHint(''); drawPad(); updateButtons();
 }
 for (const t of document.querySelectorAll('.tab')) t.addEventListener('click', e => { e.preventDefault(); setPart(t.dataset.part); });
@@ -1084,6 +1085,7 @@ if (/[?&]eventtest(=|&|$)/.test(location.search)) lsSet('eventtest', '1');
 const EV_ON = true;
 const EV_COLOR = '#8e24aa';
 const PART_DAY = { arm: 'うでの日', leg: 'あしの日', body: 'からだの日' };
+const evq = n => window.LANG === 'en' ? ' "' + n + '"' : '「' + n + '」';   // お題の 名前の かっこ（英語は ""）
 let evd = null;   // イベントの モンスターを 描いている あいだ: { backup: { strokes, myRobot }, t: お題, day }
 let evTop = null, evMe = null, evInfo = null, evBusy = false, evDown = false, evGot = null;
 function jstDay() { return new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10); }
@@ -1132,7 +1134,7 @@ function renderEv() {
   const t = evTheme(), top = evTop, me = evMe, info = evInfo;
   // お題（なにも ない からだ・うで・あしに お題の パーツだけ 色つき）
   $('evday').textContent = '🎀 きょうは ' + PART_DAY[t.part];
-  $('evname').textContent = '「' + t.name + '」';
+  $('evname').textContent = evq(t.name).trim();
   $('evhint').textContent = t.hint + '（' + PARTS[t.part] + ' は みんな この かたち）';
   { const base = { body: [[-30, -150], [30, -150], [30, -80], [-30, -80]], arm: [[0, 0], [20, 0], [40, 0], [60, 0]], leg: [[0, 0], [0, 20], [0, 40], [0, 60]] };
     base[t.part] = t.pts; drawPreview($('evthemecv'), RB.design(base.body, base.arm, base.leg), EV_COLOR); }
@@ -1140,7 +1142,7 @@ function renderEv() {
   $('evsub').textContent = top ? top.count + ' たい さんか・よる 0 じ しめきり（あと ' + left + ' じかん）' : evDown ? 'いま イベントに つながらないよ。しばらく してから また きてね' : 'よみこみちゅう…';
   // きのうの 1 位
   const ch = top && top.champion, cb = $('evchamp'); cb.hidden = !ch; cb.innerHTML = '';
-  if (ch) { cb.append(miniPreview(ch.code, '#78909c', 96, ch.kz)); const d = document.createElement('div'); d.innerHTML = '<b>🎀 きのうの ' + PART_DAY[ch.part] + '「' + themeName(ch.part, ch.no) + '」 いちばん</b><br>'; d.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.pct + '%・' + ch.n + ' たい）')); cb.append(d); }
+  if (ch) { cb.append(miniPreview(ch.code, '#78909c', 96, ch.kz)); const d = document.createElement('div'); d.innerHTML = '<b>🎀 きのうの ' + PART_DAY[ch.part] + evq(themeName(ch.part, ch.no)) + ' いちばん</b><br>'; d.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.pct + '%・' + ch.n + ' たい）')); cb.append(d); }
   // 自分
   const box = $('evme'); box.innerHTML = '';
   if (info && info.won) { const w = document.createElement('div'); w.className = 'ev-title'; w.textContent = '🎀 きのうの ' + PART_DAY[info.won.part] + ' いちばん'; box.append(w); }
@@ -1180,7 +1182,7 @@ function renderEv() {
     row.append(p, miniPreview(m.code, EV_COLOR, 64, m.kz), nm, sc);
     row.addEventListener('click', () => evPractice(m)); list.append(row);
   }
-  if (top && !(top.top || []).length) list.textContent = 'まだ だれも だして いないよ。いちばん のりで だそう！';
+  if (top && !(top.top || []).length) list.textContent = top.count ? 'まだ たたかう あいてが いないよ（2 たい から じゅんいが でるよ）' : 'まだ だれも だして いないよ。いちばん のりで だそう！';
   if (me && me.pos && me.pos > ((top && top.top) || []).length && me.nb && me.nb.length) {
     const gap = document.createElement('div'); gap.className = 'rk-gap'; gap.textContent = '⋮'; list.append(gap);
     for (const x of me.nb) { const row = document.createElement('div'); row.className = 'rk-row rk-top' + (x.id === me.id ? ' mine' : ''); row.textContent = x.pos + '　' + x.name + (x.id === me.id ? '（あなた）' : '') + '　' + x.pct + '%'; list.append(row); }

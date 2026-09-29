@@ -152,6 +152,34 @@
     "おなじ たたかいを みる": "Watch the same fight",
     "もういちど みる": "Watch again",
     "ランクせんへ もどる": "Back to Ranked",
+    // きょうの イベント
+    "きょうの イベント": "Today's Event",
+    "1 にちで きまる ランクせん": "One-day ranked",
+    "きょうの お題の パーツは みんな おなじ かたち（かえられない）": "Today's theme part is the same shape for everyone (can't change it)",
+    "ほかの 2 つを かいて だすと、みんなと じどうで たたかって じゅんいが きまる": "Draw the other 2 parts and enter — you auto-battle everyone for a rank",
+    "なんかいでも だしなおせる（さいごに だした 1 たいで きまる）": "Re-enter as often as you like (your last entry counts)",
+    "よる 0 じに しめきり。1 いに 🎀 リボン": "Closes at midnight (Japan time). #1 gets a 🎀 ribbon",
+    "つぎの 日は べつの お題": "A new theme every day",
+    "あなたの イベント モンスター": "Your event monster",
+    "この モンスターで だす": "Enter this monster",
+    "この モンスターで だしなおす": "Re-enter with this monster",
+    "イベントの モンスターを かく": "Draw your event monster",
+    "イベントの モンスターを なおす": "Edit your event monster",
+    "きょうの ランキング（タップで れんしゅうじあい）": "Today's ranking (tap for a practice match)",
+    "いま イベントに つながらないよ。しばらく してから また きてね": "Can't reach the event right now. Please come back later",
+    "お題の パーツは きまってるよ。のこりの 2 つを かいて だしてね": "The theme part is fixed. Draw the other 2 parts and enter!",
+    "だしなおすと まえの モンスターと いれかわるよ": "Re-entering replaces your previous monster",
+    "きょうは もう たくさん だしたよ。また あした！": "You've entered a lot today. See you tomorrow!",
+    "まだ だれも だして いないよ。いちばん のりで だそう！": "No entries yet. Be the first!",
+    "まだ たたかう あいてが いないよ（2 たい から じゅんいが でるよ）": "No opponents yet (ranks appear from 2 entries)",
+    "できたよ！ なまえを いれて だしてね": "Done! Enter a name and submit",
+    "だしてるよ…": "Entering…",
+    "だしたよ！ 20 ぷん くらいで じゅんいが でるよ": "Entered! Your rank shows up in about 20 min",
+    "れんしゅうじあいは イベントの モンスターを かいてから": "Draw your event monster first to play practice matches",
+    "なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ": "Your name isn't shown in the ranking because it isn't suitable for everyone",
+    "その モンスターは だせないよ": "That monster can't be entered",
+    "できた！<small>イベントに もどる</small>": "Done!<small>Back to the event</small>",
+    "イベントへ もどる": "Back to the event",
     "モンスターを なおす": "Edit monster",
     "モンスターを なおす（1 たいめから）": "Edit monster (restart from #1)",
     "でんせつ しょうめいしょ": "Legend certificate",
@@ -257,6 +285,18 @@
     [/いま: /, 'Now: '],
     [/^(\d+) たい さんか・20 ぷんごとに こうしん$/, '$1 entered · updates every 20 min'],
     [/<b>👑 きのうの チャンピオン<\/b>/, "<b>👑 Yesterday's champion</b>"],
+    // きょうの イベント（お題の 名前は 英語の データ、日の 名前は あとの 言いまわしで）
+    [/^(\d+) たい さんか・よる 0 じ しめきり（あと (\d+) じかん）$/, '$1 entered · closes at midnight ($2 h left)'],
+    [/^🎀 きょうは (.+)$/, '🎀 Today: $1'],
+    [/（(からだ|うで|あし) は みんな この かたち）$/, (m, p) => ' (everyone gets this ' + ({ 'からだ': 'body', 'うで': 'arm', 'あし': 'leg' })[p] + ')'],
+    [/<b>🎀 きのうの (.+) いちばん<\/b>/, "<b>🎀 Yesterday's #1: $1</b>"],
+    [/（しょうりつ ([\d.]+)%・(\d+) たい）$/, ' (win $1% · $2 entries)'],
+    [/^🎀 きのうの (.+) いちばん！ リボンを もらったよ$/, "🎀 #1 on yesterday's $1! You got a ribbon"],
+    [/^🎀 きのうの (.+) いちばん$/, "🎀 Yesterday's #1: $1"],
+    [/^🎀 リボン (\d+) こ（あなたの モンスターに つくよ）$/, '🎀 Ribbons: $1 (shown on your monster)'],
+    [/^きょうの お題：(\S+) は(.+)（かえられない）$/, (m, p, n) => "Today's theme: the " + ({ 'からだ': 'body', 'うで': 'arm', 'あし': 'leg' })[p] + ' is' + n + ' (fixed)'],
+    [/^きょうは (\S+) は きまった かたち(.+)だよ$/, (m, p, n) => 'Today the ' + ({ 'からだ': 'body', 'うで': 'arm', 'あし': 'leg' })[p] + ' is fixed:' + n],
+    [/^🔒 (\S+) は きょうの お題(.+)$/, (m, p, n) => "🔒 The " + ({ 'からだ': 'body', 'うで': 'arm', 'あし': 'leg' })[p] + " is today's theme:" + n],
     [/（しょうりつ ([\d.]+)%）/g, ' (win $1%)'],
     [/👑 きのうの チャンピオン（(\d+) にち れんぞく！?）/g, "👑 Yesterday's champion ($1 days in a row)"],
     [/👑 きのうの チャンピオン！?/g, "👑 Yesterday's champion"],
@@ -294,6 +334,7 @@
   const P = Object.entries(Object.assign({
     'かいて！モンスターバトル': 'Draw! Monster Battle', 'ランクせん': 'Ranked', 'けいさんちゅう': 'calculating',
     'たたかう': 'Fight', 'クリア': 'Clear',
+    'からだの日': 'Body day', 'うでの日': 'Arm day', 'あしの日': 'Leg day',
   }, SIDE)).sort((a, b) => b[0].length - a[0].length);
 
   const cache = new Map();
@@ -327,6 +368,13 @@
   }
   const CPUN = { 'ヒョロリ': 'Skinny', 'ドッシン': 'Thud', 'カクカク': 'Blocky', 'チョロ': 'Scamper', 'ゴツン': 'Bonk', 'カゲ': 'Shadow', 'ヤミ': 'Dark', 'ドクロ': 'Skull', 'オニ': 'Ogre', 'ダイマオウ': 'Demon King', 'ギザマル': 'Sawtooth', 'オオヤマ': 'Mountain', 'ワニガメ': 'Snapper', 'ハコブネ': 'Ark', 'カミソリ': 'Razor' };
   if (window.RB) for (const L of [RB.CPU, RB.URA, RB.MINNA]) if (L) for (const c of L) if (CPUN[c.name]) c.name = CPUN[c.name];
+  // きょうの イベントの お題（event.js の 並びと おなじ 順。[名前, せつめい]）
+  const EVN = {
+    body: [['Star', 'a star'], ['Circle', 'perfectly round'], ['Square', 'a box'], ['Triangle', 'point up'], ['Upside-down', 'point down'], ['Heart', 'a heart'], ['Tall', 'thin and tall'], ['Flat', 'wide and flat'], ['Diamond', 'a diamond'], ['Crescent', 'a moon'], ['House', 'a house with a roof'], ['Mushroom', 'cap and stem'], ['Cloud', 'puffy'], ['Ghost', 'wavy hem'], ['Fish', 'with a tail'], ['Gourd', 'two circles stacked'], ['Cross', 'a plus sign'], ['Tiny', 'very small'], ['Cup', 'a U with a dent on top'], ['Two humps', 'two hills']],
+    arm: [['Spear', 'long and straight'], ['Hammer', 'heavy head at the tip'], ['Hook', 'curls at the tip'], ['Zigzag', 'a lightning bolt'], ['Spiral', 'swirl at the tip'], ['Boomerang', 'bent in a V'], ['Fork', '3 prongs'], ['Ring', 'a ring at the tip'], ['Fist', 'short with a square tip'], ['Uppercut', 'reaches up at an angle'], ['Downward', 'angles down'], ['L-shape', 'forward then up'], ['Wave', 'wiggly wave'], ['Scythe', 'a big curved blade'], ['Broom', 'spreads at the tip'], ['Knot', 'a loop in the middle'], ['Glasses', 'two loops'], ['Star', 'a star at the tip'], ['Square wave', 'boxy wave'], ['Backward', 'reaches backward']],
+    leg: [['Pole', 'long and straight'], ['Stub', 'short'], ['Ring', 'a round ring'], ['Boot', 'down then forward'], ['Cane', 'curls at the tip'], ['Zigzag', 'jagged'], ['S-shape', 'a wiggly S'], ['Slant', 'angled forward'], ['T-shape', 'a bar at the tip'], ['Swirl', 'a spiral'], ['Half circle', 'half a circle'], ['Square wave', 'boxy wave'], ['Y-shape', 'splits in two'], ['Big ring', 'short stick, big ring'], ['Knee', 'bent in a V'], ['Square', 'a square frame'], ['Triangle', 'a triangle frame'], ['Bone', 'bumps at both ends'], ['Claw', '3 claws at the tip'], ['Star', 'a star at the tip']],
+  };
+  if (window.EVENT_PARTS) for (const k of Object.keys(EVN)) (EVENT_PARTS[k] || []).forEach((x, i) => { const e = EVN[k][i]; if (e) { x.name = e[0]; x.hint = e[1]; } });
 
   // ---- 画面に 出る ところで 置きかえ ----
   const wrap = (proto, prop) => {
