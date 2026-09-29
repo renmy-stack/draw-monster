@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '99';
+const VERSION = '100';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -73,9 +73,9 @@ const TITLE_TEST = true;
 // ?gachatest を 開いた 端末（オーナー）だけ 確認用の 一覧（?kzgallery）と 当たりの 見本（?kzreveal）が 使える
 if (/[?&]gachatest(=|&|$)/.test(location.search)) lsSet('gachatest', '1');
 const KZ_ON = true, KZ_OWNER = lsGet('gachatest') === '1';
-// ?cardtest を 開いた 端末（オーナー）だけ ランクせんの「じゅんい カード」（全員に 出すのは オーナーの OK の あと）
+// ランクせんの「じゅんい カード」: 2026-09-29 全員に 公開（前は ?cardtest の 端末だけ）
 if (/[?&]cardtest(=|&|$)/.test(location.search)) lsSet('cardtest', '1');
-const CARD_ON = lsGet('cardtest') === '1';
+const CARD_ON = true;
 const kzs = KZ.store(k => lsGet(k), (k, v) => lsSet(k, v));
 function withKz(d) { if (d && KZ_ON) { const e = kzs.eq(); d.kz = e.some(Boolean) ? e : null; } return d; }
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
