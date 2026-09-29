@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '119';
+const VERSION = '120';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1548,7 +1548,7 @@ checkVersion();
 
 // ---------- 下の タブ（?navtest の 端末だけ、2026-09-30〜）----------
 // トップが 長く なって きたので: ぼうけん（ホーム）・ランクせん・イベント・ガチャ・そのほか。描く 画面と 戦いの 画面では 出さない
-// そのほか には トップに あった ふたりで・コレクション・データの ひきつぎ・English・あそびかた を 移す（同じ 部品を 動かすので 動きは おなじ）
+// そのほか には トップに あった コレクション・データの ひきつぎ・English・あそびかた を 移す（同じ 部品を 動かすので 動きは おなじ）。ふたりで は ぼうけんの 下
 if (/[?&]navtest(=|&|$)/.test(location.search)) lsSet('navtest', '1');
 function navOn() { return lsGet('navtest') === '1'; }
 function navSync(id) {
@@ -1575,7 +1575,8 @@ if (navOn()) {
   document.body.classList.add('nav');
   $('tmon').width = $('tmon').height = 480;   // トップの モンスターを 大きく 出すので 細かく
   const ml = $('morelist');
-  for (const id of ['vs', 'collection', 'bkbtn', 'langbtn']) ml.append($(id));
+  $('adv').append($('vs'));   // ふたりで たたかう は ぼうけんの「たたかう」の 下（オーナー: そのほか では ない）
+  for (const id of ['collection', 'bkbtn', 'langbtn']) ml.append($(id));
   ml.append(document.querySelector('#title .howto'), document.querySelector('#title .tfoot'));
 }
 for (const b of document.querySelectorAll('#navbar button')) onTap(b, () => {
