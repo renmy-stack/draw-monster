@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '103';
+const VERSION = '104';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -78,6 +78,9 @@ if (/[?&]cardtest(=|&|$)/.test(location.search)) lsSet('cardtest', '1');
 const CARD_ON = true;
 // モンスターの ほぞん 12 こ（2026-09-29 全員に。前は 3 こ）
 const SLOT_N = 12;
+// ?backuptest を 開いた 端末（オーナー）だけ「データの ひきつぎ」
+if (/[?&]backuptest(=|&|$)/.test(location.search)) lsSet('backuptest', '1');
+const BK_ON = lsGet('backuptest') === '1';
 const kzs = KZ.store(k => lsGet(k), (k, v) => lsSet(k, v));
 function withKz(d) { if (d && KZ_ON) { const e = kzs.eq(); d.kz = e.some(Boolean) ? e : null; } return d; }
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
@@ -1396,3 +1399,59 @@ showTitle();
   }
 }
 requestAnimationFrame(frame);
+
+// ---------- データの ひきつぎ（ランクせんの サーバーに あずける → コードで べつの 端末へ。さいごに あずけて から 30 日）----------
+// あずけるのは この ゲームの localStorage（drawrobot.〜）ぜんぶ。コイン・かざり・ほぞん・クリア・ランクせんの とうろく も いっしょに うつる
+function bkAll() { const o = {}; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith(KEY)) o[k] = localStorage.getItem(k); } } catch (e) {} return o; }
+const bkFmt = c => c.slice(0, 4) + '-' + c.slice(4);
+const bkDay = t => { const d = new Date(t); return (d.getMonth() + 1) + '/' + d.getDate(); };
+let bkAsk = false, bkBusy = false;
+function showBk() {
+  bkAsk = false; $('bkload').textContent = 'うけとる'; $('bkmsg').textContent = '';
+  const c = lsGet('bk.code'), u = +(lsGet('bk.until') || 0);
+  $('bkcode').hidden = !(c && u > Date.now());
+  if (c && u > Date.now()) { $('bkcode').textContent = bkFmt(c); $('bkuntil').textContent = bkDay(u) + ' まで つかえるよ（あずけなおすと のびる）'; }
+  else $('bkuntil').textContent = '';
+  $('bksave').textContent = c && u > Date.now() ? 'いまの データで あずけなおす' : 'データを あずける';
+  $('bkbox').hidden = false;
+}
+async function bkSave() {
+  if (bkBusy) return; bkBusy = true; $('bkmsg').textContent = 'あずけちゅう…';
+  try {
+    const r = await (await fetch(RANK_API + '/bk/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: lsGet('bk.code') || '', key: lsGet('bk.key') || '', data: bkAll() }) })).json();
+    if (r.error || !r.code) $('bkmsg').textContent = r.error || 'うまく いかなかった…';
+    else {
+      const same = r.code === lsGet('bk.code');
+      lsSet('bk.code', r.code); lsSet('bk.key', r.key); lsSet('bk.until', String(r.until));
+      TR('bksave', { n: same ? 1 : 0 });
+      showBk(); $('bkmsg').textContent = 'あずけたよ！ この コードを スクショ か メモ してね';
+    }
+  } catch (e) { $('bkmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
+  bkBusy = false;
+}
+async function bkLoad() {
+  const code = $('bkin').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (code.length !== 8) { $('bkmsg').textContent = 'コードは 8 もじ（れい: K7M2-QX9P）'; return; }
+  if (!bkAsk) { bkAsk = true; $('bkload').textContent = 'いまの データは きえるよ。うけとる？'; return; }
+  if (bkBusy) return; bkBusy = true; $('bkmsg').textContent = 'うけとりちゅう…';
+  try {
+    const r = await (await fetch(RANK_API + '/bk/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) })).json();
+    if (r.error || !r.data) { $('bkmsg').textContent = r.error || 'うまく いかなかった…'; bkAsk = false; $('bkload').textContent = 'うけとる'; bkBusy = false; return; }
+    TR('bkload', { n: Object.keys(r.data).length });
+    const keep = {}; for (const k of ['backuptest', 'gachatest']) { const v = lsGet(k); if (v != null) keep[k] = v; }   // オーナーの 印は この 端末の ものを のこす
+    try {
+      for (const k of Object.keys(bkAll())) localStorage.removeItem(k);
+      for (const [k, v] of Object.entries(r.data)) if (typeof k === 'string' && k.startsWith(KEY) && typeof v === 'string') localStorage.setItem(k, v);
+      for (const [k, v] of Object.entries(keep)) lsSet(k, v);
+    } catch (e) { $('bkmsg').textContent = 'ほぞん できなかった…'; bkBusy = false; return; }
+    $('bkmsg').textContent = 'うけとったよ！ よみこみなおすね';
+    setTimeout(() => location.replace(location.pathname), 800);
+  } catch (e) { $('bkmsg').textContent = 'つながらなかった…もういちど ためしてね'; bkAsk = false; $('bkload').textContent = 'うけとる'; }
+  bkBusy = false;
+}
+$('bkbtn').hidden = !BK_ON;
+onTap($('bkbtn'), () => { TR('bkopen', null); showBk(); });
+onTap($('bksave'), bkSave);
+onTap($('bkload'), bkLoad);
+$('bkin').addEventListener('input', () => { bkAsk = false; $('bkload').textContent = 'うけとる'; });
+onTap($('bkclose'), () => { $('bkbox').hidden = true; });

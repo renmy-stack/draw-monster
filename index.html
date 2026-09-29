@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=103">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=104">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://renmygames.com/draw-monster/icon-512.png">
 <meta name="twitter:card" content="summary">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=103">
+<link rel="stylesheet" href="style.css?v=104">
 <script src="/t.js?v=5"></script>
 </head>
 <body>
@@ -61,6 +61,7 @@
         <div id="halllist"></div>
       </div>
     </details>
+    <button id="bkbtn" class="linkbtn" hidden>📦 データの ひきつぎ</button>
     <details class="fold howto">
       <summary>あそびかた・つよさ</summary>
       <h3>つくりかた</h3>
@@ -175,6 +176,22 @@
   </div>
 </div>
 
+<div id="bkbox" hidden>
+  <div class="panel">
+    <div class="rtitle">データの ひきつぎ</div>
+    <div class="note">きしゅへんこう や べつの ブラウザ（X の なか → Safari など）に、コイン・かざり・ほぞん・きろく・ランクせん を うつせるよ</div>
+    <div class="bk-h">この スマホの データを あずける</div>
+    <div id="bkcode" class="bk-code" hidden></div>
+    <div id="bkuntil" class="bk-until"></div>
+    <div class="rbtns"><button id="bksave" class="main">データを あずける</button></div>
+    <div class="bk-h">べつの スマホの データを うけとる</div>
+    <input id="bkin" class="bk-in" maxlength="9" placeholder="K7M2-QX9P" autocapitalize="characters" autocomplete="off" spellcheck="false">
+    <div class="rbtns"><button id="bkload" class="sub">うけとる</button></div>
+    <div id="bkmsg" class="bk-msg"></div>
+    <div class="rbtns small"><button id="bkclose" class="sub">とじる</button></div>
+  </div>
+</div>
+
 <div id="minnainfo" hidden>
   <div class="panel">
     <div class="minna-title">みんなの<br>さいきょう ぐんだん</div>
@@ -241,9 +258,9 @@
   </div>
 </div>
 
-<script src="sim.js?v=103"></script>
-<script src="kazari.js?v=103"></script>
-<script src="kzstage.js?v=103"></script>
-<script src="game.js?v=103"></script>
+<script src="sim.js?v=104"></script>
+<script src="kazari.js?v=104"></script>
+<script src="kzstage.js?v=104"></script>
+<script src="game.js?v=104"></script>
 </body>
 </html>

@@ -22,7 +22,7 @@ button { font: inherit; }
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 16px; background: rgba(10, 12, 30, .55);
 }
-#hallbox[hidden], #tmycard[hidden], #trank[hidden], #trecord[hidden], #tmchint[hidden], #collection[hidden], #rank[hidden], #rankreg[hidden], #rankchamp[hidden], #minnainfo[hidden], #kzbox[hidden], #kzrow[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
+#hallbox[hidden], #tmycard[hidden], #trank[hidden], #trecord[hidden], #tmchint[hidden], #collection[hidden], #rank[hidden], #rankreg[hidden], #rankchamp[hidden], #minnainfo[hidden], #kzbox[hidden], #kzrow[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #bkbox[hidden], #bkcode[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
 .panel {
   width: min(92vw, 400px); max-height: calc(100% - 20px); overflow-y: auto;
   background: var(--paper); border: 4px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow);
@@ -404,3 +404,12 @@ button:disabled { opacity: .45; }
 @keyframes kzflash { from { opacity: 1; } to { opacity: 0; } }
 #kzpull.spin3 { animation: kzspin3 1.3s ease-in-out; }
 @keyframes kzspin3 { 0%, 100% { transform: none; } 10%, 30%, 50%, 70% { transform: rotate(-8deg) scale(1.08); } 20%, 40%, 60%, 80% { transform: rotate(8deg) scale(1.08); } 90% { transform: scale(1.25); filter: brightness(1.8); } }
+
+/* データの ひきつぎ */
+#bkbox { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(10, 12, 30, .6); z-index: 30; }
+#bkbox .panel { max-height: 100%; overflow: auto; }
+.bk-h { margin-top: 14px; font-weight: 800; font-size: 14px; }
+.bk-code { margin: 8px auto 0; padding: 8px 12px; border: 3px dashed var(--ink); border-radius: 12px; background: #fff; font: 900 32px/1.2 ui-monospace, Menlo, Consolas, monospace; letter-spacing: 3px; text-align: center; user-select: all; -webkit-user-select: all; }
+.bk-until { font-size: 12px; opacity: .75; text-align: center; margin-top: 4px; }
+.bk-in { display: block; width: 100%; box-sizing: border-box; margin-top: 8px; padding: 10px; border: 2px solid var(--ink); border-radius: 10px; font: 800 22px ui-monospace, Menlo, Consolas, monospace; letter-spacing: 2px; text-align: center; text-transform: uppercase; }
+.bk-msg { min-height: 1.4em; margin-top: 8px; font-weight: 700; text-align: center; font-size: 14px; }
