@@ -5,7 +5,7 @@
 //   1. 文 まるごと（D）→ 2. 数字の 入る 文（R、上から じゅんに 置きかえ）→ 3. のこった 日本語は 言いまわし（P、長い ものから）
 //   かざりの 名前・CPU の 名前は データ そのものを 英語に する
 (function () {
-  const KEYL = 'drawrobot.lang', AUTO = false;   // AUTO: スマホの 設定で 英語に する（オーナーの OK の あと true）
+  const KEYL = 'drawrobot.lang', AUTO = true;   // AUTO: スマホの 設定で 英語に する（2026-09-30 全員に）
   let pick = null;
   try {
     if (/[?&]lang=en(&|$)/.test(location.search)) localStorage.setItem(KEYL, 'en');

@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '110';
+const VERSION = '111';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1469,8 +1469,8 @@ onTap($('bkload'), bkLoad);
 $('bkin').addEventListener('input', () => { bkAsk = false; $('bkload').textContent = 'うけとる'; });
 onTap($('bkclose'), () => { $('bkbox').hidden = true; });
 
-// ---------- 言語の 切りかえ（?langtest の 端末だけ。全員に 出すのは オーナーの OK の あと）----------
+// ---------- 言語の 切りかえ（2026-09-30 全員に）----------
 if (/[?&]langtest(=|&|$)/.test(location.search)) lsSet('langtest', '1');
-$('langbtn').hidden = lsGet('langtest') !== '1';
+$('langbtn').hidden = false;
 $('langbtn').textContent = window.LANG === 'en' ? '🌐 日本語' : '🌐 English';
 onTap($('langbtn'), () => { const to = window.LANG === 'en' ? 'ja' : 'en'; TR('lang', { to }); window.setLang(to); });
