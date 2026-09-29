@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '113';
+const VERSION = '114';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1078,10 +1078,10 @@ onTap($('rankdraw'), showDraw);
 onTap($('rankback'), showTitle);
 onTap($('ranktop'), showTitle);
 // ---------- きょうの イベント（1 日で 完結する ランクせん。お題の パーツは きまった 形）----------
-// ?eventtest を 開いた 端末（オーナー）だけ（2026-09-30〜）。お題は event.js（60 日で 一周）、受付は ランクせんと おなじ 受付係（/ev/*）、計算は tools/ev_batch.js
+// 2026-09-30 全員に 公開（前は ?eventtest の 端末だけ）。お題は event.js（60 日で 一周）、受付は ランクせんと おなじ 受付係（/ev/*）、計算は tools/ev_batch.js
 // イベントの モンスターは ふだんの モンスターと べつに 端末へ（ev.robot・その 日だけ）。お題の パーツは 描く 画面で さわれない（サーバーでも 上書き）
 if (/[?&]eventtest(=|&|$)/.test(location.search)) lsSet('eventtest', '1');
-const EV_ON = lsGet('eventtest') === '1';
+const EV_ON = true;
 const EV_COLOR = '#8e24aa';
 const PART_DAY = { arm: 'うでの日', leg: 'あしの日', body: 'からだの日' };
 let evd = null;   // イベントの モンスターを 描いている あいだ: { backup: { strokes, myRobot }, t: お題, day }
