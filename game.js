@@ -876,7 +876,7 @@ onTap($('next'), () => { if (!vs && goMinna) { if (toMinna('result')) minnaStart
 onTap($('again'), () => { if (S && S.side === 'rank' && rankLast) { rankBattle(...rankLast); return; } if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (vs) startVsMode(); else showDraw(); });
 // ---------- モンスター ランクせん（みんなの モンスターと 自動で 対戦）----------
-// 登録（形と 名前）だけ ゲームから 送る。順位は サーバー（登録が あれば 15 分に 1 回まで 計算）が 決める。1000 体 までは 全員と、こえたら 全員が 同じ 代表 1000 体と、左右 入れかえて 2 戦ずつ した 勝率 ＝ 運も ずるも ない
+// 登録（形と 名前）だけ ゲームから 送る。順位は サーバー（登録が あれば 15 分に 1 回まで 計算）が 決める。500 体 までは 全員と、こえたら 全員が 同じ 代表 500 体と、左右 入れかえて 2 戦ずつ した 勝率 ＝ 運も ずるも ない
 // リプレイと 練習試合は この 端末で 計算（同じ 2 体・同じ 左右なら 同じ 試合に なる）
 const RANK_API = 'https://renmy-rank.renmy-stack.workers.dev';
 const RANK_ON = true;   // 2026-09-28 全員に 公開（前は ?ranktest の 端末だけ）
