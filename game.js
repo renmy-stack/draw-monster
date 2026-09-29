@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '117';
+const VERSION = '118';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -133,8 +133,11 @@ function showTitle() {
   if (friendRobot) drawPreview($('friendprev'), friendRobot, FRIEND.color);
   renderHall();
   // じぶんの モンスター（絵・すすみぐあい・ランクせん）
-  $('tmycard').hidden = !myRobot;
+  $('tmycard').hidden = !myRobot && !navOn();   // タブの ときは まだ いなくても 大きな わくで「タップで つくる」
+  $('tmycard').classList.toggle('empty', !myRobot);
   if (myRobot) drawPreview($('tmon'), withRibbon(withKz(withCrown(myRobot))), ME.color);
+  else { const g = $('tmon').getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, $('tmon').width, $('tmon').height); }
+  $('tmycard').querySelector('.mc-h').textContent = myRobot ? 'じぶんの モンスター' : 'まだ モンスターが いないよ';
   $('kzrow').hidden = !KZ_ON || !myRobot;
   if (KZ_ON) $('kzcoins').textContent = '🪙 ' + kzs.coins();
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0), mb = +(lsGet('minna.best') || 0);
@@ -162,7 +165,7 @@ function showTitle() {
 // ぼうけんの 道: 出ている 段は タップで えらべる（えらんだ 段が「たたかう」の 相手）。まだの 段は ？？？
 function renderRoad() {
   $('trecord').hidden = true; $('start').parentNode.style.display = 'none'; $('adv').hidden = false;
-  $('tmchint').textContent = '✏ タップで なおす・えらぶ';
+  $('tmchint').textContent = myRobot ? '✏ タップで なおす・えらぶ' : '✏ タップで つくる';
   const open = { omote: true, ura: uraOpen, minna: MINNA_OPEN };
   const road = $('road'); road.innerHTML = '';
   ['omote', 'ura', 'minna'].forEach((s, i) => {
@@ -1558,6 +1561,7 @@ function navSync(id) {
 function showMore() { mode = 'more'; show('more'); }
 if (navOn()) {
   document.body.classList.add('nav');
+  $('tmon').width = $('tmon').height = 480;   // トップの モンスターを 大きく 出すので 細かく
   const ml = $('morelist');
   for (const id of ['vs', 'collection', 'bkbtn', 'langbtn']) ml.append($(id));
   ml.append(document.querySelector('#title .howto'), document.querySelector('#title .tfoot'));

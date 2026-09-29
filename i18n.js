@@ -156,6 +156,8 @@
     "きょうの イベント": "Today's Event",
     "きょうの イベント<br>ランクせん": "Today's Event<br>Ranked",
     // 下の タブ
+    "まだ モンスターが いないよ": "No monster yet",
+    "✏ タップで つくる": "✏ Tap to make one",
     "そのほか": "More",
     "イベント": "Event",
     "ガチャ": "Gacha",
