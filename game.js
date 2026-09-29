@@ -1,16 +1,16 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '111';
+const VERSION = '112';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
 // Safari が おぼえていた 古い ページ（index.html）と 新しい game.js が まざると、部品（kazari.js など）が なくて 止まる
 // → 1 回だけ、URL に 印を つけて ページごと 読みなおす（2026-09-29 の 解析で 見つかった）
-if (!window.KZ || !window.KZStage || !window.RB) {
+if (!window.KZ || !window.KZStage || !window.RB || !document.getElementById('langbtn')) {   // 古い index.html（あたらしい ボタンが ない）も
   let tried = ''; try { tried = sessionStorage.getItem('mon.fix') || ''; } catch (e) {}
   if (tried !== VERSION) {
     try { sessionStorage.setItem('mon.fix', VERSION); } catch (e) {}
-    TR('stalefix', { k: !!window.KZ, s: !!window.KZStage });
+    TR('stalefix', { k: !!window.KZ, s: !!window.KZStage, b: !!document.getElementById('langbtn') });
     location.replace(location.pathname + (location.search ? location.search + '&' : '?') + 'nc=' + Date.now() + location.hash);
     throw new Error('reload for new version');
   }
