@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '120';
+const VERSION = '121';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1575,7 +1575,7 @@ if (navOn()) {
   document.body.classList.add('nav');
   $('tmon').width = $('tmon').height = 480;   // トップの モンスターを 大きく 出すので 細かく
   const ml = $('morelist');
-  $('adv').append($('vs'));   // ふたりで たたかう は ぼうけんの「たたかう」の 下（オーナー: そのほか では ない）
+  { const row = document.createElement('div'); row.className = 'advrow'; $('adv').append(row); row.append($('advgo'), $('vs')); }   // ふたりで たたかう は「たたかう」の 横（たたかう が 広め。オーナー: そのほか では ない）
   for (const id of ['collection', 'bkbtn', 'langbtn']) ml.append($(id));
   ml.append(document.querySelector('#title .howto'), document.querySelector('#title .tfoot'));
 }
