@@ -88,14 +88,14 @@ async function main() {
   let reps;
   if (n <= REP_MAX) reps = list.map((m, i) => i);
   else {
-    // 固定の ランダム 450 体: 前の 代表で まだ いる ものを のこし、たりない ぶんを 補充（日付で きまる ならび）
+    // 固定の ランダム 400 体: 前の 代表で まだ いる ものを のこし、たりない ぶんを 補充（日付で きまる ならび）
     const fixed = (rep.fixed || []).filter(id => idx.has(id)).map(id => idx.get(id));
     const inFixed = new Set(fixed);
     let seed = hashStr(today); const rnd = () => (seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296;
     const pool = list.map((m, i) => i).filter(i => !inFixed.has(i));
     for (let k = pool.length - 1; k > 0; k--) { const r = Math.floor(rnd() * (k + 1)); [pool[k], pool[r]] = [pool[r], pool[k]]; }
     while (fixed.length < REP_MAX - REP_TOP && pool.length) { const i = pool.pop(); fixed.push(i); inFixed.add(i); }
-    // その日の 上位 50 体: 日が かわった ときだけ 入れかえ（前の 代表での 勝率で）
+    // その日の 上位 100 体: 日が かわった ときだけ 入れかえ（前の 代表での 勝率で）
     let top = (rep.top || []).filter(id => idx.has(id)).map(id => idx.get(id));
     if (rep.day !== today || !top.length) {
       const prevReps = [...new Set(fixed.concat(top))], st0 = statsOf(prevReps);
