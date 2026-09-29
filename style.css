@@ -455,10 +455,12 @@ body.nav #title .modes, body.nav #kzrow, body.nav #ranktop, body.nav #evtop, bod
 body.nav #title, body.nav #rank, body.nav #ev, body.nav #more { align-items: stretch; padding-top: 10px; padding-left: 10px; padding-right: 10px; }
 body.nav #title .panel, body.nav #rank .panel, body.nav #ev .panel, body.nav #more .panel { width: 100%; max-width: 520px; margin: 0 auto; max-height: none; height: 100%; }
 body.nav #title .panel { display: flex; flex-direction: column; }
-body.nav #tmycard { flex: 1 1 auto; min-height: 0; flex-direction: column; justify-content: center; text-align: center; gap: 6px; margin-top: 12px; }
-body.nav #tmycard canvas { width: min(62vw, 36vh); height: auto; aspect-ratio: 1 / 1; border-radius: 16px; }
+body.nav #tmycard { flex: 1 1 auto; min-height: 0; overflow: hidden; flex-direction: column; justify-content: center; text-align: center; gap: 6px; margin-top: 12px; }
+body.nav #tmycard canvas { width: 60px; height: 60px; border-radius: 16px; }   /* 大きさは game.js の fitTmon で 枠の あいている ぶんに あわせる */
 body.nav #tmycard .mc-body { align-items: center; }
 body.nav #tmycard .mc-h { font-size: 13px; }
 body.nav #adv { margin-top: auto; padding-top: 12px; }
 body.nav .advgo { margin-bottom: 4px; padding-top: 14px; padding-bottom: 14px; font-size: 24px; }
 body.nav #tmycard.empty canvas { background: #1f2250 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='64' font-size='46' text-anchor='middle' fill='%237c83ff'%3E✏%3C/text%3E%3C/svg%3E") center / 55% no-repeat; }
+body.nav #title .logo { font-size: min(34px, 9vw); }
+body.nav #title .lead { display: none; }

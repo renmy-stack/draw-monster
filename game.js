@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '118';
+const VERSION = '119';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -161,6 +161,7 @@ function showTitle() {
   $('collection').hidden = !nl && !nh;
   $('collsum').textContent = 'コレクション　' + (nl ? '⭐ でんせつ ' + nl + '　' : '') + (nh ? '👑 でんどういり ' + nh : '');
   drawTitleBg();
+  setTimeout(fitTmon, 0);
 }
 // ぼうけんの 道: 出ている 段は タップで えらべる（えらんだ 段が「たたかう」の 相手）。まだの 段は ？？？
 function renderRoad() {
@@ -1075,6 +1076,7 @@ async function titleRank() {
   $('rankbtn').classList.toggle('new', !me);
   $('tmchint').hidden = !!me;
   tr.hidden = !me; tr.textContent = me ? 'ランクせん ' + (me.pos ? me.pos + ' い・しょうりつ ' + me.pct + '%' : 'けいさんちゅう') + (cur && cur !== me.code ? '（べつの モンスターで とうろくちゅう）' : '') : '';
+  setTimeout(fitTmon, 0);   // 一言の 行数で 絵の 大きさが かわる
 }
 onTap($('torank'), () => { TR('torank', null); showRank('いまの モンスターで とうろく できるよ'); });
 onTap($('rankregbtn'), rankRegister);
@@ -1559,6 +1561,16 @@ function navSync(id) {
   nb.querySelector('[data-tab=ev]').hidden = !EV_ON;
 }
 function showMore() { mode = 'more'; show('more'); }
+// トップの モンスターの 絵を 枠の あいている 高さ・はばに あわせる（Safari は vh が バーの ぶん ずれるので 測る）。いちど 小さく して 枠の 大きさを 測る
+function fitTmon() {
+  if (!navOn() || $('title').hidden) return;
+  const c = $('tmon'), card = $('tmycard'), body = card.querySelector('.mc-body');
+  c.style.width = c.style.height = '40px';
+  const cs = getComputedStyle(card), padV = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom), padH = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
+  const sz = Math.floor(Math.max(48, Math.min(card.clientWidth - padH, card.clientHeight - padV - body.offsetHeight - 10, 360)));
+  c.style.width = c.style.height = sz + 'px';
+}
+window.addEventListener('resize', () => setTimeout(fitTmon, 0));
 if (navOn()) {
   document.body.classList.add('nav');
   $('tmon').width = $('tmon').height = 480;   // トップの モンスターを 大きく 出すので 細かく
