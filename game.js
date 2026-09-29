@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '104';
+const VERSION = '105';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -33,12 +33,15 @@ const P2 = { name: '2P', color: '#e53935' };
 let vs = null;
 // 王冠: うら 5 人抜きした モンスター（形そのもの）。1 本でも 描きなおすと べつの モンスター
 function plainCode(d) { return RB.encodeDesign({ body: d.body, arm: d.arm, leg: d.leg }); }
-function crownedList() { try { return JSON.parse(lsGet('crowned') || '[]'); } catch (e) { return []; } }
-function isCrowned(d) { return !!d && crownedList().includes(plainCode(d)); }
-function legendList() { try { return JSON.parse(lsGet('legend') || '[]'); } catch (e) { return []; } }
+// 王冠・でんせつの 一覧は 形の 短い 印（11 もじ前後）で おぼえる。形 そのもの（〜400 もじ）だと 遊びこむほど データが 大きく なる（2026-09-29）
+function codeTag(c) { let a = 0x811c9dc5, b = 0x9e3779b9; for (let i = 0; i < c.length; i++) { const x = c.charCodeAt(i); a = Math.imul(a ^ x, 16777619) >>> 0; b = Math.imul(b ^ x, 2246822519) >>> 0; } return a.toString(36) + b.toString(36).slice(0, 5); }
+function tagList(k) { try { return JSON.parse(lsGet(k) || '[]').map(c => String(c).length > 16 ? codeTag(String(c)) : String(c)); } catch (e) { return []; } }
+function crownedList() { return tagList('crowned'); }
+function isCrowned(d) { return !!d && crownedList().includes(codeTag(plainCode(d))); }
+function legendList() { return tagList('legend'); }
 // チャンピオン メダル: ランクせんで 1 位に なった 形 → 日数（{ 形: 日数 }）
 function champMap() { try { return JSON.parse(lsGet('champ') || '{}'); } catch (e) { return {}; } }
-function withCrown(d) { if (d) { const c = plainCode(d); d.crown = d.crown || isCrowned(d); d.legend = d.legend || legendList().includes(c); d.champ = Math.max(d.champ || 0, champMap()[c] || 0); } return d; }
+function withCrown(d) { if (d) { const c = plainCode(d); d.crown = d.crown || isCrowned(d); d.legend = d.legend || legendList().includes(codeTag(c)); d.champ = Math.max(d.champ || 0, champMap()[c] || 0); } return d; }
 const PARTS = { body: 'からだ', arm: 'うで', leg: 'あし' };
 const PART_HINT = {
   body: '<b>からだ</b> を かこむように かいてね',
@@ -53,6 +56,12 @@ function lsSet(k, v) { try { localStorage.setItem(KEY + k, v); } catch (e) {} }
 // うら の並びを 変えたときは うら の途中経過と「倒したことがある」を 消す
 const URA_VER = '2';
 try { if (lsGet('uraver') !== URA_VER) { localStorage.removeItem(KEY + 'ura.stage'); localStorage.removeItem(KEY + 'ura.beaten'); lsSet('uraver', URA_VER); } } catch (e) {}
+// でんどういり・でんせつの 記録は 形つきで 最新 HALL_KEEP こ だけ のこし、数は 〜.n に。王冠・でんせつの 一覧は 印に（前の 版の データを 1 回だけ 直す）
+const HALL_KEEP = 24;
+try {
+  for (const k of ['crowned', 'legend']) { const a = JSON.parse(lsGet(k) || '[]'); if (a.some(c => String(c).length > 16)) lsSet(k, JSON.stringify([...new Set(tagList(k))])); }
+  for (const k of ['hall', 'legendhall']) { const a = JSON.parse(lsGet(k) || '[]'); if (lsGet(k + '.n') == null) lsSet(k + '.n', String(a.length)); if (a.length > HALL_KEEP) lsSet(k, JSON.stringify(a.slice(-HALL_KEEP))); }
+} catch (e) {}
 try { if (lsGet('simv') !== String(RB.SIM_VERSION)) { localStorage.removeItem(KEY + 'stage'); localStorage.removeItem(KEY + 'ura.stage'); lsSet('simv', String(RB.SIM_VERSION)); } } catch (e) {}
 // 描きかけの線（3 本）と、完成したモンスター
 let strokes = { body: null, arm: null, leg: null };
@@ -143,7 +152,7 @@ function showTitle() {
   if (TITLE_TEST) { $('minnabtn').hidden = true; $('minnaabout').hidden = !MINNA_OPEN || side !== 'minna'; }
   { const n = [...document.querySelectorAll('.modes > .mode')].filter(el => !el.hidden).length; document.querySelector('.modes').classList.toggle('odd', n % 2 === 1); }
   // コレクション（でんせつ・でんどういり）
-  let nl = 0, nh = 0; try { nl = JSON.parse(lsGet('legendhall') || '[]').length; nh = JSON.parse(lsGet('hall') || '[]').length; } catch (e) {}
+  const nl = hallCount('legendhall'), nh = hallCount('hall');
   $('collection').hidden = !nl && !nh;
   $('collsum').textContent = 'コレクション　' + (nl ? '⭐ でんせつ ' + nl + '　' : '') + (nh ? '👑 でんどういり ' + nh : '');
   drawTitleBg();
@@ -1055,20 +1064,24 @@ onTap($('ranktop'), showTitle);
 let endT0 = 0, confetti = [];
 function onUraClear() {
   TR('uraclear', { me: plainCode(myRobot) });
-  const code = plainCode(myRobot), list = crownedList();
-  if (!list.includes(code)) { list.push(code); lsSet('crowned', JSON.stringify(list)); }
+  const code = plainCode(myRobot), tag = codeTag(code), list = crownedList(), fresh = !list.includes(tag);
+  if (fresh) { list.push(tag); lsSet('crowned', JSON.stringify(list)); }
   myRobot.crown = true; lsSet('robot', RB.encodeDesign(myRobot)); S.crownA = true;
-  let hall = []; try { hall = JSON.parse(lsGet('hall') || '[]'); } catch (e) {}
-  if (!hall.some(h => h.c === code)) { const t = new Date(); hall.push({ c: code, d: (t.getMonth() + 1) + '/' + t.getDate() }); lsSet('hall', JSON.stringify(hall)); }
+  if (fresh) { hallAdd('hall', { c: code, d: (new Date().getMonth() + 1) + '/' + new Date().getDate() }); }
   endingPending = true;
 }
 let endingPending = false;
+// でんどういり・でんせつの 記録に 1 つ 足す（形つきは 最新 HALL_KEEP こ まで、数は 〜.n）
+function hallAdd(k, h) {
+  let a = []; try { a = JSON.parse(lsGet(k) || '[]'); } catch (e) {}
+  a.push(h); lsSet(k, JSON.stringify(a.slice(-HALL_KEEP))); lsSet(k + '.n', String(hallCount(k) + 1));
+}
+function hallCount(k) { let a = []; try { a = JSON.parse(lsGet(k) || '[]'); } catch (e) {} return Math.max(+(lsGet(k + '.n') || 0), a.length); }
 function onMinnaClear() {
-  const code = plainCode(myRobot), list = legendList();
-  if (!list.includes(code)) { list.push(code); lsSet('legend', JSON.stringify(list)); }
-  let lh = []; try { lh = JSON.parse(lsGet('legendhall') || '[]'); } catch (e) {}
+  const code = plainCode(myRobot), tag = codeTag(code), list = legendList(), fresh = !list.includes(tag);
+  if (fresh) { list.push(tag); lsSet('legend', JSON.stringify(list)); }
   const t = new Date(), day = t.getFullYear() + '/' + (t.getMonth() + 1) + '/' + t.getDate();
-  if (!lh.some(h => h.c === code)) { lh.push({ c: code, d: day }); lsSet('legendhall', JSON.stringify(lh)); }
+  if (fresh) hallAdd('legendhall', { c: code, d: day });
   myRobot.legend = true; S.legendA = true;
   TR('minnaclear', { me: code });
   $('cert').hidden = false; certFor = { c: code, d: day };
