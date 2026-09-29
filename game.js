@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '93';
+const VERSION = '94';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -877,13 +877,24 @@ async function loadRank() {
   try {
     const [t, m] = await Promise.all([fetch(RANK_API + '/top').then(r => r.json()), fetch(RANK_API + '/me?dev=' + rankDev()).then(r => r.json())]);
     rankTop = t; rankMe = m.me; rankDown = false;
+    await rankSyncKz();
     if (rankMe) lsSet('rank.reg', '1');
     if (rankMe && rankMe.champDays) { const cm = champMap(), had = cm[rankMe.code] || 0; if (rankMe.champDays > had) { cm[rankMe.code] = rankMe.champDays; lsSet('champ', JSON.stringify(cm)); rankGotMedal = rankMe.champDays; if (myRobot && plainCode(myRobot) === rankMe.code) { myRobot.champ = rankMe.champDays; lsSet('robot', RB.encodeDesign(myRobot)); } TR('rankmedal', { n: rankMe.champDays }); } }
   } catch (e) { rankTop = null; rankDown = true; }   // サーバーが 休み（読み取り枠 など）
 }
-function miniPreview(code, color, size) {
+// ランクせんの かざり（サーバーには「あたま,かお,からだ,えふぇくと」の 文字で）
+const kzStr = e => (e && e.some(Boolean)) ? e.join(',') : '';
+const kzParse = s => { if (!s) return null; const a = String(s).split(',').map(v => +v || 0); return a.some(Boolean) ? a.slice(0, 4) : null; };
+// ランクせんを 開いたとき、いま つけている かざりが 前に 送った ものと ちがえば 送る（1 行 書くだけ・計算しない）
+async function rankSyncKz() {
+  if (!rankMe || !KZ_ON) return;
+  const cur = kzStr(kzs.eq());
+  if (cur === (rankMe.kz || '')) return;
+  try { const r = await (await fetch(RANK_API + '/kz', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), kz: cur }) })).json(); if (r && r.ok) { rankMe.kz = r.kz || ''; TR('rankkz', null); } } catch (e) {}
+}
+function miniPreview(code, color, size, kz) {
   const c = document.createElement('canvas'); c.width = c.height = size || 96;
-  const d = RB.decodeDesign(code); if (d) drawPreview(c, d, color); return c;
+  const d = RB.decodeDesign(code); if (d) { d.kz = kzParse(kz); drawPreview(c, d, color); } return c;
 }
 function showRank(msg) {
   mode = 'rank'; show('rank');
@@ -901,7 +912,7 @@ function renderRank() {
   const box = $('rankme'); box.innerHTML = '';
   if (me) {
     const head = document.createElement('div'); head.className = 'rk-mehead';
-    { const md = RB.decodeDesign(me.code); if (md) { md.champ = champMap()[me.code] || 0; const cv = document.createElement('canvas'); cv.width = cv.height = 120; drawPreview(cv, md, ME.color); head.append(cv); } }
+    { const md = RB.decodeDesign(me.code); if (md) { md.champ = champMap()[me.code] || 0; md.kz = kzParse(me.kz); const cv = document.createElement('canvas'); cv.width = cv.height = 120; drawPreview(cv, md, ME.color); head.append(cv); } }
     const info = document.createElement('div');
     const nm = document.createElement('div'); nm.className = 'rk-name'; nm.textContent = me.name;
     const st = document.createElement('div'); st.className = 'rk-stat';
@@ -941,7 +952,7 @@ function renderRank() {
     const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = ti + 1;
     const nm = document.createElement('span'); nm.className = 'rk-opp'; nm.textContent = m.name;
     const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = m.pct + '%';
-    row.append(p, miniPreview(m.code, RANK_COLOR, 64), nm, sc);
+    row.append(p, miniPreview(m.code, RANK_COLOR, 64, m.kz), nm, sc);
     row.addEventListener('click', () => rankPractice(m)); list.append(row);
   }
   if (t && !(t.top || []).length) list.textContent = 'まだ だれも とうろく して いないよ';
@@ -957,7 +968,7 @@ function renderRank() {
       const cv = document.createElement('canvas'); cv.width = cv.height = 64;
       row.append(p, cv, nm, sc); list.append(row);
       // 絵は 形を もらって から
-      fetch(RANK_API + '/mon?id=' + encodeURIComponent(x.id)).then(r => r.json()).then(m => { const d = m.code && RB.decodeDesign(m.code); if (d) drawPreview(cv, d, x.id === me.id ? ME.color : RANK_COLOR); if (x.id !== me.id && m.code) row.addEventListener('click', () => rankPractice({ name: x.name, code: m.code })); }).catch(() => {});
+      fetch(RANK_API + '/mon?id=' + encodeURIComponent(x.id)).then(r => r.json()).then(m => { const d = m.code && RB.decodeDesign(m.code); if (d) { d.kz = kzParse(m.kz); drawPreview(cv, d, x.id === me.id ? ME.color : RANK_COLOR); } if (x.id !== me.id && m.code) row.addEventListener('click', () => rankPractice({ name: x.name, code: m.code, kz: m.kz })); }).catch(() => {});
     }
   }
 }
@@ -967,36 +978,36 @@ async function rankRegister() {
   if (!name) { $('rankmsg').textContent = 'なまえを いれてね'; return; }
   rankBusy = true; $('rankmsg').textContent = 'とうろくちゅう…';
   try {
-    const r = await (await fetch(RANK_API + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: plainCode(myRobot), name }) })).json();
+    const r = await (await fetch(RANK_API + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: plainCode(myRobot), name, kz: KZ_ON ? kzStr(kzs.eq()) : '' }) })).json();
     if (r.error) $('rankmsg').textContent = r.error;
     else { TR('rankreg', { me: plainCode(myRobot) }); lsSet('rank.reg', '1'); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！ だいたい 20 ぷんで みんなとの たいせん けっかが でるよ'; }
   } catch (e) { $('rankmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   rankBusy = false; if (mode === 'rank') renderRank();
 }
 // 対戦を 見る: side は 自分が 左（A）か 右（B）か。同じ 左右で 計算するので サーバーと 同じ 試合に なる
-function rankBattle(leftCode, rightCode, leftName, rightName, leftColor, rightColor, meSide, kind) {
+function rankBattle(leftCode, rightCode, leftName, rightName, leftColor, rightColor, meSide, kind, kzL, kzR) {
   const L = RB.decodeDesign(leftCode), R = RB.decodeDesign(rightCode); if (!L || !R) return;
   isFriend = true;
   opp = { name: rightName, color: rightColor, d: R };
   S = RB.create(L, R); S.stage = 0; S.side = 'rank'; S.leftName = leftName; S.leftColor = leftColor; S.meSide = meSide; S.rankKind = kind;
-  S.crownA = false; S.crownB = false;
-  rankLast = [leftCode, rightCode, leftName, rightName, leftColor, rightColor, meSide, kind];
+  S.crownA = false; S.crownB = false; S.kzA = kzParse(kzL); S.kzB = kzParse(kzR);
+  rankLast = [leftCode, rightCode, leftName, rightName, leftColor, rightColor, meSide, kind, kzL, kzR];
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
 }
 let rankLast = null;
 async function rankReplay(me, r) {
   TR('rankreplay', null);
-  let c = r.c;
-  if (!c) { try { c = (await (await fetch(RANK_API + '/mon?id=' + encodeURIComponent(r.o))).json()).code; } catch (e) {} }
+  let c = r.c, okz = null;
+  try { const m = await (await fetch(RANK_API + '/mon?id=' + encodeURIComponent(r.o))).json(); c = c || m.code; okz = m.kz; } catch (e) {}   // かざりも（1 時間 おぼえて いる）
   if (!c) { $('rankmsg').textContent = 'あいてが みつからなかった'; return; }
-  if (r.s === 'A') rankBattle(me.code, c, me.name, r.n, ME.color, RANK_COLOR, 'A', 'replay');
-  else rankBattle(c, me.code, r.n, me.name, RANK_COLOR, ME.color, 'B', 'replay');
+  if (r.s === 'A') rankBattle(me.code, c, me.name, r.n, ME.color, RANK_COLOR, 'A', 'replay', me.kz, okz);
+  else rankBattle(c, me.code, r.n, me.name, RANK_COLOR, ME.color, 'B', 'replay', okz, me.kz);
 }
 function rankPractice(m) {
   if (!myRobot) { $('rankmsg').textContent = 'れんしゅうじあいは モンスターを つくってから'; return; }
   TR('rankpractice', null);
-  rankBattle(plainCode(myRobot), m.code, ME.name, m.name, ME.color, RANK_COLOR, 'A', 'practice');
+  rankBattle(plainCode(myRobot), m.code, ME.name, m.name, ME.color, RANK_COLOR, 'A', 'practice', KZ_ON ? kzStr(kzs.eq()) : '', m.kz);
 }
 onTap($('rankbtn'), () => showRank());
 // タイトルの ランクせん の 一言（とうろく して いれば 順位、あがったら おしらせ）
