@@ -154,6 +154,8 @@
     "ランクせんへ もどる": "Back to Ranked",
     // きょうの イベント
     "きょうの イベント": "Today's Event",
+    "きょうの イベント<br>ランクせん": "Today's Event<br>Ranked",
+    "きょうの イベント ランクせん": "Today's Event Ranked",
     "1 にちで きまる ランクせん": "One-day ranked",
     "きょうの お題の パーツは みんな おなじ かたち（かえられない）": "Today's theme part is the same shape for everyone (can't change it)",
     "ほかの 2 つを かいて だすと、みんなと じどうで たたかって じゅんいが きまる": "Draw the other 2 parts and enter — you auto-battle everyone for a rank",
