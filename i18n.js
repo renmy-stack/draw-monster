@@ -1,15 +1,22 @@
-// 英語 対応（?lang=en を ひらいた 端末だけ。?lang=ja で もどる）
+// 英語 対応
+// 言語の きめかた: 1. じぶんで えらんだ もの（タイトルの 🌐 か ?lang=en / ?lang=ja、端末に おぼえる）
+//                  2. えらんで いなければ スマホの 設定（日本語 → 日本語、それ いがい → 英語）。AUTO が false の 間は 日本語
 // ゲームの コードは 日本語の まま。画面に 出る ところ（textContent・innerHTML・textarea・canvas の 文字・シェア）で 英語に おきかえる
 //   1. 文 まるごと（D）→ 2. 数字の 入る 文（R、上から じゅんに 置きかえ）→ 3. のこった 日本語は 言いまわし（P、長い ものから）
 //   かざりの 名前・CPU の 名前は データ そのものを 英語に する
 (function () {
-  const KEYL = 'drawrobot.lang';
+  const KEYL = 'drawrobot.lang', AUTO = false;   // AUTO: スマホの 設定で 英語に する（オーナーの OK の あと true）
+  let pick = null;
   try {
     if (/[?&]lang=en(&|$)/.test(location.search)) localStorage.setItem(KEYL, 'en');
-    if (/[?&]lang=ja(&|$)/.test(location.search)) localStorage.removeItem(KEYL);
+    if (/[?&]lang=ja(&|$)/.test(location.search)) localStorage.setItem(KEYL, 'ja');
+    pick = localStorage.getItem(KEYL);
   } catch (e) {}
-  let on = false; try { on = localStorage.getItem(KEYL) === 'en'; } catch (e) {}
+  const auto = AUTO && !/^ja/i.test(navigator.language || 'ja') ? 'en' : 'ja';
+  const on = (pick === 'en' || pick === 'ja' ? pick : auto) === 'en';
   window.LANG = on ? 'en' : 'ja';
+  // 切りかえ（タイトルの 🌐）: えらんだ ほうを おぼえて 読みなおす
+  window.setLang = l => { try { localStorage.setItem(KEYL, l); } catch (e) {} location.replace(location.pathname + location.hash); };
   window.TRL = s => s;
   if (!on) return;
   document.documentElement.lang = 'en';
