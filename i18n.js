@@ -132,7 +132,8 @@
     "もうすこし おおきく かいてね": "Draw it a bit bigger",
     "からだを かえたので、うで・あしも くっつけなおしたよ": "The body changed, so the arm and leg were reattached",
     "かちぬき ちゅう：モンスターを かえると 1 たいめから": "On a streak: changing your monster restarts from #1",
-    "みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい": "Everyone's Strongest Squad: 5 monsters picked from players who beat Hidden",
+    "うら かちぬき：とんでもなく つよい 5 たい": "Hidden streak: 5 super strong monsters",
+    "みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい":"Everyone's Strongest Squad: 5 monsters picked from players who beat Hidden",
     "できた！<small>2P に わたす</small>": "Done!<small>pass to 2P</small>",
     "たたかう！<small>1P たい 2P</small>": "Fight!<small>1P vs 2P</small>",
     // 結果
