@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '98';
+const VERSION = '99';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -73,6 +73,9 @@ const TITLE_TEST = true;
 // ?gachatest を 開いた 端末（オーナー）だけ 確認用の 一覧（?kzgallery）と 当たりの 見本（?kzreveal）が 使える
 if (/[?&]gachatest(=|&|$)/.test(location.search)) lsSet('gachatest', '1');
 const KZ_ON = true, KZ_OWNER = lsGet('gachatest') === '1';
+// ?cardtest を 開いた 端末（オーナー）だけ ランクせんの「じゅんい カード」（全員に 出すのは オーナーの OK の あと）
+if (/[?&]cardtest(=|&|$)/.test(location.search)) lsSet('cardtest', '1');
+const CARD_ON = lsGet('cardtest') === '1';
 const kzs = KZ.store(k => lsGet(k), (k, v) => lsSet(k, v));
 function withKz(d) { if (d && KZ_ON) { const e = kzs.eq(); d.kz = e.some(Boolean) ? e : null; } return d; }
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
@@ -931,6 +934,7 @@ function renderRank() {
     info.append(nm, st);
     if (me.champ) { const c = document.createElement('div'); c.className = 'rk-champbadge'; c.textContent = '👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく！）' : '！'); info.append(c); }
     head.append(info); box.append(head);
+    if (CARD_ON && me.pos && !me.hidden) { const cb = document.createElement('button'); cb.className = 'main rk-card'; cb.textContent = '📸 じゅんい カードを つくる'; cb.addEventListener('click', () => showRankCard(me)); box.append(cb); }
     if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。だいたい 20 ぷんで ランキングに もどるよ'; box.append(b); }
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ。なまえを かえて とうろくしなおしてね'; box.append(h); }
     const rec = me.recent || [];
@@ -1089,24 +1093,66 @@ function makeCert(code, day) {
 function showCert(code, day) {
   const c = makeCert(code, day); if (!c) return;
   TR('cert', { me: code });
-  openCertBox(c);
+  openCertBox(c, 'でんせつ しょうめいしょ（ながおしで ほぞん）', 'densetsu.png', 'みんなの さいきょう ぐんだん を たおして でんせつ に なった！（かいて！モンスターバトル）' + String.fromCharCode(10) + SITE_URL, false);
 }
 // 証明書を 画面に 出す → 「シェア」で 共有の 画面（X など）。共有できない ブラウザでは 長押しで 保存
-let certFile = null;
-function openCertBox(c) {
+// textOnly: 画像を 共有できない ブラウザでも「シェア」を 出して 文（リンク）だけ 送る（画像は ながおしで 保存）
+let certFile = null, certText = '', certKind = 'cert';
+function openCertBox(c, note, fname, text, textOnly) {
   $('certimg').src = c.toDataURL('image/png'); $('certbox').hidden = false;
-  certFile = null; $('certshare').hidden = true;
+  $('certnote').textContent = note; certText = text; certKind = fname === 'densetsu.png' ? 'cert' : 'rankcard';
+  certFile = null; $('certshare').hidden = !textOnly;
   c.toBlob(blob => {
-    const file = blob && new File([blob], 'densetsu.png', { type: 'image/png' });
+    const file = blob && new File([blob], fname, { type: 'image/png' });
     if (file && navigator.canShare && navigator.canShare({ files: [file] })) { certFile = file; $('certshare').hidden = false; }
   }, 'image/png');
 }
 onTap($('certshare'), () => {
-  if (!certFile) return;
-  TR('certshare', null);
-  const text = 'みんなの さいきょう ぐんだん を たおして でんせつ に なった！（かいて！モンスターバトル）' + String.fromCharCode(10) + SITE_URL;
-  navigator.share({ files: [certFile], text }).catch(() => {});
+  TR(certKind + 'share', { f: certFile ? 1 : 0 });
+  if (certFile) { navigator.share({ files: [certFile], text: certText }).catch(() => {}); return; }
+  if (navigator.share) navigator.share({ text: certText }).catch(err => { if (!err || err.name !== 'AbortError') showShareBox(certText); });
+  else showShareBox(certText);
 });
+// ランクせんの じゅんい カード（画像）: 順位・何体中・モンスター（かざりつき）・名前・勝率。リンクを ひらくと その モンスターと たたかえる
+function rankCardDesign(me) { const d = RB.decodeDesign(me.code); if (d) { d.champ = champMap()[me.code] || 0; d.kz = kzParse(me.kz); } return d; }
+function makeRankCard(me) {
+  const d = rankCardDesign(me); if (!d) return null;
+  const W = 1080, H = 1350, c = document.createElement('canvas'); c.width = W; c.height = H;
+  const g = c.getContext('2d');
+  const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#2b1100'); bg.addColorStop(1, '#6d2a00');
+  g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const top = me.pos === 1 ? '#ffd54f' : me.pos === 2 ? '#e0e0e0' : me.pos === 3 ? '#ffab76' : '#ffffff';
+  g.strokeStyle = '#ffb74d'; g.lineWidth = 16; g.strokeRect(40, 40, W - 80, H - 80); g.lineWidth = 4; g.strokeRect(70, 70, W - 140, H - 140);
+  g.textAlign = 'center';
+  g.fillStyle = '#ffcc80'; g.font = '900 60px sans-serif'; g.fillText('モンスター ランクせん', W / 2, 170);
+  // 順位（数字は 大きく、「い」は 小さく）
+  const num = String(me.pos);
+  g.font = '900 210px sans-serif'; const nw = g.measureText(num).width;
+  g.font = '900 100px sans-serif'; const iw = g.measureText(' い').width;
+  const x0 = W / 2 - (nw + iw) / 2;
+  g.textAlign = 'left'; g.fillStyle = top;
+  g.font = '900 210px sans-serif'; g.fillText(num, x0, 385);
+  g.font = '900 100px sans-serif'; g.fillText(' い', x0 + nw, 385);
+  g.textAlign = 'center'; g.fillStyle = '#ffe0b2'; g.font = '800 46px sans-serif';
+  g.fillText(me.count + ' たい ちゅう', W / 2, 455);
+  const m = document.createElement('canvas'); m.width = 900; m.height = 540;
+  drawPreview(m, d, ME.color);
+  g.save(); g.shadowColor = 'rgba(255, 183, 77, .7)'; g.shadowBlur = 40; g.drawImage(m, 90, 470); g.restore();
+  let y = 1060;
+  if (me.champ) { g.fillStyle = '#ffd54f'; g.font = '900 50px sans-serif'; g.fillText('👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく）' : ''), W / 2, 1020, W - 200); y = 1100; }
+  g.fillStyle = '#ffffff'; g.font = '900 72px sans-serif'; g.fillText(me.name, W / 2, y, W - 200);
+  g.fillStyle = '#ffcc80'; g.font = '800 46px sans-serif';
+  g.fillText('しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）', W / 2, y + 75, W - 200);
+  g.fillStyle = '#ffe0b2'; g.font = '700 36px sans-serif'; g.fillText('かいて！モンスターバトル　renmygames.com', W / 2, 1255);
+  return c;
+}
+function showRankCard(me) {
+  const c = makeRankCard(me); if (!c) return;
+  TR('rankcard', { pos: me.pos, n: me.count });
+  const url = SITE_URL + '#r=' + RB.encodeDesign(rankCardDesign(me));
+  const text = 'ランクせんで ' + me.pos + ' い（' + me.count + ' たい ちゅう）！「' + me.name + '」と たたかってみて！（かいて！モンスターバトル）' + String.fromCharCode(10) + url;
+  openCertBox(c, 'じゅんい カード（ながおしで ほぞん）', 'rank.png', text, true);
+}
 onTap($('cert'), () => { if (certFor) showCert(certFor.c, certFor.d); });
 onTap($('certclose'), () => { $('certbox').hidden = true; });
 function renderLegend() {

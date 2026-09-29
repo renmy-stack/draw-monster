@@ -196,6 +196,7 @@ button:disabled { opacity: .45; }
 #certbox { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(4, 22, 26, .85); z-index: 30; }
 #certbox .panel { max-height: 100%; overflow: auto; }
 #certimg { display: block; width: 100%; max-width: 320px; margin: 8px auto 0; border-radius: 8px; }
+.rk-card { display: block; width: 100%; margin: 10px 0 4px; }
 .cert-note { font-weight: 800; font-size: 14px; color: #00796b; }
 
 /* みんなの さいきょう ぐんだん へ さそう ボタン（青緑と 金） */
