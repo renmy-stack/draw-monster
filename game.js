@@ -1,9 +1,20 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '94';
+const VERSION = '95';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
+// Safari が おぼえていた 古い ページ（index.html）と 新しい game.js が まざると、部品（kazari.js など）が なくて 止まる
+// → 1 回だけ、URL に 印を つけて ページごと 読みなおす（2026-09-29 の 解析で 見つかった）
+if (!window.KZ || !window.KZStage || !window.RB) {
+  let tried = ''; try { tried = sessionStorage.getItem('mon.fix') || ''; } catch (e) {}
+  if (tried !== VERSION) {
+    try { sessionStorage.setItem('mon.fix', VERSION); } catch (e) {}
+    TR('stalefix', { k: !!window.KZ, s: !!window.KZStage });
+    location.replace(location.pathname + (location.search ? location.search + '&' : '?') + 'nc=' + Date.now() + location.hash);
+    throw new Error('reload for new version');
+  }
+}
 // 記録を 軽く（2026-09-28）: モンスターの 形は この セッションで はじめての ときだけ 'design' で 送り、たたかいの 記録には 番号（d）だけ 入れる
 // 強さ（形から 計算できる）・当てた回数・ダメージ・残り HP は 送らない。たたかいは 終わった とき（result）か やめた とき（quit）に 1 件
 const sentDesigns = new Map();
