@@ -1,7 +1,7 @@
 // node tools/rank_batch.js — モンスター ランクせん の 計算（GitHub Actions が 実行。起動は Cloudflare の 受付係から 15 分に 1 回まで。RANK_ADMIN が いる）
 // 順位 ＝ 「代表」と 左右 入れかえて 2 戦ずつ した 勝率。同じ 2 体・同じ 左右は いつも 同じ 結果 なので 運が 入らない
 //   代表: 登録が REP_MAX（500）体 までは 全員（＝ 総当たり）。それを こえたら 全員が 同じ 代表 500 体と 戦う
-//         代表 = 固定の ランダム 400 体（引退・お休みの ときだけ 補充）＋ その日の 上位 100 体（日が かわると 入れかえ）
+//         代表 = 固定の ランダム 400 体（引退・お休みの ときだけ 補充）＋ その日の 上位 100 体（日が かわると 入れかえ・抜けたら 補充）
 // 1. 登録中の モンスターを 受け取る（2000 体ずつ）
 // 2. まだの 組み合わせを、計算ずみが 少ない モンスター（＝ 新しく 登録された）から TIME_LIMIT（8 分）まで 計算（CPU の 数だけ 並列、
 //    WAVE 戦ずつ 区切って 時間を 見る。のこりは 次の 回に つづき から）
@@ -92,15 +92,17 @@ async function main() {
     const fixed = (rep.fixed || []).filter(id => idx.has(id)).map(id => idx.get(id));
     const inFixed = new Set(fixed);
     let seed = hashStr(today); const rnd = () => (seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296;
-    const pool = list.map((m, i) => i).filter(i => !inFixed.has(i));
+    const prevTop = new Set(rep.top || []);   // 上位の 代表を 固定に 取りこまない（かさなると 代表が 500 より へる）
+    const pool = list.map((m, i) => i).filter(i => !inFixed.has(i) && !prevTop.has(list[i].id));
     for (let k = pool.length - 1; k > 0; k--) { const r = Math.floor(rnd() * (k + 1)); [pool[k], pool[r]] = [pool[r], pool[k]]; }
     while (fixed.length < REP_MAX - REP_TOP && pool.length) { const i = pool.pop(); fixed.push(i); inFixed.add(i); }
-    // その日の 上位 100 体: 日が かわった ときだけ 入れかえ（前の 代表での 勝率で）
+    // その日の 上位 100 体: 日が かわったら 入れかえ（前の 代表での 勝率で）。日の 途中で 引退・お休みで 抜けたら、のこりの 代表での 勝率の 順に 補充
     let top = (rep.top || []).filter(id => idx.has(id)).map(id => idx.get(id));
-    if (rep.day !== today || !top.length) {
+    if (rep.day !== today || top.length < REP_TOP) {
       const prevReps = [...new Set(fixed.concat(top))], st0 = statsOf(prevReps);
-      top = list.map((m, i) => i).filter(i => !inFixed.has(i) && playedOf(st0[i]) > 0).sort((a, b) => pctOf(st0[b]) - pctOf(st0[a])).slice(0, REP_TOP);
-      rep.day = today;
+      const best = list.map((m, i) => i).filter(i => !inFixed.has(i) && playedOf(st0[i]) > 0).sort((a, b) => pctOf(st0[b]) - pctOf(st0[a]));
+      if (rep.day !== today || !top.length) { top = best.slice(0, REP_TOP); rep.day = today; }
+      else { const inTop = new Set(top); for (const i of best) { if (top.length >= REP_TOP) break; if (!inTop.has(i)) { top.push(i); inTop.add(i); } } }
     }
     reps = [...new Set(fixed.concat(top))];
     rep.fixed = fixed.map(i => list[i].id); rep.top = top.map(i => list[i].id);
