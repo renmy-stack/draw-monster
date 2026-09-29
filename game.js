@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '95';
+const VERSION = '96';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -932,7 +932,7 @@ function renderRank() {
     if (me.champ) { const c = document.createElement('div'); c.className = 'rk-champbadge'; c.textContent = '👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく！）' : '！'); info.append(c); }
     head.append(info); box.append(head);
     if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。だいたい 20 ぷんで ランキングに もどるよ'; box.append(b); }
-    if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'この モンスターは ひょうじされて いません'; box.append(h); }
+    if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ。なまえを かえて とうろくしなおしてね'; box.append(h); }
     const rec = me.recent || [];
     if (rec.length) {
       const lt = document.createElement('div'); lt.className = 'rk-h'; lt.textContent = 'つよい あいてとの たいせん（タップで リプレイ）'; box.append(lt);
@@ -951,11 +951,11 @@ function renderRank() {
   }
   // 登録（いまの モンスター）
   const same = me && myRobot && plainCode(myRobot) === me.code;
-  $('rankreg').hidden = !myRobot || same;
+  $('rankreg').hidden = !myRobot || (same && !(me && me.hidden));   // 非表示に された ときは 同じ モンスターでも 名前を かえて 登録しなおせる
   $('rankregbtn').textContent = me ? 'いまの モンスターで とうろくしなおす' : 'いまの モンスターで とうろく';
-  $('rankreghint').textContent = me ? 'とうろくしなおすと みんなと たたかい なおして じゅんいが きまるよ' : '';
+  $('rankreghint').textContent = me && me.hidden ? 'あたらしい なまえで とうろくしなおしてね' : me ? 'とうろくしなおすと みんなと たたかい なおして じゅんいが きまるよ' : '';
   if (myRobot) drawPreview($('rankprev'), myRobot, ME.color);
-  if (!$('rankname').value && me) $('rankname').value = me.name;
+  if (!$('rankname').value && me && !me.hidden) $('rankname').value = me.name;
   // ランキング
   const list = $('ranklist'); list.innerHTML = '';
   for (const [ti, m] of ((t && t.top) || []).entries()) {
