@@ -6,7 +6,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=112">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=113">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
@@ -14,7 +14,7 @@
 <meta property="og:image" content="https://renmygames.com/draw-monster/icon-512.png">
 <meta name="twitter:card" content="summary">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=112">
+<link rel="stylesheet" href="style.css?v=113">
 <script src="/t.js?v=5"></script>
 </head>
 <body>
@@ -47,6 +47,7 @@
     <div class="modes">
       <button id="minnabtn" class="mode m-minna" hidden><b>みんなの さいきょう ぐんだん</b><small id="minnacap">うらを クリアした みんなの 5 たい</small></button>
       <button id="rankbtn" class="mode m-rank" hidden><b>ランクせん</b><small id="rankcap">みんなの モンスターと じどうで たいせん</small></button>
+      <button id="evbtn" class="mode m-ev" hidden><b>きょうの イベント</b><small id="evcap">1 にちで きまる ランクせん</small></button>
       <button id="vs" class="mode m-vs"><b>ふたりで たたかう</b><small>1 だいで 2 にんで しょうぶ</small></button>
     </div>
     <button id="minnaabout" class="linkbtn" hidden>どんな 5 たい？</button>
@@ -110,6 +111,31 @@
       <button id="rankdraw" class="sub">モンスターを つくる・なおす</button>
       <button id="rankback" class="sub">タイトルへ</button>
     </div>
+  </div>
+</div>
+
+<div id="ev" hidden>
+  <div class="panel">
+    <div class="rk-backbar"><button id="evtop" class="backbtn" aria-label="タイトルへ もどる">← もどる</button></div>
+    <div class="rtitle">きょうの イベント</div>
+    <div id="evsub" class="rk-sub"></div>
+    <div class="ev-theme"><canvas id="evthemecv" width="200" height="200"></canvas><div><div id="evday" class="ev-day"></div><div id="evname" class="ev-name"></div><div id="evhint" class="rk-note"></div></div></div>
+    <details class="rk-rules"><summary>ルール</summary><ul><li>きょうの お題の パーツは みんな おなじ かたち（かえられない）</li><li>ほかの 2 つを かいて だすと、みんなと じどうで たたかって じゅんいが きまる</li><li>なんかいでも だしなおせる（さいごに だした 1 たいで きまる）</li><li>よる 0 じに しめきり。1 いに 🎀 リボン</li><li>つぎの 日は べつの お題</li></ul></details>
+    <div id="evchamp" class="rk-champ ev-champ" hidden></div>
+    <div class="rk-h ev-h">あなたの イベント モンスター</div>
+    <div id="evme"></div>
+    <div id="evreg">
+      <canvas id="evprev" width="240" height="240"></canvas>
+      <label class="rk-label" for="evnm">なまえ（10 もじまで）</label>
+      <input id="evnm" maxlength="10" autocomplete="off" placeholder="モンスターの なまえ">
+      <div class="rbtns"><button id="evregbtn" class="main ev-main">この モンスターで だす</button></div>
+      <div id="evreghint" class="rk-note"></div>
+    </div>
+    <div class="rbtns"><button id="evdraw" class="main ev-main">イベントの モンスターを かく</button></div>
+    <div id="evmsg" class="rk-msg"></div>
+    <div class="rk-h ev-h">きょうの ランキング（タップで れんしゅうじあい）</div>
+    <div id="evlist"></div>
+    <div class="rbtns small"><button id="evback" class="sub">タイトルへ</button></div>
   </div>
 </div>
 
@@ -260,10 +286,11 @@
   </div>
 </div>
 
-<script src="sim.js?v=112"></script>
-<script src="kazari.js?v=112"></script>
-<script src="kzstage.js?v=112"></script>
-<script src="i18n.js?v=112"></script>
-<script src="game.js?v=112"></script>
+<script src="sim.js?v=113"></script>
+<script src="event.js?v=113"></script>
+<script src="kazari.js?v=113"></script>
+<script src="kzstage.js?v=113"></script>
+<script src="i18n.js?v=113"></script>
+<script src="game.js?v=113"></script>
 </body>
 </html>

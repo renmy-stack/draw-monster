@@ -10,7 +10,7 @@ concurrency: rank
 jobs:
   batch:
     runs-on: ubuntu-latest
-    timeout-minutes: 12   # 計算は 8 分まで（起動は 15 分に 1 回まで なので 次の 回と ぶつからない）
+    timeout-minutes: 13   # 計算は ふだん 8 分 ＋ イベント 1.5 分まで（起動は 15 分に 1 回まで なので 次の 回と ぶつからない）
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -26,8 +26,15 @@ jobs:
         run: node tools/rank_batch.js
         env:
           RANK_ADMIN: ${{ secrets.RANK_ADMIN }}
+      # きょうの イベント（1 日で 完結する ランクせん）。計算は 1.5 分まで。ふだんの ほうが 失敗しても 動かす
+      - id: ev
+        if: always()
+        run: node tools/ev_batch.js
+        env:
+          RANK_ADMIN: ${{ secrets.RANK_ADMIN }}
+          RANK_TIME: '90000'
       # 新しい 組み合わせを 計算した ときだけ 保存（同じ 中身の キャッシュを 積み上げない）
-      - if: steps.batch.outputs.changed == '1'
+      - if: always() && (steps.batch.outputs.changed == '1' || steps.ev.outputs.changed == '1')
         uses: actions/cache/save@v4
         with:
           path: .rankcache
