@@ -155,6 +155,10 @@
     // きょうの イベント
     "きょうの イベント": "Today's Event",
     "きょうの イベント<br>ランクせん": "Today's Event<br>Ranked",
+    // 下の タブ
+    "そのほか": "More",
+    "イベント": "Event",
+    "ガチャ": "Gacha",
     "きょうの イベント ランクせん": "Today's Event Ranked",
     "1 にちで きまる ランクせん": "One-day ranked",
     "きょうの お題の パーツは みんな おなじ かたち（かえられない）": "Today's theme part is the same shape for everyone (can't change it)",

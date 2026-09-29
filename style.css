@@ -18,11 +18,11 @@ button { font: inherit; }
 #game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
 
 /* パネル */
-#title, #result, #sharebox, #rank, #ev {
+#title, #result, #sharebox, #rank, #ev, #more {
   position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
   padding: 16px; background: rgba(10, 12, 30, .55);
 }
-#hallbox[hidden], #tmycard[hidden], #trank[hidden], #trecord[hidden], #tmchint[hidden], #collection[hidden], #rank[hidden], #rankreg[hidden], #rankchamp[hidden], #ev[hidden], #evreg[hidden], #evchamp[hidden], #minnainfo[hidden], #kzbox[hidden], #kzrow[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #bkbox[hidden], #bkcode[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
+#hallbox[hidden], #tmycard[hidden], #trank[hidden], #trecord[hidden], #tmchint[hidden], #collection[hidden], #rank[hidden], #rankreg[hidden], #rankchamp[hidden], #ev[hidden], #evreg[hidden], #evchamp[hidden], #more[hidden], #navbar[hidden], #minnainfo[hidden], #kzbox[hidden], #kzrow[hidden], #legendbox[hidden], #certbox[hidden], #title[hidden], #result[hidden], #sharebox[hidden], #slotbox[hidden], #bkbox[hidden], #bkcode[hidden], #handoff[hidden], #draw[hidden], #friendbox[hidden], button[hidden] { display: none; }
 .panel {
   width: min(92vw, 400px); max-height: calc(100% - 20px); overflow-y: auto;
   background: var(--paper); border: 4px solid var(--ink); border-radius: 18px; box-shadow: var(--shadow);
@@ -434,3 +434,20 @@ button:disabled { opacity: .45; }
 .ev-title { display: inline-block; margin-top: 4px; padding: 2px 10px; border-radius: 999px; background: #eceff1; border: 2px solid #90a4ae; font-size: 12px; font-weight: 900; color: #37474f; }
 #evprev { width: 90px; height: 90px; display: block; margin: 6px auto 0; }
 #evnm { width: 100%; max-width: 240px; font-size: 16px; padding: 6px 10px; border: 2px solid #8e24aa; border-radius: 10px; margin-top: 2px; }
+
+/* 下の タブ（?navtest の 端末だけ） */
+#navbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: flex; justify-content: center; gap: 2px; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: var(--paper); border-top: 3px solid var(--ink); }
+body.browser #navbar { padding-bottom: 14px; }
+#navbar button { flex: 1; max-width: 96px; display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 4px 0 2px; border: none; border-radius: 12px; background: none; box-shadow: none; color: #666; font-size: 11px; font-weight: 800; position: relative; margin: 0; }
+#navbar button i { font-style: normal; font-size: 22px; line-height: 1.1; filter: grayscale(.6); opacity: .75; }
+#navbar button.on { background: #ffe7a8; color: var(--ink); }
+#navbar button.on i { filter: none; opacity: 1; }
+#navbar button.dot::after { content: ''; position: absolute; top: 3px; right: calc(50% - 20px); width: 9px; height: 9px; border-radius: 50%; background: #e53935; border: 2px solid var(--paper); }
+body.nav #title, body.nav #rank, body.nav #ev, body.nav #more, body.nav #kzbox { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+body.nav.browser #title, body.nav.browser #rank, body.nav.browser #ev, body.nav.browser #more, body.nav.browser #kzbox { padding-bottom: 88px; }
+body.nav #title .modes, body.nav #kzrow, body.nav #ranktop, body.nav #evtop, body.nav #rankback, body.nav #evback { display: none !important; }
+#more .panel { max-height: 100%; overflow-y: auto; }
+#morelist { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; text-align: left; }
+#morelist .mode { width: 100%; }
+#morelist .linkbtn { font-size: 15px; text-align: left; margin: 0; padding: 6px 4px; }
+#morelist .fold { margin-top: 0; }

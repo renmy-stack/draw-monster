@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '116';
+const VERSION = '117';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -121,7 +121,7 @@ function resize() {
   sizePad(); if (mode === 'draw') drawPad();
 }
 window.addEventListener('resize', resize);
-function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff', 'rank', 'ev']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); }
+function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff', 'rank', 'ev', 'more']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); navSync(id); }
 // はやおくり: 一度でも倒した CPU との戦いだけ
 function canFast() { return mode === 'battle' && !isFriend && !!beaten[S && S.stage != null ? S.stage : stage]; }
 function updateFastBtn() { $('fast').textContent = fast ? '▶ ふつう' : '▶▶ はやおくり'; $('fast').classList.toggle('on', fast); }
@@ -775,7 +775,7 @@ const kzOpen = new Set((() => { try { return JSON.parse(lsGet('kz.open') || '[]'
 function kzSeen() { try { const v = lsGet('kz.seen'); if (v == null) { const o = kzs.own(); lsSet('kz.seen', JSON.stringify(o)); return o; } return JSON.parse(v); } catch (e) { return []; } }
 function kzMarkSeen(id) { const s = kzSeen(); if (!s.includes(id)) { s.push(id); lsSet('kz.seen', JSON.stringify(s)); } }
 function showKz(msg) {
-  $('kzbox').hidden = false;
+  $('kzbox').hidden = false; navSync('kz');
   $('kzcoins2').textContent = '🪙 ' + kzs.coins();
   $('kzpull').disabled = kzs.coins() < KZ.PRICE;
   $('kzpull10').disabled = kzs.coins() < KZ.MULTI_PRICE;
@@ -1541,6 +1541,32 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 window.addEventListener('pageshow', e => { if (e.persisted) checkVersion(); });
 checkVersion();
 
+// ---------- 下の タブ（?navtest の 端末だけ、2026-09-30〜）----------
+// トップが 長く なって きたので: ぼうけん（ホーム）・ランクせん・イベント・ガチャ・そのほか。描く 画面と 戦いの 画面では 出さない
+// そのほか には トップに あった ふたりで・コレクション・データの ひきつぎ・English・あそびかた を 移す（同じ 部品を 動かすので 動きは おなじ）
+if (/[?&]navtest(=|&|$)/.test(location.search)) lsSet('navtest', '1');
+function navOn() { return lsGet('navtest') === '1'; }
+function navSync(id) {
+  const nb = $('navbar'); if (!nb) return;
+  const tab = navOn() ? { title: 'home', rank: 'rank', ev: 'ev', more: 'more', kz: 'kz' }[id] : null;
+  nb.hidden = !tab; if (!tab) return;
+  for (const b of nb.querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === tab);
+  nb.querySelector('[data-tab=rank]').classList.toggle('dot', lsGet('rank.reg') !== '1');
+  nb.querySelector('[data-tab=kz]').classList.toggle('dot', KZ_ON && kzs.coins() >= KZ.PRICE);
+  nb.querySelector('[data-tab=ev]').hidden = !EV_ON;
+}
+function showMore() { mode = 'more'; show('more'); }
+if (navOn()) {
+  document.body.classList.add('nav');
+  const ml = $('morelist');
+  for (const id of ['vs', 'collection', 'bkbtn', 'langbtn']) ml.append($(id));
+  ml.append(document.querySelector('#title .howto'), document.querySelector('#title .tfoot'));
+}
+for (const b of document.querySelectorAll('#navbar button')) onTap(b, () => {
+  const t = b.dataset.tab; TR('nav', { t });
+  $('kzbox').hidden = true;
+  if (t === 'home') showTitle(); else if (t === 'rank') showRank(); else if (t === 'ev') showEv(''); else if (t === 'kz') { showTitle(); showKz(); } else showMore();
+});
 resize();
 showTitle();
 {
@@ -1612,7 +1638,7 @@ async function bkLoad() {
     const r = await (await fetch(RANK_API + '/bk/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) })).json();
     if (r.error || !r.data) { $('bkmsg').textContent = r.error || 'うまく いかなかった…'; bkAsk = false; $('bkload').textContent = 'うけとる'; bkBusy = false; return; }
     TR('bkload', { n: Object.keys(r.data).length });
-    const keep = {}; for (const k of ['backuptest', 'gachatest']) { const v = lsGet(k); if (v != null) keep[k] = v; }   // オーナーの 印は この 端末の ものを のこす
+    const keep = {}; for (const k of ['backuptest', 'gachatest', 'eventtest', 'navtest']) { const v = lsGet(k); if (v != null) keep[k] = v; }   // オーナーの 印は この 端末の ものを のこす
     try {
       for (const k of Object.keys(bkAll())) localStorage.removeItem(k);
       for (const [k, v] of Object.entries(r.data)) if (typeof k === 'string' && k.startsWith(KEY) && typeof v === 'string') localStorage.setItem(k, v);
