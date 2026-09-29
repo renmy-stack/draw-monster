@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '102';
+const VERSION = '103';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -76,9 +76,8 @@ const KZ_ON = true, KZ_OWNER = lsGet('gachatest') === '1';
 // ランクせんの「じゅんい カード」: 2026-09-29 全員に 公開（前は ?cardtest の 端末だけ）
 if (/[?&]cardtest(=|&|$)/.test(location.search)) lsSet('cardtest', '1');
 const CARD_ON = true;
-// ?slottest を 開いた 端末（オーナー）だけ モンスターの ほぞん 12 こ（タイル）。ほかは 3 こ（前の 画面）
-if (/[?&]slottest(=|&|$)/.test(location.search)) lsSet('slottest', '1');
-const SLOT12 = lsGet('slottest') === '1', SLOT_N = 12;
+// モンスターの ほぞん 12 こ（2026-09-29 全員に。前は 3 こ）
+const SLOT_N = 12;
 const kzs = KZ.store(k => lsGet(k), (k, v) => lsSet(k, v));
 function withKz(d) { if (d && KZ_ON) { const e = kzs.eq(); d.kz = e.some(Boolean) ? e : null; } return d; }
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
@@ -1270,27 +1269,8 @@ function startVsBattle() {
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
 }
-// ---------- モンスターの ほぞん（3 つ。?slottest の 端末は 12 こ）----------
+// ---------- モンスターの ほぞん（12 こ）----------
 function slotDesign(i) { const w = lsGet('slot' + i); return w ? RB.decodeDesign(w) : null; }
-function renderSlots(msg) {
-  const list = $('slotlist'); list.innerHTML = '';
-  for (let i = 1; i <= 3; i++) {
-    const d = slotDesign(i), row = document.createElement('div');
-    row.className = 'slot';
-    row.innerHTML = '<b>' + i + '</b><canvas width="152" height="152"></canvas><div class="sbtns"><button class="main" data-a="save">ほぞん</button><button class="sub" data-a="load"' + (d ? '' : ' disabled') + '>よびだす</button></div>';
-    list.appendChild(row);
-    const c = row.querySelector('canvas');
-    if (d) drawPreview(c, d, ME.color);
-    else { const g = c.getContext('2d'); g.fillStyle = 'rgba(255,255,255,.5)'; g.font = 'bold 22px sans-serif'; g.textAlign = 'center'; g.fillText('から', 76, 84); }
-    row.querySelector('[data-a="save"]').addEventListener('click', e => {
-      e.preventDefault();
-      if (!myRobot) { renderSlots('からだ・うで・あし を ぜんぶ かいてから ほぞん してね'); return; }
-      lsSet('slot' + i, RB.encodeDesign(myRobot)); renderSlots(i + ' に ほぞん しました');
-    });
-    row.querySelector('[data-a="load"]').addEventListener('click', e => { e.preventDefault(); if (d) loadSlot(i, d); });
-  }
-  $('slotmsg').textContent = msg || '';
-}
 function loadSlot(i, d) {
   TR('slotload', { i });
   const same = myRobot && RB.encodeDesign(myRobot) === RB.encodeDesign(d);
@@ -1338,7 +1318,7 @@ function renderSlots12(msg) {
   list.append(bar);
   $('slotmsg').textContent = msg || '';
 }
-onTap($('slots'), () => { if (SLOT12) { slotSel = 0; slotDelAsk = false; slotOwAsk = false; renderSlots12(''); } else renderSlots(''); $('slotbox').hidden = false; });
+onTap($('slots'), () => { slotSel = 0; slotDelAsk = false; slotOwAsk = false; renderSlots12(''); $('slotbox').hidden = false; });
 onTap($('closeslots'), () => { $('slotbox').hidden = true; });
 // おもて / うら の切りかえ（おもてを クリアしたら 出る）
 function updateSideUi() {
