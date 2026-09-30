@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '134';
+const VERSION = '135';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1213,7 +1213,15 @@ function renderEv() {
   if (top && !(top.top || []).length) list.textContent = top.count ? 'まだ たたかう あいてが いないよ（2 たい から じゅんいが でるよ）' : 'まだ だれも だして いないよ。いちばん のりで だそう！';
   if (me && me.pos && me.pos > ((top && top.top) || []).length && me.nb && me.nb.length) {
     const gap = document.createElement('div'); gap.className = 'rk-gap'; gap.textContent = '⋮'; list.append(gap);
-    for (const x of me.nb) { const row = document.createElement('div'); row.className = 'rk-row rk-top' + (x.id === me.id ? ' mine' : ''); row.textContent = x.pos + '　' + x.name + (x.id === me.id ? '（あなた）' : '') + '　' + x.pct + '%'; list.append(row); }
+    for (const x of me.nb) {   // ふつうの ランクせんと 同じ 作り（絵・タップで れんしゅうじあい）
+      const row = document.createElement('button'); row.className = 'rk-row rk-top' + (x.id === me.id ? ' mine' : '');
+      const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = x.pos;
+      const nm = document.createElement('span'); nm.className = 'rk-opp'; nm.textContent = x.name + (x.id === me.id ? '（あなた）' : '');
+      const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = x.pct + '%';
+      const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+      row.append(p, cv, nm, sc); list.append(row);
+      (x.code ? Promise.resolve(x) : monGet(x.id)).then(m => { const d = m.code && RB.decodeDesign(m.code); if (d) { d.kz = kzParse(m.kz); drawPreview(cv, d, x.id === me.id ? ME.color : EV_COLOR); } if (x.id !== me.id && m.code) row.addEventListener('click', () => evPractice({ name: x.name, code: m.code, kz: m.kz })); }).catch(() => {});
+    }
   }
 }
 async function evRegister() {
