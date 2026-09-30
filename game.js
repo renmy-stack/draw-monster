@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '133';
+const VERSION = '134';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -933,7 +933,7 @@ function seasonRange(s) { const a = new Date(s + 'T00:00:00Z'); return (a.getUTC
 const BOARD_URL = 'https://raw.githubusercontent.com/renmy-stack/draw-monster/board/';
 async function boardFile(name, ok) {
   if (/[?&]localapi(&|$)/.test(location.search)) return null;
-  try { const j = await (await fetch(BOARD_URL + name)).json(); return j && ok(j) && Date.now() - (j.updated || j.now || 0) < 2 * 3600e3 ? j : null; } catch (e) { return null; }
+  try { const j = await (await fetch(BOARD_URL + name)).json(); return j && ok(j) ? j : null; } catch (e) { return null; }   // きょうの 日付なら つかう（夜は 計算が 動かないので 受付係の 表も おなじ 古さ）
 }
 function meCache(k, me) { if (me !== undefined) { lsSet(k, JSON.stringify({ t: Date.now(), me })); return me; } try { const c = JSON.parse(lsGet(k) || 'null'); return c && Date.now() - c.t < 10 * 60e3 ? c : null; } catch (e) { return null; } }
 let rankAt = 0, rankMeAt = 0;
@@ -1340,7 +1340,7 @@ function nkInvite(g) {
 }
 // なかまリーグ: なかまの モンスターで 総当たり（左右 入れかえて 2 戦）を この 端末で 計算。結果は 形の 組み合わせごとに おぼえる（同じ 2 体・同じ 左右は いつも 同じ）
 // スマホの 複数の コアで 同時に（Web Worker、最大 4 つ）。自分の 試合を 先に。画面を はなれたら 止める。Worker が 使えない ときは 30ms ずつ この 画面で
-let nkLg = null, nkLgTimer = 0, nkPool = [];
+var nkLg = null, nkLgTimer = 0, nkPool = [];   // var: show() が 先に 見ても エラーに ならない ように
 const NK_RES_MAX = 6000;
 function nkRes() { try { return JSON.parse(lsGet('nk.res') || '{}'); } catch (e) { return {}; } }
 function nkResSave(r) { let ks = Object.keys(r); if (ks.length > NK_RES_MAX) { const o = {}; for (const k of ks.slice(-NK_RES_MAX / 2)) o[k] = r[k]; r = o; } lsSet('nk.res', JSON.stringify(r)); }

@@ -37,6 +37,8 @@ jobs:
       - if: always() && hashFiles('.board/*.json') != ''
         run: |
           cd .board
+          # この 回で 書けなかった ファイル（計算の 失敗など）は いまの board 枝の ものを のこす（上書きで 消さない）
+          for f in top.json evtop.json; do [ -f "$f" ] || curl -sfo "$f" "https://raw.githubusercontent.com/${{ github.repository }}/board/$f" || true; done
           git init -q -b board
           git add -A
           git -c user.name=rank-bot -c user.email=279485679+renmy-stack@users.noreply.github.com commit -qm "board $(date -u +%FT%TZ)"
