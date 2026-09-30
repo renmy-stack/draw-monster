@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '121';
+const VERSION = '122';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1546,11 +1546,11 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 window.addEventListener('pageshow', e => { if (e.persisted) checkVersion(); });
 checkVersion();
 
-// ---------- 下の タブ（?navtest の 端末だけ、2026-09-30〜）----------
+// ---------- 下の タブ（2026-09-30〜、v122 で 全員に）----------
 // トップが 長く なって きたので: ぼうけん（ホーム）・ランクせん・イベント・ガチャ・そのほか。描く 画面と 戦いの 画面では 出さない
 // そのほか には トップに あった コレクション・データの ひきつぎ・English・あそびかた を 移す（同じ 部品を 動かすので 動きは おなじ）。ふたりで は ぼうけんの 下
 if (/[?&]navtest(=|&|$)/.test(location.search)) lsSet('navtest', '1');
-function navOn() { return lsGet('navtest') === '1'; }
+function navOn() { return true; }   // 2026-09-30 全員に 公開（前は ?navtest の 端末だけ）
 function navSync(id) {
   const nb = $('navbar'); if (!nb) return;
   const tab = navOn() ? { title: 'home', rank: 'rank', ev: 'ev', more: 'more', kz: 'kz' }[id] : null;
