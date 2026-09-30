@@ -34,21 +34,35 @@ const ARENA_CPU = {
     ],
   },
   dokutsu: {
-    omote: [   // 78% 81% 68% 62% 51%、ランダムの 形で（前の ものさし） 全部ぬけ 14.1%（天井に つかえる 形を のぞく 546 体。77% 81% 61% 75% 50%）
-      ['コウモリ', '#8d6e63', 'CoyAipeDn32edZl1gHVmfFyEWoxlB4CAiouUdZ6LqHWyi711B4CAf4p-lHudeKd1sHG5'],
-      ['ツララ', '#7cb342', 'EJiAmJiYuoq6gLp2umi6aJhogGhnaEV2RYBFikWYRZhnB4CAi4SVe5-DqXu0g75-CYCAeYB1eXdyfm6FcIl2h36AgQ'],
-      ['モグラ', '#00897b', 'DKGXnbCQwIDLcMBhsl2XY39wboBjkG2ffQaAgJCAg2mdcZBZqmIJgICEioiUjJ2SppevnbSktKq0'],
-      ['ヒカリゴケ', '#6d4c41', 'E7JTsmSyeqGGjYZ8hmqGUoVObk1bTkpON1Igah98H40foCCyK7JBBoCAi36WfKB6q3m2dwWAgIKJhZGKmZGf'],
-      ['ドウクツヌシ', '#33691e', 'EqtSplyiZZZsh295bmxpYWRWXVRSWkleP2w6eDOHOJU6nkGoSAWAgIp_lX-ffql-BICAgIt_l3ui'],
+    omote: [   // 89% 81% 80% 68% 71%、実際の 形 1500 で 全部ぬけ 28.1%（85% 87% 82% 62% 75%）
+      ['コウモリ', '#8d6e63', 'D5hdlWGPZIdnfmd0Zm1jaV9pWm5WdVR-UodSj1WVWAaAgIx_im2bcZlgpV8JgICBioKTgp2CpoGwgLl-w3vM'],
+      ['ツララ', '#7cb342', 'C7J0pX-UiHmJZYNZeVVuYmR6YpRgoWoMgICEd4hujGWRXZVUmUudQqE5pTCqJ64eBoCAhIiJkI-Xlp2eow'],
+      ['モグラ', '#00897b', 'D82Uza7N06DTgNNg0zPTM64zlDN6M1RgVIBUoFTNVASAgIGbm2-ToQqAgIV6inqRfpSFkoqMj4SOfoh_fw'],
+      ['ヒカリゴケ', '#6d4c41', 'EMVtwH2xipqTgJZmk0-KQH07bUBeT1BmSIBEmkixUMBeB4CAiZKSbpuSpICjcqlxC4CAfIl3kXKabaJnqmGyW7lUwE3HRs0'],
+      ['ドウクツヌシ', '#33691e', 'EL1PuVerXphjgGRoY1VeR1dDT0dGVT9oOoA5mDqrP7lGBYCAhouWiJmXpZkIgICBioSTiJyNpJSrm7Kktg'],
+    ],
+    ura: [   // 72% 43% 38% 50% 62%、実際の 形 1500 で 全部ぬけ 3.7%（70% 39% 36% 48% 77%）
+      ['ヤミコウモリ', '#455a64', 'EK2PqZ6gq5G0gLdvtGCrV55Tj1eAYHNvaoBnkWqgc6mABICAfpmddo-jCYCAhoiMkZGblKSXrpm5msOZyA'],
+      ['ショウニュウ', '#4a148c', 'EL2fvaq9upm6gLpnukO6Q6pDn0OUQ4RnhICEmYS9hL2UB4CAkYaFaKB6k1ylYpxXCYCAe4F0hG2Ba3puc3Vxe3R-ew'],
+      ['イワツバメ', '#3e2723', 'EMeWx7DH1Z3VgNVj1TnVObA5ljl8OVdjV4BXnVfHV8d8BYCAlIyIZKaBmlkJgICIg46DkoeSjI6RiZGEjYSH'],
+      ['マグマ', '#b71c1c', 'DuRZ5GOpY4BjV2McYxxdHFUcT1dPgE-pT-RP5FUGgICKemtoimduVYpTEYCAgXqGd4x2kXeWepl_moWZipaPkZKMk4aSgY9-in2Ffn8'],
+      ['チテイオウ', '#111111', 'EM9cyWW4bp5zgHVic0huN2UxXDdSSEpiRYBDnkW4SslSBoCAj4mMap-Bn2KfeQ6AgIV-in2SgpWGlouUkJGUiJeDln-TfY58iX2E'],
     ],
   },
   gake: {
-    omote: [   // 80% 82% 65% 55% 51%、ランダムの 形で（前の ものさし） 全部ぬけ 10.3%（77% 79% 62% 49% 56%）
-      ['ガケマル', '#8d6e63', 'DYpKilKJXYNdelx2WHZOdkZ2PHo4fziJOIpCDICAin-Tfp19p3uwerp5w3jNd9d24HXkcgyAgIOKhZOHnYqni7GNu4_FkM-R2ZLjku0'],
-      ['ヒュルル', '#7cb342', 'CotdiXuEj32Nd3x1XXdAfCyELIlABYCAfJWcf4yjrIwKgIB-in2UfJ57qHuye7x8xn3Qf9o'],
-      ['オチソウ', '#00897b', 'C593moyMmHyebZJlgWZtbVp8U41Sl2MEgICKfpR9nXsGgICDiYaSipqOo5Kr'],
-      ['フチッコ', '#6d4c41', 'ELmguby55JjkgORo5EfkR7xHoEeDR1toW4BbmFu5W7mDCoCAiYaUgJuKpoiperV9sZmjlqaICYCAfXx6d3pxf22GbolziXmEfQ'],
-      ['ガケノヌシ', '#33691e', 'EJB9kIqQnYedgJ15nXCdcIpwfXBvcFx5XIBch1yQXJBvBICAa5Gdi3GkCYCAfIV2hXGBcXp1dnt1gHqBgA'],
+    omote: [   // 86% 80% 78% 71% 72%、実際の 形 1500 で 全部ぬけ 29.4%（84% 80% 83% 72% 74%）
+      ['ガケマル', '#8d6e63', 'DY9Fjk6IVYJYe1d1UnFKcUF1OXszgjKINo08CoCAjIGOcZ13oGeubbFewGTCVNFaCoCAgoqFlIidjKeQsJW5msGgyqbS'],
+      ['ヒュルル', '#7cb342', 'CpZIkWuHhHp4cWZsSHIseQ2GGI4sBICAg3qGc4ltDYCAgIqAk4CdgKaBsIG5gsODzYTWhuCI6Yny'],
+      ['オチソウ', '#00897b', 'EpZvl3STeYt7hH98fnJ9bXlqdGhvZ2puZnVje1-EYY1hlGWYagSAgIN6hnOJbQWAgIGKgpOCnYGn'],
+      ['フチッコ', '#6d4c41', 'DLdPr2uhiYB_ZIFKb0lPSjBlIIAbmiGxMweAgI9-gmmabY5YpVyZRw6AgH-Kf5N_nYCngbCCuoPDhs2I1ovgjumR8pX2'],
+      ['ガケノヌシ', '#33691e', 'Crd9t42Sk26TS41JfUltbmeSZ7RuBYCAiHuQdZdwn2sJgICCioaUip6OqJSxmrmgwajJ'],
+    ],
+    ura: [   // 74% 47% 40% 40% 64%、実際の 形 1500 で 全部ぬけ 4.1%（76% 46% 41% 42% 66%）
+      ['ツキオトシ', '#455a64', 'DoyIi5GImISdfJ14mHWRdIh1f3h4fHOEc4h4i38EgIBxj5mJipgLgICCioOThJ2Ep4Sxg7uCxYDOfth74g'],
+      ['ナライキ', '#4a148c', 'EKhYpWCcZo9qgGxxamRmW2BYWFtQZEpxRYBEj0WcSqVQBICAf5uec5KkB4CAe4J2g3N_dHl5d357'],
+      ['ダンガイ', '#3e2723', 'ENZNz1O9WKFcgF1fXENYMVMqTTFHQ0JfP4A-oT-9Qs9HBICAeZmYeoilEYCAfoV4iHKJbYdog2V-ZXhncmpucGt2antsgHCDdYN7gYE'],
+      ['フウジン', '#b71c1c', 'EN2D1orCkKSUgJZclD6QKoojgyp7PnVccYBwpHHCddZ7BoCAkXlxaZFldVSRUAmAgHyHdIlthGt8b3Z3dH54gIA'],
+      ['ガケノオウ', '#111111', 'EN2G1o7ClKSZgJpcmT6UKo4jhip-Pndcc4BxpHPCd9Z-BoCAkntzaJJnd1SSUwuAgIGFe4xyjWuHaYJseXB2eXV9eIKA'],
     ],
   },
   dansa: {
