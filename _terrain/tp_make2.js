@@ -52,7 +52,9 @@ const T = TIERS[tier];
   out[tk] = out[tk] || {}; out[tk][tier] = pick; fs.writeFileSync(OUT, JSON.stringify(out));
   // 確かめ: 選ぶのに 使って いない 挑戦者で かちぬき
   let al = T.check; const rates = [];
+  if (TER[tk].ceil) { const r = await run(al.map(a => [a, pick[0].code, tk])); al = al.filter((_, i) => r[i] !== 'T'); }   // 天井に つかえる 挑戦者は 入れない ので 数えない
+  const n0 = al.length;
   for (const p of pick) { const r = await run(al.map(a => [a, p.code, tk])); const nx = al.filter((_, i) => r[i] === 'A'); rates.push((nx.length / al.length * 100).toFixed(0) + '%'); al = nx; }
-  { const o2 = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : {}; if (o2[tk] && o2[tk][tier]) { o2[tk][tier][0].check = (al.length / T.check.length * 100).toFixed(1) + '%（' + rates.join(' ') + '）'; fs.writeFileSync(OUT, JSON.stringify(o2)); } }
-  console.log('確かめ（べつの', T.check.length, '体）: 各段', rates.join(' '), '全部ぬけ', (al.length / T.check.length * 100).toFixed(1) + '%', ((Date.now() - t0) / 1000).toFixed(0) + '秒');
+  { const o2 = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : {}; if (o2[tk] && o2[tk][tier]) { o2[tk][tier][0].check = (al.length / n0 * 100).toFixed(1) + '%（' + rates.join(' ') + '）'; fs.writeFileSync(OUT, JSON.stringify(o2)); } }
+  console.log('確かめ（べつの', n0, '体）: 各段', rates.join(' '), '全部ぬけ', (al.length / n0 * 100).toFixed(1) + '%', ((Date.now() - t0) / 1000).toFixed(0) + '秒');
 })();
