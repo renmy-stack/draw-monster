@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '146';
+const VERSION = '147';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -220,7 +220,7 @@ function renderRoad() {
   if (!myRobot) { go.innerHTML = 'モンスターを つくる'; go.className = 'main advgo'; return; }
   go.innerHTML = '▶ たたかう<small>' + tname() + SIDE_LABEL[side] + ' ' + (stage + 1) + ' / ' + CPUS().length + ' ' + CPUS()[stage].name + '</small>';
   go.className = 'main advgo' + (side === 'ura' ? ' ura' : side === 'minna' ? ' minna' : '');
-  if (terrInfo()) $('tmchint').textContent = '🏔 ' + terrInfo().name + '：' + terrInfo().hint;
+  if (terrInfo()) $('tmchint').textContent = '🏔 ' + terrInfo().name + '：' + terrInfo().hint + (terrInfo().cpu.kari ? '（あいては かり）' : '');
 }
 onTap($('advgo'), () => {
   if (!myRobot) { showDraw(); return; }
@@ -625,6 +625,10 @@ function renderBattle(dt) {
     for (let x = -RB.HW; x <= RB.HW; x += 60) { ctx.beginPath(); ctx.moveTo(x, 5); ctx.lineTo(x * 1.3, 120); ctx.stroke(); }
   }
   for (const k of ['B', 'A']) drawRobotWorld(S[k], k === 'A' ? (S.leftColor || ME.color) : opp.color, hurt[k] > 0, k === 'A' ? S.crownA : S.crownB);
+  if (si && si.arena.water) {   // 水: モンスターの 上から うすい 青（水面は ゆっくり ゆれる）
+    const wy = -si.arena.water; ctx.fillStyle = 'rgba(41,121,255,.28)'; ctx.fillRect(-900, wy, 1800, 900 - wy);
+    ctx.strokeStyle = 'rgba(179,229,252,.8)'; ctx.lineWidth = 4; ctx.beginPath(); for (let x = -900; x <= 900; x += 30) ctx.lineTo(x, wy + 6 * Math.sin(x / 60 + S.t * 2)); ctx.stroke();
+  }
   for (const k of ['A', 'B']) if (hurt[k] > 0) hurt[k]--;
   // かけら・数字
   for (let i = parts.length - 1; i >= 0; i--) {
@@ -651,6 +655,13 @@ function drawArena(si) {
   const path = () => { ctx.beginPath(); ctx.moveTo(xs[0], -RB.floorH(a, xs[0])); for (const x of xs) ctx.lineTo(x, -RB.floorH(a, x)); };
   path(); ctx.lineTo(900, 900); ctx.lineTo(-900, 900); ctx.closePath(); ctx.fillStyle = si.ground; ctx.fill();
   path(); ctx.strokeStyle = si.edge; ctx.lineWidth = 5; ctx.lineJoin = 'round'; ctx.stroke();
+  if (si.ice) { ctx.strokeStyle = 'rgba(255,255,255,.55)'; ctx.lineWidth = 3; for (let x = -330; x < 380; x += 150) { ctx.beginPath(); ctx.moveTo(x, 14); ctx.lineTo(x + 50, 6); ctx.stroke(); } }   // こおりの つや（大きく・まばらに）
+  if (a.belt) {   // 動く床: いま 動いている 向きに 矢印（速さで こさ）
+    const v = a.belt * Math.sin(2 * Math.PI * S.t / (a.beltT || 4)), dir = v >= 0 ? 1 : -1, al = Math.min(1, Math.abs(v) / a.belt) * 0.9;
+    ctx.fillStyle = 'rgba(255,202,40,' + al.toFixed(2) + ')';
+    const off = ((S.t * v) % 80 + 80) % 80;
+    for (let x = -260 + off; x < 240; x += 80) { ctx.beginPath(); ctx.moveTo(x + dir * 14, 12); ctx.lineTo(x - dir * 8, 4); ctx.lineTo(x - dir * 8, 20); ctx.closePath(); ctx.fill(); }
+  }
   if (a.hw) { ctx.fillStyle = 'rgba(20,22,50,.85)'; ctx.fillRect(-a.hw - 300, -700, 300, 1000); ctx.fillRect(a.hw, -700, 300, 1000); ctx.fillStyle = si.edge; ctx.fillRect(-a.hw - 5, -700, 5, 1000); ctx.fillRect(a.hw, -700, 5, 1000); }
   if (a.ceil) {
     ctx.fillStyle = si.ground; ctx.fillRect(-900, -a.ceil - 600, 1800, 600); ctx.fillStyle = si.edge; ctx.fillRect(-900, -a.ceil - 5, 1800, 5);

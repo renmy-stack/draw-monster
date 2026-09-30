@@ -205,10 +205,10 @@ function contact2(A, jA, B, jB, px, py, qx, qy, nx, ny, pen) {
     const jn = -(1 + E) * vn / kn;
     push(A, jA, LA, jn * nx, jn * ny); if (B) push(B, jB, LB, -jn * nx, -jn * ny);
     // 摩擦
-    const va2 = pvel(A, jA, LA), vb2 = B ? pvel(B, jB, LB) : [0, 0];
+    const va2 = pvel(A, jA, LA), vb2 = B ? pvel(B, jB, LB) : [beltV(), 0];   // 動く床: 床の 速さ（ふつうは 0）
     const tx = -ny, ty = nx, vt = (va2[0] - vb2[0]) * tx + (va2[1] - vb2[1]) * ty;
     const kt = kEff(A, jA, LA, tx, ty) + (B ? kEff(B, jB, LB, tx, ty) : 0);
-    const lim = MU * jn, jt = clamp(-vt / kt, -lim, lim);
+    const lim = (!B && AR && AR.mu != null ? AR.mu : MU) * jn, jt = clamp(-vt / kt, -lim, lim);   // こおり: 床の すべりやすさ
     push(A, jA, LA, jt * tx, jt * ty); if (B) push(B, jB, LB, -jt * tx, -jt * ty);
   }
   const corr = Math.min(pen, 6) * 0.4;
@@ -220,7 +220,16 @@ function contact2(A, jA, B, jB, px, py, qx, qy, nx, ny, pen) {
 // arena: { floor: [[x, 高さ], ...]（x の 小さい 順に 線で つなぐ。上が +。はしより 外は はしの 高さ）, hw: かべの 半幅（0 なら かべ なし）,
 //          ceil: 天井の 高さ（0 なら なし）, sx: 出る 位置（左右 ±sx、ない ときは 150）, fall: 足もとの 高さより これ以上 下に 落ちたら 負け（0 なら なし） }
 // arena が ない とき（ふつうの 戦い・ランクせん）は 前と まったく 同じ 計算
-let AR = null;
+let AR = null, ARt = 0;   // ARt: いまの 時間（動く床）
+// 動く床: 右と 左に 行ったり 来たり（belt ＝ はやさ、beltT ＝ 1 往復の 秒）
+function beltV() { return AR && AR.belt ? AR.belt * dsin(TWO_PI * ARt / (AR.beltT || 4)) : 0; }
+// 水: water ＝ 床からの 水の 高さ。中心が 水の 中なら うく（buoy ＝ 重さの 何わり）と 水の ていこう（drag）
+function water(b) {
+  if (b.y <= -AR.water) return;
+  b.vy -= G * (AR.buoy || 0) * DT;
+  const k = 1 - (AR.drag || 0) * DT; b.vx *= k; b.vy *= k; b.om *= k;
+  for (const j of b.joints) j.w *= 1 - (AR.drag || 0) * 0.5 * DT;
+}
 function floorSeg(x) {
   const f = AR.floor; if (!f || !f.length) return [0, 0];
   if (x <= f[0][0]) return [f[0][1], 0];
@@ -358,9 +367,10 @@ function eachPoint(b, fn) {
 function step(S) {
   if (S.over) return;
   const A = S.A, B = S.B;
-  AR = S.arena || null;
+  AR = S.arena || null; ARt = S.t;
   motors(S, A, B); motors(S, B, A);
   integrate(A); integrate(B);
+  if (AR && AR.water) { water(A); water(B); }
   eachPoint(A, (j, x, y) => ground(A, j, x, y));
   eachPoint(B, (j, x, y) => ground(B, j, x, y));
   shape(A); shape(B);
