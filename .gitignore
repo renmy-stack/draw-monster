@@ -7,3 +7,4 @@ _*.out
 .DS_Store
 Thumbs.db
 .rankcache/
+.board/

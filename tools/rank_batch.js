@@ -13,7 +13,7 @@
 const fs = require('fs'), path = require('path'), os = require('os');
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 const RB = require('../sim.js');
-const API = 'https://renmy-rank.renmy-stack.workers.dev';
+const API = process.env.RANK_API || 'https://renmy-rank.renmy-stack.workers.dev';   // RANK_API は 手元の 受付係で ためす とき
 const KEY = process.env.RANK_ADMIN;
 const TIME_LIMIT = +(process.env.RANK_TIME || 8 * 60e3), MAX_TODO = 400000, TOP_N = 30, CHAMP_MIN = 20;   // チャンピオンは 20 戦 以上（総当たりが 20 戦 未満 なら 全員と 戦い おわって いれば よい）
 const REP_MAX = +(process.env.RANK_REP || 500), REP_TOP = Math.round(REP_MAX / 5);
@@ -144,7 +144,7 @@ async function main() {
     // 対戦の 例: 強い 相手に かった 3 戦・まけた 3 戦（リプレイ用に 自分が 左か 右か も）
     const pickx = (arr, res) => arr.slice().sort((x, y) => pctOf(st[y[0]]) - pctOf(st[x[0]])).slice(0, 3).map(([o, side]) => [list[o].id, list[o].name, res, side]);
     // 順位表で 自分の 前後 2 体（自分も ふくむ）: [順位, ID, 名前, 勝率]。30 位より 下の 人に ランキングの 下で 見せる
-    const nb = s.pos ? ranked.slice(Math.max(0, s.pos - 3), s.pos + 2).map(k => [st[k].pos, list[k].id, list[k].name, Math.round(pctOf(st[k]) * 1000) / 10]) : [];
+    const nb = s.pos ? ranked.slice(Math.max(0, s.pos - 3), s.pos + 2).map(k => [st[k].pos, list[k].id, list[k].name, Math.round(pctOf(st[k]) * 1000) / 10, list[k].code, list[k].kz || null]) : [];   // 形と かざりも（ゲームが /mon で 聞かなくて すむ ように）
     return { pos: s.pos || null, pct: Math.round(pctOf(s) * 1000) / 10, pl: playedOf(s), tot: s.tot, w: s.w, l: s.l, d: s.d, rec: pickx(s.beat, 'W').concat(pickx(s.lost, 'L')), nb };
   };
   const top = { t: now, n, reps: reps.length, top: ranked.slice(0, TOP_N).map(i => { const e = entry(i); return { id: list[i].id, name: list[i].name, pos: e.pos, pct: e.pct, pl: e.pl, tot: e.tot }; }) };
@@ -165,6 +165,12 @@ async function main() {
   if (process.env.RANK_DRY) { console.log('お試し: 代表', reps.length, '上位', top.top.slice(0, 5).map(x => x.pos + ' ' + x.name + ' ' + x.pct + '% ' + x.pl + '/' + x.tot).join(' / '), '固定', (rep.fixed || []).length, '上位代表', (rep.top || []).length); return; }
   const res = await (await fetch(API + '/admin/board', { method: 'POST', headers: H, body: JSON.stringify(body) })).json();
   if (!res.ok) throw new Error('board 失敗 ' + JSON.stringify(res));
+  // 順位表の ファイル（.board/top.json → rank.yml が board 枝へ）。ゲームは まず これを 読む（受付係への 通信を へらす）。形は GET /top と おなじ
+  {
+    const pc = act.champion, ch = champion ? { season: champion.season, id: champion.id, name: champion.name, code: champion.code, rating: champion.pct, streak: pc && pc.id === champion.id ? (pc.streak || 1) + 1 : 1 } : pc;
+    const file = { season, now, updated: top.t, count: top.n, top: top.top.map(x => ({ ...x, code: byId.get(x.id).code, kz: byId.get(x.id).kz || null })), champion: ch || null };
+    const dir = path.join(__dirname, '..', '.board'); fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(path.join(dir, 'top.json'), JSON.stringify(file));
+  }
 
   // キャッシュを 詰めて 保存（変わった ときだけ Actions が 保存する）
   const packed = Buffer.alloc(Math.ceil(n * n / 4));

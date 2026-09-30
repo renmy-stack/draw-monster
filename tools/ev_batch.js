@@ -76,7 +76,7 @@ async function runDay(day, final) {
   const entry = i => {
     const s = st[i];
     const pickx = (arr, res) => arr.slice().sort((x, y) => pctOf(st[y[0]]) - pctOf(st[x[0]])).slice(0, 3).map(([o, side]) => [list[o].id, list[o].name, res, side]);
-    const nb = s.pos ? ranked.slice(Math.max(0, s.pos - 3), s.pos + 2).map(k => [st[k].pos, list[k].id, list[k].name, Math.round(pctOf(st[k]) * 1000) / 10]) : [];
+    const nb = s.pos ? ranked.slice(Math.max(0, s.pos - 3), s.pos + 2).map(k => [st[k].pos, list[k].id, list[k].name, Math.round(pctOf(st[k]) * 1000) / 10, list[k].code, list[k].kz || null]) : [];   // 形と かざりも（ゲームが /mon で 聞かなくて すむ ように）
     return { pos: s.pos || null, pct: Math.round(pctOf(s) * 1000) / 10, pl: playedOf(s), tot: s.tot, w: s.w, l: s.l, d: s.d, rec: pickx(s.beat, 'W').concat(pickx(s.lost, 'L')), nb };
   };
   const top = { t: act.now, n, reps: reps.length, top: ranked.slice(0, TOP_N).map(i => { const e = entry(i); return { id: list[i].id, name: list[i].name, pos: e.pos, pct: e.pct, pl: e.pl, tot: e.tot }; }) };
@@ -93,6 +93,12 @@ async function runDay(day, final) {
   if (process.env.RANK_DRY) { console.log('お試し ' + day + ': ' + n + ' 体・今回 ' + fought + ' 戦・上位 ' + top.top.slice(0, 3).map(x => x.name + ' ' + x.pct + '%').join(' / ') + (body.champion ? '・1 位 ' + body.champion.id : '')); return; }
   const res = await (await fetch(API + '/admin/ev_board', { method: 'POST', headers: H, body: JSON.stringify(body) })).json();
   if (!res.ok) throw new Error('ev_board 失敗 ' + JSON.stringify(res));
+  // 順位表の ファイル（.board/evtop.json → rank.yml が board 枝へ）。きょうの ぶんだけ。形は GET /ev/top と おなじ
+  if (!final) {
+    const byId = new Map(list.map(m => [m.id, m]));
+    const file = { day, now: act.now, updated: top.t, count: n, top: top.top.map(x => ({ ...x, code: byId.get(x.id).code, kz: byId.get(x.id).kz || null })), champion: act.champion || null };
+    const dir = path.join(__dirname, '..', '.board'); fs.mkdirSync(dir, { recursive: true }); fs.writeFileSync(path.join(dir, 'evtop.json'), JSON.stringify(file));
+  }
   // キャッシュ（日ごと。しめた 日の ものと 2 日 より 前の ものは けす）
   fs.mkdirSync(DIR, { recursive: true });
   const packed = Buffer.alloc(Math.ceil(n * n / 4));

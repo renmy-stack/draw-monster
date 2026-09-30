@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '131';
+const VERSION = '132';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -928,10 +928,25 @@ const RANK_COLOR = '#ef6c00';
 let rankTop = null, rankMe = null, rankBusy = false, rankGotMedal = 0, rankDown = false;
 function rankDev() { let d = lsGet('rank.dev'); if (!d) { d = Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4); lsSet('rank.dev', d); } return d; }
 function seasonRange(s) { const a = new Date(s + 'T00:00:00Z'); return (a.getUTCMonth() + 1) + '/' + a.getUTCDate(); }
-async function loadRank() {
+// 通信回数を へらす（2026-09-30）: 順位表は まず GitHub の board 枝の ファイル（15 分ごとの 計算で 書く、GitHub が 5 分 おぼえる）。
+// とれない・古い ときだけ 受付係。自分の ぶんは /rank?dev=&notop=1 の 1 回（登録した ことが ない 端末は 聞かない）。1 分 以内の 開きなおしは 聞かない
+const BOARD_URL = 'https://raw.githubusercontent.com/renmy-stack/draw-monster/board/';
+async function boardFile(name, ok) {
+  if (/[?&]localapi(&|$)/.test(location.search)) return null;
+  try { const j = await (await fetch(BOARD_URL + name)).json(); return j && ok(j) && Date.now() - (j.updated || j.now || 0) < 2 * 3600e3 ? j : null; } catch (e) { return null; }
+}
+function meCache(k, me) { if (me !== undefined) { lsSet(k, JSON.stringify({ t: Date.now(), me })); return me; } try { const c = JSON.parse(lsGet(k) || 'null'); return c && Date.now() - c.t < 10 * 60e3 ? c : null; } catch (e) { return null; } }
+let rankAt = 0;
+// 前後の 人の 形は 順位の データに 入って いる（前の 版の 受付係なら /mon で 聞いて、1 度 聞いたら おぼえる）
+const monMem = new Map();
+function monGet(id) { if (!monMem.has(id)) monMem.set(id, fetch(RANK_API + '/mon?id=' + encodeURIComponent(id)).then(r => r.json()).catch(e => { monMem.delete(id); throw e; })); return monMem.get(id); }
+async function loadRank(force) {
+  if (!force && rankTop && Date.now() - rankAt < 60e3) return;
   try {
-    const [t, m] = await Promise.all([fetch(RANK_API + '/top').then(r => r.json()), fetch(RANK_API + '/me?dev=' + rankDev()).then(r => r.json())]);
-    rankTop = t; rankMe = m.me; rankDown = false;
+    const reg = lsGet('rank.reg') === '1', file = await boardFile('top.json', j => j.season === jstDay());
+    let t = file, m = null;
+    if (!file || reg) { const r = await fetch(RANK_API + '/rank?dev=' + rankDev() + (file ? '&notop=1' : '')).then(r => r.json()); t = file || r.top; m = r.me; }
+    rankTop = t; rankMe = m ? m.me : null; rankDown = false; rankAt = Date.now(); meCache('rank.mec', rankMe);
     await rankSyncKz();
     if (rankMe) lsSet('rank.reg', '1');
     if (rankMe && rankMe.champDays) { const cm = champMap(), had = cm[rankMe.code] || 0; if (rankMe.champDays > had) { cm[rankMe.code] = rankMe.champDays; lsSet('champ', JSON.stringify(cm)); rankGotMedal = rankMe.champDays; if (myRobot && plainCode(myRobot) === rankMe.code) { myRobot.champ = rankMe.champDays; lsSet('robot', RB.encodeDesign(myRobot)); } TR('rankmedal', { n: rankMe.champDays }); } }
@@ -1024,7 +1039,7 @@ function renderRank() {
       const cv = document.createElement('canvas'); cv.width = cv.height = 64;
       row.append(p, cv, nm, sc); list.append(row);
       // 絵は 形を もらって から
-      fetch(RANK_API + '/mon?id=' + encodeURIComponent(x.id)).then(r => r.json()).then(m => { const d = m.code && RB.decodeDesign(m.code); if (d) { d.kz = kzParse(m.kz); drawPreview(cv, d, x.id === me.id ? ME.color : RANK_COLOR); } if (x.id !== me.id && m.code) row.addEventListener('click', () => rankPractice({ name: x.name, code: m.code, kz: m.kz })); }).catch(() => {});
+      (x.code ? Promise.resolve(x) : monGet(x.id)).then(m => { const d = m.code && RB.decodeDesign(m.code); if (d) { d.kz = kzParse(m.kz); drawPreview(cv, d, x.id === me.id ? ME.color : RANK_COLOR); } if (x.id !== me.id && m.code) row.addEventListener('click', () => rankPractice({ name: x.name, code: m.code, kz: m.kz })); }).catch(() => {});
     }
   }
 }
@@ -1036,7 +1051,7 @@ async function rankRegister() {
   try {
     const r = await (await fetch(RANK_API + '/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: plainCode(myRobot), name, kz: KZ_ON ? kzStr(kzs.eq()) : '' }) })).json();
     if (r.error) $('rankmsg').textContent = r.error;
-    else { TR('rankreg', { me: plainCode(myRobot) }); lsSet('rank.reg', '1'); await loadRank(); $('rankmsg').textContent = 'とうろく できたよ！'; }
+    else { TR('rankreg', { me: plainCode(myRobot) }); lsSet('rank.reg', '1'); await loadRank(true); $('rankmsg').textContent = 'とうろく できたよ！'; }
   } catch (e) { $('rankmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   rankBusy = false; if (mode === 'rank') renderRank();
 }
@@ -1071,7 +1086,7 @@ async function titleRank() {
   const cap = $('rankcap'), tr = $('trank');
   // 登録した ことが ない 端末は 通信しない（受け付け回数の 節約）。登録した 端末は 自分の ぶん（/me）だけ
   if (lsGet('rank.reg') !== '1') { cap.textContent = 'とうろくして みんなと じどうで たいせん！'; $('rankbtn').classList.add('new'); tr.hidden = true; return; }
-  if (!rankMe) { try { rankMe = (await (await fetch(RANK_API + '/me?dev=' + rankDev())).json()).me; } catch (e) {} }
+  if (!rankMe) { const c = meCache('rank.mec'); if (c) rankMe = c.me; else { try { rankMe = meCache('rank.mec', (await (await fetch(RANK_API + '/rank?dev=' + rankDev() + '&notop=1')).json()).me.me); } catch (e) {} } }   // 10 分 おぼえる
   const me = rankMe, cur = myRobot && plainCode(myRobot);
   if (me && me.pos) {
     const prev = +(lsGet('rank.lastpos') || 0);
@@ -1125,10 +1140,13 @@ function applyEvUi() {
   $('fight').classList.remove('ura');
   $('fight').innerHTML = 'できた！<small>イベントに もどる</small>';
 }
-async function loadEv() {
+let evAt = 0;
+async function loadEv(force) {
+  if (!force && evTop && Date.now() - evAt < 60e3) return;
   try {
-    const [t, m] = await Promise.all([fetch(RANK_API + '/ev/top').then(r => r.json()), fetch(RANK_API + '/ev/me?dev=' + rankDev()).then(r => r.json())]);
-    evTop = t; evMe = m.me; evInfo = m; evDown = false;
+    const file = await boardFile('evtop.json', j => j.day === jstDay());
+    const r = await fetch(RANK_API + '/ev?dev=' + rankDev() + (file ? '&notop=1' : '')).then(r => r.json()), t = file || r.top, m = r.me;
+    evTop = t; evMe = m.me; evInfo = m; evDown = false; evAt = Date.now();
     if (m.ribbons > evRibbons()) lsSet('ev.ribbons', String(m.ribbons));
     if (m.won && lsGet('ev.wonseen') !== m.won.day) { evGot = m.won; lsSet('ev.wonseen', m.won.day); TR('evribbon', { n: m.ribbons }); }
   } catch (e) { evTop = null; evDown = true; }
@@ -1206,7 +1224,7 @@ async function evRegister() {
   try {
     const r = await (await fetch(RANK_API + '/ev/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: evPlain(d), name, kz: KZ_ON ? kzStr(kzs.eq()) : '' }) })).json();
     if (r.error) $('evmsg').textContent = r.error;
-    else { TR('evreg', { n: evTheme().n }); await loadEv(); $('evmsg').textContent = 'だしたよ！ 20 ぷん くらいで じゅんいが でるよ'; }
+    else { TR('evreg', { n: evTheme().n }); await loadEv(true); $('evmsg').textContent = 'だしたよ！ 20 ぷん くらいで じゅんいが でるよ'; }
   } catch (e) { $('evmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   evBusy = false; if (mode === 'ev') renderEv();
 }
@@ -1243,15 +1261,19 @@ let nkMine = null, nkBoard = null, nkSel = lsGet('nk.sel') || '', nkForm = null,
 for (const el of document.querySelectorAll('.nk-seg')) el.hidden = !NK_ON;
 for (const b of document.querySelectorAll('.nk-seg button[data-go]')) onTap(b, () => { if (b.dataset.go === 'nakama') showNakama(); else showRank(); });
 const nkApi = (p, body) => fetch(RANK_API + p, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ dev: rankDev() }, body)) } : undefined).then(r => r.json());
-async function loadNakama() {
+let nkAt = 0;
+async function loadNakama(force) {
+  if (!force && nkMine && nkBoard !== null && Date.now() - nkAt < 30e3 && !nkPreview) return;
   try {
-    nkMine = (await nkApi('/g/mine?dev=' + rankDev())).list || [];
+    const all = await nkApi('/g/all?dev=' + rankDev() + (nkSel ? '&code=' + nkSel : '')); nkAt = Date.now();   // なかまの 一覧と えらんで いる なかまの 表を 1 回で
+    nkMine = (all.mine && all.mine.list) || [];
     if (typeof nkPreview === 'string') {   // さそう URL: もう はいって いれば その なかまを 出す。まだ なら「はいる？」
       if (nkMine.some(g => g.code === nkPreview)) { nkSel = nkPreview; nkPreview = null; }
       else { const p = await nkApi('/g?code=' + nkPreview); nkPreview = p && !p.error ? p : null; if (!nkPreview) $('nkmsg').textContent = 'その なかまは みつからないよ'; }
     }
+    const sel0 = nkSel;
     if (!nkMine.some(g => g.code === nkSel)) nkSel = nkMine.length ? nkMine[0].code : '';
-    nkBoard = nkSel ? await nkApi('/g?code=' + nkSel + '&dev=' + rankDev()) : null;
+    nkBoard = !nkSel ? null : nkSel === sel0 && all.board && !all.board.error ? all.board : await nkApi('/g?code=' + nkSel + '&dev=' + rankDev());
   } catch (e) { $('nkmsg').textContent = 'つながらなかった…しばらく してから また きてね'; }
 }
 function showNakama(msg) {
@@ -1272,7 +1294,7 @@ function renderNakama() {
   }
   // 自分の なかま（えらぶ）＋ つくる・コードで はいる
   const gs = $('nkgroups'); gs.innerHTML = '';
-  for (const g of nkMine || []) { const b = document.createElement('button'); b.className = g.code === nkSel ? 'on' : ''; nkRaw(b, g.name, g.name); b.addEventListener('click', () => { nkSel = g.code; lsSet('nk.sel', g.code); nkBoard = null; showNakama(''); }); gs.append(b); }
+  for (const g of nkMine || []) { const b = document.createElement('button'); b.className = g.code === nkSel ? 'on' : ''; nkRaw(b, g.name, g.name); b.addEventListener('click', () => { nkSel = g.code; lsSet('nk.sel', g.code); nkBoard = null; nkAt = 0; showNakama(''); }); gs.append(b); }
   if (nkMine && nkMine.length < 3) for (const [k, label] of [['create', '＋ なかまを つくる'], ['join', '🔑 コードで はいる']]) { const b = document.createElement('button'); b.className = 'add'; b.textContent = label; b.addEventListener('click', () => { nkForm = nkForm === k ? null : k; renderNakama(); }); gs.append(b); }
   $('nkform').hidden = !nkForm;
   if (nkForm) { $('nklabel').textContent = nkForm === 'create' ? 'なかまの なまえ（10 もじまで）' : 'なかまコード（6 もじ）'; $('nkin').placeholder = TRL(nkForm === 'create' ? 'れい: 3くみ' : 'れい: K7M2QX'); $('nkgo').textContent = nkForm === 'create' ? 'つくる' : 'はいる'; }
@@ -1295,20 +1317,20 @@ async function nkSubmit() {
   if (nkBusy) return; const v = $('nkin').value.trim(); if (!v) { $('nkmsg').textContent = nkForm === 'create' ? 'なまえを いれてね' : 'コードを いれてね'; return; }
   if (nkForm === 'join') return nkJoin(v);
   nkBusy = true; $('nkmsg').textContent = 'つくってるよ…';
-  try { const r = await nkApi('/g/create', { name: v }); if (r.error) $('nkmsg').textContent = r.error; else { TR('nkcreate', null); nkSel = r.code; lsSet('nk.sel', r.code); nkForm = null; $('nkin').value = ''; nkRaw($('nkmsg'), '「' + r.name + '」が できたよ！ 📨 さそう で ともだちに おくろう', '"' + r.name + '" is ready! Send it to friends with 📨 Invite'); setTimeout(() => $('nkmsg').classList.remove('nk-raw'), 0); await loadNakama(); } }
+  try { const r = await nkApi('/g/create', { name: v }); if (r.error) $('nkmsg').textContent = r.error; else { TR('nkcreate', null); nkSel = r.code; lsSet('nk.sel', r.code); nkForm = null; $('nkin').value = ''; nkRaw($('nkmsg'), '「' + r.name + '」が できたよ！ 📨 さそう で ともだちに おくろう', '"' + r.name + '" is ready! Send it to friends with 📨 Invite'); setTimeout(() => $('nkmsg').classList.remove('nk-raw'), 0); await loadNakama(true); } }
   catch (e) { $('nkmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   nkBusy = false; if (mode === 'nakama') renderNakama();
 }
 async function nkJoin(code) {
   if (nkBusy) return; nkBusy = true; $('nkmsg').textContent = 'はいってるよ…';
-  try { const r = await nkApi('/g/join', { code }); if (r.error) $('nkmsg').textContent = r.error; else { TR('nkjoin', { via: nkPreview ? 'url' : 'code' }); nkSel = r.code; lsSet('nk.sel', r.code); nkForm = null; nkPreview = null; $('nkin').value = ''; nkRaw($('nkmsg'), '「' + r.name + '」に はいったよ！', 'You joined "' + r.name + '"!'); setTimeout(() => $('nkmsg').classList.remove('nk-raw'), 0); await loadNakama(); } }
+  try { const r = await nkApi('/g/join', { code }); if (r.error) $('nkmsg').textContent = r.error; else { TR('nkjoin', { via: nkPreview ? 'url' : 'code' }); nkSel = r.code; lsSet('nk.sel', r.code); nkForm = null; nkPreview = null; $('nkin').value = ''; nkRaw($('nkmsg'), '「' + r.name + '」に はいったよ！', 'You joined "' + r.name + '"!'); setTimeout(() => $('nkmsg').classList.remove('nk-raw'), 0); await loadNakama(true); } }
   catch (e) { $('nkmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   nkBusy = false; if (mode === 'nakama') renderNakama();
 }
 async function nkLeave() {
   if (!nkLeaveAsk) { nkLeaveAsk = true; renderNakama(); return; }
   if (nkBusy || !nkSel) return; nkBusy = true;
-  try { await nkApi('/g/leave', { code: nkSel }); TR('nkleave', null); $('nkmsg').textContent = 'ぬけたよ'; nkSel = ''; nkLeaveAsk = false; await loadNakama(); } catch (e) { $('nkmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
+  try { await nkApi('/g/leave', { code: nkSel }); TR('nkleave', null); $('nkmsg').textContent = 'ぬけたよ'; nkSel = ''; nkLeaveAsk = false; await loadNakama(true); } catch (e) { $('nkmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   nkBusy = false; if (mode === 'nakama') renderNakama();
 }
 function nkInvite(g) {

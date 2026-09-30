@@ -5,7 +5,7 @@ name: rank
 on:
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write   # 順位表の ファイルを board 枝へ
 concurrency: rank
 jobs:
   batch:
@@ -33,6 +33,14 @@ jobs:
         env:
           RANK_ADMIN: ${{ secrets.RANK_ADMIN }}
           RANK_TIME: '90000'
+      # 順位表の ファイル（top.json・evtop.json）を board 枝に 1 コミットで 上書き。ゲームは まず これを 読む（受付係への 通信を へらす）
+      - if: always() && hashFiles('.board/*.json') != ''
+        run: |
+          cd .board
+          git init -q -b board
+          git add -A
+          git -c user.name=rank-bot -c user.email=279485679+renmy-stack@users.noreply.github.com commit -qm "board $(date -u +%FT%TZ)"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" board
       # 新しい 組み合わせを 計算した ときだけ 保存（同じ 中身の キャッシュを 積み上げない）
       - if: always() && (steps.batch.outputs.changed == '1' || steps.ev.outputs.changed == '1')
         uses: actions/cache/save@v4
