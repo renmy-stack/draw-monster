@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '132';
+const VERSION = '133';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -936,7 +936,7 @@ async function boardFile(name, ok) {
   try { const j = await (await fetch(BOARD_URL + name)).json(); return j && ok(j) && Date.now() - (j.updated || j.now || 0) < 2 * 3600e3 ? j : null; } catch (e) { return null; }
 }
 function meCache(k, me) { if (me !== undefined) { lsSet(k, JSON.stringify({ t: Date.now(), me })); return me; } try { const c = JSON.parse(lsGet(k) || 'null'); return c && Date.now() - c.t < 10 * 60e3 ? c : null; } catch (e) { return null; } }
-let rankAt = 0;
+let rankAt = 0, rankMeAt = 0;
 // 前後の 人の 形は 順位の データに 入って いる（前の 版の 受付係なら /mon で 聞いて、1 度 聞いたら おぼえる）
 const monMem = new Map();
 function monGet(id) { if (!monMem.has(id)) monMem.set(id, fetch(RANK_API + '/mon?id=' + encodeURIComponent(id)).then(r => r.json()).catch(e => { monMem.delete(id); throw e; })); return monMem.get(id); }
@@ -946,7 +946,7 @@ async function loadRank(force) {
     const reg = lsGet('rank.reg') === '1', file = await boardFile('top.json', j => j.season === jstDay());
     let t = file, m = null;
     if (!file || reg) { const r = await fetch(RANK_API + '/rank?dev=' + rankDev() + (file ? '&notop=1' : '')).then(r => r.json()); t = file || r.top; m = r.me; }
-    rankTop = t; rankMe = m ? m.me : null; rankDown = false; rankAt = Date.now(); meCache('rank.mec', rankMe);
+    rankTop = t; rankMe = m ? m.me : null; rankDown = false; rankAt = rankMeAt = Date.now(); meCache('rank.mec', rankMe);
     await rankSyncKz();
     if (rankMe) lsSet('rank.reg', '1');
     if (rankMe && rankMe.champDays) { const cm = champMap(), had = cm[rankMe.code] || 0; if (rankMe.champDays > had) { cm[rankMe.code] = rankMe.champDays; lsSet('champ', JSON.stringify(cm)); rankGotMedal = rankMe.champDays; if (myRobot && plainCode(myRobot) === rankMe.code) { myRobot.champ = rankMe.champDays; lsSet('robot', RB.encodeDesign(myRobot)); } TR('rankmedal', { n: rankMe.champDays }); } }
@@ -1086,7 +1086,7 @@ async function titleRank() {
   const cap = $('rankcap'), tr = $('trank');
   // 登録した ことが ない 端末は 通信しない（受け付け回数の 節約）。登録した 端末は 自分の ぶん（/me）だけ
   if (lsGet('rank.reg') !== '1') { cap.textContent = 'とうろくして みんなと じどうで たいせん！'; $('rankbtn').classList.add('new'); tr.hidden = true; return; }
-  if (!rankMe) { const c = meCache('rank.mec'); if (c) rankMe = c.me; else { try { rankMe = meCache('rank.mec', (await (await fetch(RANK_API + '/rank?dev=' + rankDev() + '&notop=1')).json()).me.me); } catch (e) {} } }   // 10 分 おぼえる
+  if (!rankMe || Date.now() - rankMeAt > 10 * 60e3) { const c = meCache('rank.mec'); if (c) { rankMe = c.me; rankMeAt = c.t; } else { try { rankMe = meCache('rank.mec', (await (await fetch(RANK_API + '/rank?dev=' + rankDev() + '&notop=1')).json()).me.me); rankMeAt = Date.now(); } catch (e) {} } }   // 10 分 おぼえる（すぎたら 聞きなおす）
   const me = rankMe, cur = myRobot && plainCode(myRobot);
   if (me && me.pos) {
     const prev = +(lsGet('rank.lastpos') || 0);
@@ -1431,6 +1431,14 @@ function nkPractice(m) {
   TR('nkpractice', null); rankEvMode = false; rankNkMode = true;
   rankBattle(plainCode(myRobot), m.code, ME.name, m.name, ME.color, RANK_COLOR, 'A', 'practice', KZ_ON ? kzStr(kzs.eq()) : '', m.kz);
 }
+// ほかの アプリから もどって きた とき: 開いて いる 画面の 順位を 聞きなおす（前に 聞いて から 1 分 たって いる ときだけ。置きっぱなしでも 古い ままに しない）
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  if (mode === 'rank') loadRank().then(() => { if (mode === 'rank') renderRank(); });
+  else if (mode === 'ev') loadEv().then(() => { if (mode === 'ev') renderEv(); });
+  else if (mode === 'nakama') loadNakama().then(() => { if (mode === 'nakama') renderNakama(); });
+  else if (mode === 'title' && RANK_ON) titleRank();
+});
 onTap($('nkgo'), nkSubmit);
 $('nkin').addEventListener('keydown', e => { if (e.key === 'Enter') nkSubmit(); });
 // ---------- うら 5 人抜き: 王冠・でんどういり・エンディング ----------
