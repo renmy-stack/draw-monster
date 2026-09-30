@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '136';
+const VERSION = '137';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1177,6 +1177,7 @@ function applyEvUi() {
   $('fight').innerHTML = 'できた！<small>イベントに もどる</small>';
 }
 let evAt = 0;
+var evChWaitT = 0;   // var: 読みこみ中に renderEv が 先に 呼ばれても こまらない
 async function loadEv(force) {
   if (!force && evTop && Date.now() - evAt < 60e3) return;
   try {
@@ -1205,7 +1206,11 @@ function renderEv() {
   const left = Math.max(0, Math.ceil((Date.parse(evDayNow() + 'T15:00:00Z') - (info ? info.now : Date.now())) / 3600e3));
   $('evsub').textContent = top ? top.count + ' たい さんか・よる 0 じ しめきり（あと ' + left + ' じかん）' : evDown ? 'いま イベントに つながらないよ。しばらく してから また きてね' : 'よみこみちゅう…';
   // きのうの 1 位
-  const ch = top && top.champion, cb = $('evchamp'); cb.hidden = !ch; cb.innerHTML = '';
+  const ch = top && top.champion, cb = $('evchamp'); cb.innerHTML = '';
+  // 0 時すぎ（しめの 計算が おわる まで 10 分 ほど）は きのうの 1 位が まだ ない → 計算中と 出して 1 分ごとに 読みなおす
+  const chWait = !ch && top && evDayNow() > EVENT_START && new Date(Date.now() + 9 * 3600e3).getUTCHours() === 0;
+  cb.hidden = !ch && !chWait;
+  if (chWait) { const d = document.createElement('div'); d.innerHTML = '<b>🎀 きのうの けっかを けいさん ちゅう…</b><br>0 じ 10 ぷん ごろ に でるよ'; cb.append(d); clearTimeout(evChWaitT); evChWaitT = setTimeout(() => { if (mode === 'ev') loadEv(true).then(() => { if (mode === 'ev') renderEv(); }); }, 60e3); }
   if (ch) { cb.append(miniPreview(ch.code, '#78909c', 96, ch.kz)); const d = document.createElement('div'); d.innerHTML = '<b>🎀 きのうの ' + PART_DAY[ch.part] + evq(themeName(ch.part, ch.no)) + ' いちばん</b><br>'; d.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.pct + '%・' + ch.n + ' たい）')); cb.append(d); }
   // 自分
   const box = $('evme'); box.innerHTML = '';

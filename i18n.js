@@ -340,6 +340,7 @@
     [/^🎀 きょうは (.+)$/, '🎀 Today: $1'],
     [/（(からだ|うで|あし) は みんな この かたち）$/, (m, p) => ' (everyone gets this ' + ({ 'からだ': 'body', 'うで': 'arm', 'あし': 'leg' })[p] + ')'],
     [/<b>🎀 きのうの (.+) いちばん<\/b>/, "<b>🎀 Yesterday's #1: $1</b>"],
+    [/<b>🎀 きのうの けっかを けいさん ちゅう…<\/b><br>0 じ 10 ぷん ごろ に でるよ/, "<b>🎀 Counting yesterday's results…</b><br>Ready around 0:10 (JST)"],
     [/（しょうりつ ([\d.]+)%・(\d+) たい）$/, ' (win $1% · $2 entries)'],
     [/^🎀 きのうの (.+) いちばん！ リボンを もらったよ$/, "🎀 #1 on yesterday's $1! You got a ribbon"],
     [/^🎀 きのうの (.+) いちばん$/, "🎀 Yesterday's #1: $1"],
