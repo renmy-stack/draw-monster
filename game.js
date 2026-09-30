@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '127';
+const VERSION = '128';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1366,14 +1366,25 @@ function renderLeague() {
   const order = nkLg.mons.slice().sort((x, y) => pts(y) - pts(x) || (y.pct || 0) - (x.pct || 0));
   box.innerHTML = '';
   const left = nkLg.todo.length;
-  if (nkLg.mons.length >= 2) { const h = document.createElement('div'); h.className = 'rk-h'; h.textContent = left ? 'なかまリーグ けいさんちゅう ' + (nkLg.pairs.length - left) + ' / ' + nkLg.pairs.length : 'なかまリーグ（そうあたり ' + nkLg.pairs.length + ' せん）'; box.append(h); }
+  const busy = left + (nkLg.busy || 0) > 0 && nkLg.pairs.length;   // 計算中（のこり ＋ いま 計算して いる ぶん）
+  if (nkLg.mons.length >= 2) {
+    const h = document.createElement('div'); h.className = 'rk-h'; h.textContent = busy ? 'なかまリーグ' : 'なかまリーグ（そうあたり ' + nkLg.pairs.length + ' せん おわり！）'; box.append(h);
+    if (busy) {
+      const done = Object.keys(nkLg.res).length ? nkLg.pairs.filter(p => nkLg.res[p[2]]).length : 0, pc = Math.floor(done / nkLg.pairs.length * 100);
+      const pr = document.createElement('div'); pr.className = 'nk-prog';
+      const bar = document.createElement('div'); bar.className = 'nk-bar'; const fill = document.createElement('i'); fill.style.width = Math.max(4, pc) + '%'; bar.append(fill);
+      const t = document.createElement('div'); t.className = 'nk-ptext'; t.textContent = '⚔️ そうあたり けいさんちゅう… ' + pc + '%（' + done + ' / ' + nkLg.pairs.length + ' せん）じゅんいは まだ かわるよ';
+      pr.append(bar, t); box.append(pr);
+    }
+  }
   let pos = 0, prev = null;
   order.forEach((m, i) => {
     const s = st.get(m), p = pts(m); if (p !== prev) pos = i + 1; prev = p;
     const row = document.createElement('button'); row.className = 'rk-row rk-top' + (m.me ? ' mine' : '');
     const ps = document.createElement('span'); ps.className = 'rk-pos'; ps.textContent = nkLg.mons.length >= 2 ? pos : '-';
     const n = document.createElement('span'); n.className = 'rk-opp'; n.textContent = m.name + (m.me ? '（あなた）' : '');
-    const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = (s.w + s.l + s.d ? s.w + 'しょう ' + s.l + 'はい' + (s.d ? ' ' + s.d + 'わけ' : '') : '') + (m.pct != null ? '（ぜんたい ' + m.pct + '%）' : '');
+    const all = (nkLg.mons.length - 1) * 2, partial = busy && s.w + s.l + s.d < all;   // この 人の 試合が まだ のこって いる
+    const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = (s.w + s.l + s.d ? s.w + 'しょう ' + s.l + 'はい' + (s.d ? ' ' + s.d + 'わけ' : '') : '') + (partial ? ' …' : '') + (m.pct != null ? '（ぜんたい ' + m.pct + '%）' : '');
     row.append(ps, miniPreview(m.code, m.me ? ME.color : RANK_COLOR, 64, m.kz), n, sc);
     if (!m.me) row.addEventListener('click', () => nkPractice(m));
     box.append(row);

@@ -498,3 +498,9 @@ body.nav #nakama .panel { width: 100%; max-width: 520px; margin: 0 auto; max-hei
 .nk-head button { margin: 0; padding: 5px 12px; font-size: 13px; }
 .nk-code { font-size: 12px; color: #666; text-align: left; }
 .nk-leave { margin-top: 12px; }
+
+.nk-prog { margin: 4px 0 6px; }
+.nk-bar { height: 10px; border: 2px solid var(--ink); border-radius: 999px; background: #fff; overflow: hidden; }
+.nk-bar i { display: block; height: 100%; background: repeating-linear-gradient(-45deg, #ef6c00 0 8px, #ffa040 8px 16px); background-size: 22px 22px; animation: nkbar .6s linear infinite; transition: width .25s; }
+@keyframes nkbar { from { background-position: 0 0; } to { background-position: 22px 0; } }
+.nk-ptext { margin-top: 3px; font-size: 12px; font-weight: 800; color: #bf360c; text-align: left; }

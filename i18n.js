@@ -157,6 +157,7 @@
     "きょうの イベント<br>ランクせん": "Today's Event<br>Ranked",
     // なかまランキング
     "みんな": "Everyone",
+    "なかまリーグ": "Friends league",
     "なかま": "Friends",
     "なかまで そうあたりして じゅんいを くらべよう（ランクせんに とうろくした モンスターで たたかう）": "Everyone in your group battles everyone (using their Ranked monsters)",
     "＋ なかまを つくる": "+ Make a group",
@@ -307,6 +308,8 @@
     [/^(\d+) たい さんか・20 ぷんごとに こうしん$/, '$1 entered · updates every 20 min'],
     [/<b>👑 きのうの チャンピオン<\/b>/, "<b>👑 Yesterday's champion</b>"],
     [/^なかまリーグ けいさんちゅう (\d+) \/ (\d+)$/, 'Friends league: calculating $1 / $2'],
+    [/^なかまリーグ（そうあたり (\d+) せん おわり！）$/, 'Friends league (all $1 matches done!)'],
+    [/^⚔️ そうあたり けいさんちゅう… (\d+)%（(\d+) \/ (\d+) せん）じゅんいは まだ かわるよ$/, '⚔️ Battling everyone… $1% ($2 / $3) ranks may still change'],
     [/^なかまリーグ（そうあたり (\d+) せん）$/, 'Friends league (round robin, $1 matches)'],
     [/^(\d+)しょう (\d+)はい(?: (\d+)わけ)?/, (m, w, l, d) => w + 'W ' + l + 'L' + (d ? ' ' + d + 'D' : '')],
     [/（ぜんたい ([\d.]+)%）/, ' (all $1%)'],
