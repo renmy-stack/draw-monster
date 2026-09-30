@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '126';
+const VERSION = '127';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -121,7 +121,7 @@ function resize() {
   sizePad(); if (mode === 'draw') drawPad();
 }
 window.addEventListener('resize', resize);
-function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff', 'rank', 'ev', 'more', 'nakama']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); navSync(id); }
+function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff', 'rank', 'ev', 'more', 'nakama']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); navSync(id); if (id !== 'nakama' && typeof nkPool !== 'undefined' && nkPool.length) nkStop(); }
 // はやおくり: 一度でも倒した CPU との戦いだけ
 function canFast() { return mode === 'battle' && !isFriend && !!beaten[S && S.stage != null ? S.stage : stage]; }
 function updateFastBtn() { $('fast').textContent = fast ? '▶ ふつう' : '▶▶ はやおくり'; $('fast').classList.toggle('on', fast); }
@@ -1309,26 +1309,54 @@ function nkInvite(g) {
   if (navigator.share) navigator.share({ text, url }).catch(() => {}); else showShareBox(text + ' ' + url);
 }
 // なかまリーグ: なかまの モンスターで 総当たり（左右 入れかえて 2 戦）を この 端末で 計算。結果は 形の 組み合わせごとに おぼえる（同じ 2 体・同じ 左右は いつも 同じ）
-// 画面を はなれたら 止める。1 戦 ≈ パソコン 40ms（スマホは その 数倍）なので 30ms ずつ 区切って 表を うめていく
-let nkLg = null, nkLgTimer = 0;
+// スマホの 複数の コアで 同時に（Web Worker、最大 4 つ）。自分の 試合を 先に。画面を はなれたら 止める。Worker が 使えない ときは 30ms ずつ この 画面で
+let nkLg = null, nkLgTimer = 0, nkPool = [];
 const NK_RES_MAX = 6000;
 function nkRes() { try { return JSON.parse(lsGet('nk.res') || '{}'); } catch (e) { return {}; } }
 function nkResSave(r) { let ks = Object.keys(r); if (ks.length > NK_RES_MAX) { const o = {}; for (const k of ks.slice(-NK_RES_MAX / 2)) o[k] = r[k]; r = o; } lsSet('nk.res', JSON.stringify(r)); }
+function nkStop() { clearTimeout(nkLgTimer); for (const w of nkPool) w.terminate(); nkPool = []; if (nkLg) nkResSave(nkLg.res); }
+function nkWorkers() {
+  if (nkPool.length) return nkPool;
+  try {
+    const src = 'importScripts(' + JSON.stringify(new URL('sim.js?v=' + VERSION, location.href).href) + ');onmessage=function(e){var d=e.data;postMessage([d[0],RB.fight(RB.decodeDesign(d[1]),RB.decodeDesign(d[2])).winner||"D"]);};';
+    const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+    const n = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1));
+    for (let i = 0; i < n; i++) nkPool.push(new Worker(url));
+  } catch (e) { nkPool = []; }
+  return nkPool;
+}
 function nkLeague(g) {
-  clearTimeout(nkLgTimer);
+  nkStop();
   const mons = (g.top || []).filter(m => m.code && RB.decodeDesign(m.code)).map(m => Object.assign({ tag: codeTag(m.code) }, m));
   const res = nkRes(), pairs = [];
   for (const a of mons) for (const b of mons) if (a !== b) pairs.push([a, b, a.tag + '>' + b.tag]);
-  nkLg = { code: g.code, mons, pairs, res, todo: pairs.filter(p => !res[p[2]]), n: 0 };
+  const todo = pairs.filter(p => !res[p[2]]).sort((x, y) => (y[0].me || y[1].me ? 1 : 0) - (x[0].me || x[1].me ? 1 : 0));   // 自分の 試合を 先に
+  const lg = nkLg = { code: g.code, mons, pairs, res, todo, n: 0, busy: 0, t0: performance.now() };
+  let drawAt = 0;
+  const redraw = force => { const t = performance.now(); if (force || t - drawAt > 250) { drawAt = t; renderLeague(); } };
+  const finish = () => { if (lg.todo.length || lg.busy) return; nkResSave(lg.res); renderLeague(); for (const w of nkPool) w.terminate(); nkPool = []; TR('nkleague', { n: mons.length, f: lg.n, ms: Math.round(performance.now() - lg.t0), w: lg.workers || 0 }); };
+  const ok = (k, w) => { lg.res[k] = w; lg.n++; if (lg.n % 40 === 0) nkResSave(lg.res); redraw(false); };
+  // Worker が 使えない とき: この 画面で 30ms ずつ
   const step = () => {
-    if (!nkLg || nkLg.code !== g.code || mode !== 'nakama') { if (nkLg) nkResSave(nkLg.res); return; }
+    if (nkLg !== lg || mode !== 'nakama') { nkResSave(lg.res); return; }
     const t0 = performance.now();
-    while (nkLg.todo.length && performance.now() - t0 < 30) { const [a, b, k] = nkLg.todo.shift(); nkLg.res[k] = RB.fight(RB.decodeDesign(a.code), RB.decodeDesign(b.code)).winner || 'D'; nkLg.n++; }
-    if (!nkLg.todo.length || nkLg.n % 40 === 0) nkResSave(nkLg.res);
-    renderLeague();
-    if (nkLg.todo.length) nkLgTimer = setTimeout(step, 16); else TR('nkleague', { n: mons.length, f: nkLg.n });
+    while (lg.todo.length && performance.now() - t0 < 30) { const [a, b, k] = lg.todo.shift(); ok(k, RB.fight(RB.decodeDesign(a.code), RB.decodeDesign(b.code)).winner || 'D'); }
+    if (lg.todo.length) nkLgTimer = setTimeout(step, 16); else finish();
   };
-  renderLeague(); nkLgTimer = setTimeout(step, 50);
+  const pool = lg.todo.length ? nkWorkers() : [];
+  lg.workers = pool.length;
+  if (pool.length) {
+    const feed = w => {
+      if (nkLg !== lg || mode !== 'nakama') { nkStop(); return; }
+      const p = lg.todo.shift(); if (!p) { finish(); return; }
+      lg.busy++;
+      w.onmessage = e => { lg.busy--; ok(e.data[0], e.data[1]); feed(w); };
+      w.onerror = () => { lg.busy--; lg.todo.unshift(p); for (const x of nkPool) x.terminate(); nkPool = []; lg.busy = 0; nkLgTimer = setTimeout(step, 16); };   // Worker が だめなら この 画面で
+      w.postMessage([p[2], p[0].code, p[1].code]);
+    };
+    for (const w of pool) feed(w);
+  } else if (lg.todo.length) nkLgTimer = setTimeout(step, 50);
+  renderLeague();
 }
 function renderLeague() {
   const box = $('nklg'); if (!box || !nkLg) return;
