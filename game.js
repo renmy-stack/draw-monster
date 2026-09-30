@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '137';
+const VERSION = '138';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1297,6 +1297,26 @@ onTap($('evregbtn'), evRegister);
 onTap($('evdraw'), startEvDraw);
 onTap($('evback'), showTitle);
 onTap($('evtop'), showTitle);
+// れきだいの 1 位（新しい 順。受付係が 10 分 おぼえて いる）
+let evHist = null, evHistAt = 0;
+async function showEvHist() {
+  const box = $('evhist'); box.hidden = false; $('evhistbtn').textContent = '🎀 れきだいの いちばん（とじる）';
+  if (!evHist || Date.now() - evHistAt > 600e3) { box.textContent = 'よみこみちゅう…'; try { evHist = (await (await fetch(RANK_API + '/ev/champs')).json()).list || []; evHistAt = Date.now(); } catch (e) { box.textContent = 'つながらなかった…'; return; } }
+  box.innerHTML = '';
+  if (!evHist.length) { box.textContent = 'まだ いないよ'; return; }
+  for (const c of evHist) {
+    const row = document.createElement('div'); row.className = 'rk-row rk-top';
+    const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = +c.day.slice(5, 7) + '/' + +c.day.slice(8);
+    const nb = document.createElement('span'); nb.className = 'nk-nm';
+    const n = document.createElement('span'); n.className = 'rk-opp'; n.textContent = c.name;
+    const sub = document.createElement('small'); sub.textContent = PART_DAY[c.part] + evq(themeName(c.part, c.no)) + '・' + c.n + ' たい';
+    nb.append(n, sub);
+    const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = c.pct + '%';
+    row.append(p, miniPreview(c.code, EV_COLOR, 64, c.kz), nb, sc); box.append(row);
+  }
+  TR('evhist', { n: evHist.length });
+}
+onTap($('evhistbtn'), () => { if ($('evhist').hidden) showEvHist(); else { $('evhist').hidden = true; $('evhistbtn').textContent = '🎀 れきだいの いちばん'; } });
 // ---------- なかまランキング（?nakamatest の 端末だけ、2026-09-30〜）----------
 // なかまコード（6 文字）で あつまった 人の 中だけの 順位。順位は ランクせんの 勝率を ならべる だけ（受付係の /g*）。企画メモ secretary/notes/draw-robot-nakama.md
 // さそう URL（?g=コード）を 開いた 端末は テスト中でも なかまが 出る（オーナーが さそった 人だけ）
