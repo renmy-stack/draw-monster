@@ -168,6 +168,22 @@
     "やめる": "Cancel",
     "この なかまを ぬける": "Leave this group",
     "なかまへ もどる": "Back to friends",
+    "つくってるよ…": "Making…",
+    "はいってるよ…": "Joining…",
+    "ぬけたよ": "You left the group",
+    "ほんとうに ぬける？（もういちど おす）": "Really leave? (tap again)",
+    "なかまの なまえ（10 もじまで）": "Group name (up to 10 characters)",
+    "なかまコード（6 もじ）": "Group code (6 characters)",
+    "れい: 3くみ": "e.g. Class 3",
+    "れい: K7M2QX": "e.g. K7M2QX",
+    "なかまを つくって、ともだちに コードを おくろう。なかまの 中で だれが いちばん つよいか くらべられるよ": "Make a group and send the code to friends. See who is strongest in your group!",
+    "あなたも ランクせんに とうろくすると ここに でるよ": "Enter Ranked to show up here too",
+    "その なかまは みつからないよ": "That group was not found",
+    "コードは 6 もじ だよ": "The code is 6 characters",
+    "つながらなかった…しばらく してから また きてね": "Couldn't connect… please come back later",
+    "きょうは もう たくさん つくったよ。また あした！": "You made a lot today. See you tomorrow!",
+    "れんしゅうじあいは モンスターを つくってから": "Make a monster first to play practice matches",
+    "コードを いれてね": "Enter a code",
     "なかまが ランクせんに とうろくすると そうあたりで たたかうよ": "When friends enter Ranked, everyone battles everyone",
     // 下の タブ
     "まだ モンスターが いないよ": "No monster yet",
@@ -313,6 +329,10 @@
     [/^なかまリーグ（そうあたり (\d+) せん）$/, 'Friends league (round robin, $1 matches)'],
     [/^(\d+)しょう (\d+)はい(?: (\d+)わけ)?/, (m, w, l, d) => w + 'W ' + l + 'L' + (d ? ' ' + d + 'D' : '')],
     [/（ぜんたい ([\d.]+)%）/, ' (all $1%)'],
+    [/^なかまコード: ([A-Z0-9]+)$/, 'Group code: $1'],
+    [/^まだ ランクせんに とうろく してない なかま (\d+) にん$/, '$1 friend(s) have not entered Ranked yet'],
+    [/^なかまは (\d+) つまで。どれかを ぬけてから (つくって|はいって)ね$/, 'Up to $1 groups. Leave one first'],
+    [/^この なかまは もう いっぱい（(\d+) にん）$/, 'This group is full ($1)'],
     [/^ぜんたい ([\d.]+)%$/, 'all $1%'],
     [/・ぜんたい ([\d.]+)%$/, ' · all $1%'],
     // きょうの イベント（お題の 名前は 英語の データ、日の 名前は あとの 言いまわしで）
@@ -410,7 +430,7 @@
   const wrap = (proto, prop) => {
     const d = Object.getOwnPropertyDescriptor(proto, prop); if (!d || !d.set) return;
     // なまえ（プレイヤーが つけた もの）は そのまま
-    Object.defineProperty(proto, prop, { configurable: true, enumerable: d.enumerable, get: d.get, set(v) { d.set.call(this, this.classList && (this.classList.contains('rk-name') || this.classList.contains('rk-opp')) ? v : tr(v)); } });
+    Object.defineProperty(proto, prop, { configurable: true, enumerable: d.enumerable, get: d.get, set(v) { d.set.call(this, this.classList && (this.classList.contains('rk-name') || this.classList.contains('rk-opp') || this.classList.contains('nk-raw')) ? v : tr(v)); } });
   };
   wrap(Node.prototype, 'textContent');
   wrap(Element.prototype, 'innerHTML');

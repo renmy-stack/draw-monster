@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '130';
+const VERSION = '131';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1235,7 +1235,10 @@ onTap($('evtop'), showTitle);
 // さそう URL（?g=コード）を 開いた 端末は テスト中でも なかまが 出る（オーナーが さそった 人だけ）
 const gParam = (/[?&]g=([A-Za-z0-9]{6})(&|$)/.exec(location.search) || [])[1];
 if (/[?&]nakamatest(=|&|$)/.test(location.search) || gParam) lsSet('nakamatest', '1');
-const NK_ON = lsGet('nakamatest') === '1';
+const NK_ON = true;   // 2026-09-30 全員に 公開（前は ?nakamatest の 端末だけ）
+const NK_EN = window.LANG === 'en';
+// なかまの 名前は 英語の 置きかえに かけない（nk-raw、i18n.js）。名前が 入る 文は ここで 英語も 作る
+function nkRaw(el, ja, en) { el.classList.add('nk-raw'); el.textContent = NK_EN ? en : ja; }
 let nkMine = null, nkBoard = null, nkSel = lsGet('nk.sel') || '', nkForm = null, nkPreview = gParam ? gParam.toUpperCase() : null, nkBusy = false, nkLeaveAsk = false;
 for (const el of document.querySelectorAll('.nk-seg')) el.hidden = !NK_ON;
 for (const b of document.querySelectorAll('.nk-seg button[data-go]')) onTap(b, () => { if (b.dataset.go === 'nakama') showNakama(); else showRank(); });
@@ -1261,7 +1264,7 @@ function renderNakama() {
   // さそわれた とき:「○○に はいる？」
   const pv = $('nkpreview'); pv.hidden = !(nkPreview && typeof nkPreview === 'object'); pv.innerHTML = '';
   if (!pv.hidden) {
-    const t = document.createElement('div'); t.className = 'nk-head'; const b = document.createElement('b'); b.textContent = '「' + nkPreview.name + '」（' + nkPreview.count + ' にん）に はいる？'; t.append(b); pv.append(t);
+    const t = document.createElement('div'); t.className = 'nk-head'; const b = document.createElement('b'); nkRaw(b, '「' + nkPreview.name + '」（' + nkPreview.count + ' にん）に はいる？', 'Join "' + nkPreview.name + '" (' + nkPreview.count + ')?'); t.append(b); pv.append(t);
     const row = document.createElement('div'); row.className = 'rbtns';
     const yes = document.createElement('button'); yes.className = 'main'; yes.textContent = 'はいる'; yes.addEventListener('click', () => nkJoin(nkPreview.code));
     const no = document.createElement('button'); no.className = 'sub'; no.textContent = 'やめる'; no.addEventListener('click', () => { nkPreview = null; renderNakama(); });
@@ -1269,16 +1272,16 @@ function renderNakama() {
   }
   // 自分の なかま（えらぶ）＋ つくる・コードで はいる
   const gs = $('nkgroups'); gs.innerHTML = '';
-  for (const g of nkMine || []) { const b = document.createElement('button'); b.className = g.code === nkSel ? 'on' : ''; b.textContent = g.name; b.addEventListener('click', () => { nkSel = g.code; lsSet('nk.sel', g.code); nkBoard = null; showNakama(''); }); gs.append(b); }
+  for (const g of nkMine || []) { const b = document.createElement('button'); b.className = g.code === nkSel ? 'on' : ''; nkRaw(b, g.name, g.name); b.addEventListener('click', () => { nkSel = g.code; lsSet('nk.sel', g.code); nkBoard = null; showNakama(''); }); gs.append(b); }
   if (nkMine && nkMine.length < 3) for (const [k, label] of [['create', '＋ なかまを つくる'], ['join', '🔑 コードで はいる']]) { const b = document.createElement('button'); b.className = 'add'; b.textContent = label; b.addEventListener('click', () => { nkForm = nkForm === k ? null : k; renderNakama(); }); gs.append(b); }
   $('nkform').hidden = !nkForm;
-  if (nkForm) { $('nklabel').textContent = nkForm === 'create' ? 'なかまの なまえ（10 もじまで）' : 'なかまコード（6 もじ）'; $('nkin').placeholder = nkForm === 'create' ? 'れい: 3くみ' : 'れい: K7M2QX'; $('nkgo').textContent = nkForm === 'create' ? 'つくる' : 'はいる'; }
+  if (nkForm) { $('nklabel').textContent = nkForm === 'create' ? 'なかまの なまえ（10 もじまで）' : 'なかまコード（6 もじ）'; $('nkin').placeholder = TRL(nkForm === 'create' ? 'れい: 3くみ' : 'れい: K7M2QX'); $('nkgo').textContent = nkForm === 'create' ? 'つくる' : 'はいる'; }
   // 順位表
   const bd = $('nkboard'); bd.innerHTML = '';
   if (nkMine && !nkMine.length && !nkPreview) { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'なかまを つくって、ともだちに コードを おくろう。なかまの 中で だれが いちばん つよいか くらべられるよ'; bd.append(n); return; }
   const g = nkBoard; if (!g || g.error) return;
   const head = document.createElement('div'); head.className = 'nk-head';
-  const nm = document.createElement('b'); nm.textContent = g.name + '（' + g.count + ' にん）';
+  const nm = document.createElement('b'); nkRaw(nm, g.name + '（' + g.count + ' にん）', g.name + ' (' + g.count + ')');
   const inv = document.createElement('button'); inv.className = 'main'; inv.textContent = '📨 さそう'; inv.addEventListener('click', () => nkInvite(g));
   head.append(nm, inv); bd.append(head);
   const code = document.createElement('div'); code.className = 'nk-code'; code.textContent = 'なかまコード: ' + g.code; bd.append(code);
@@ -1292,13 +1295,13 @@ async function nkSubmit() {
   if (nkBusy) return; const v = $('nkin').value.trim(); if (!v) { $('nkmsg').textContent = nkForm === 'create' ? 'なまえを いれてね' : 'コードを いれてね'; return; }
   if (nkForm === 'join') return nkJoin(v);
   nkBusy = true; $('nkmsg').textContent = 'つくってるよ…';
-  try { const r = await nkApi('/g/create', { name: v }); if (r.error) $('nkmsg').textContent = r.error; else { TR('nkcreate', null); nkSel = r.code; lsSet('nk.sel', r.code); nkForm = null; $('nkin').value = ''; $('nkmsg').textContent = '「' + r.name + '」が できたよ！ 📨 さそう で ともだちに おくろう'; await loadNakama(); } }
+  try { const r = await nkApi('/g/create', { name: v }); if (r.error) $('nkmsg').textContent = r.error; else { TR('nkcreate', null); nkSel = r.code; lsSet('nk.sel', r.code); nkForm = null; $('nkin').value = ''; nkRaw($('nkmsg'), '「' + r.name + '」が できたよ！ 📨 さそう で ともだちに おくろう', '"' + r.name + '" is ready! Send it to friends with 📨 Invite'); setTimeout(() => $('nkmsg').classList.remove('nk-raw'), 0); await loadNakama(); } }
   catch (e) { $('nkmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   nkBusy = false; if (mode === 'nakama') renderNakama();
 }
 async function nkJoin(code) {
   if (nkBusy) return; nkBusy = true; $('nkmsg').textContent = 'はいってるよ…';
-  try { const r = await nkApi('/g/join', { code }); if (r.error) $('nkmsg').textContent = r.error; else { TR('nkjoin', { via: nkPreview ? 'url' : 'code' }); nkSel = r.code; lsSet('nk.sel', r.code); nkForm = null; nkPreview = null; $('nkin').value = ''; $('nkmsg').textContent = '「' + r.name + '」に はいったよ！'; await loadNakama(); } }
+  try { const r = await nkApi('/g/join', { code }); if (r.error) $('nkmsg').textContent = r.error; else { TR('nkjoin', { via: nkPreview ? 'url' : 'code' }); nkSel = r.code; lsSet('nk.sel', r.code); nkForm = null; nkPreview = null; $('nkin').value = ''; nkRaw($('nkmsg'), '「' + r.name + '」に はいったよ！', 'You joined "' + r.name + '"!'); setTimeout(() => $('nkmsg').classList.remove('nk-raw'), 0); await loadNakama(); } }
   catch (e) { $('nkmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   nkBusy = false; if (mode === 'nakama') renderNakama();
 }
@@ -1309,7 +1312,7 @@ async function nkLeave() {
   nkBusy = false; if (mode === 'nakama') renderNakama();
 }
 function nkInvite(g) {
-  const url = SITE_URL + '?g=' + g.code, text = 'かいて！モンスターバトルの なかま「' + g.name + '」に はいって、モンスターで しょうぶ！';
+  const url = SITE_URL + '?g=' + g.code, text = NK_EN ? 'Join my group in Draw! Monster Battle and battle with our monsters!' : 'かいて！モンスターバトルの なかま「' + g.name + '」に はいって、モンスターで しょうぶ！';
   TR('nkinvite', null);
   if (navigator.share) navigator.share({ text, url }).catch(() => {}); else showShareBox(text + ' ' + url);
 }
