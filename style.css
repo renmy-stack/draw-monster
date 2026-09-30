@@ -469,3 +469,9 @@ body.nav .advrow .advgo { flex: 2.4 1 0; min-width: 0; margin: 0; padding: 8px 6
 body.nav .advrow #vs { flex: 1 1 0; min-width: 0; margin: 0; padding: 6px 8px; justify-content: center; align-items: center; text-align: center; }
 body.nav .advrow #vs b { font-size: 13px; }
 body.nav .advrow #vs small { display: none; }   /* 横並びでは 説明は 出さない（高さを ひくく） */
+/* ホーム画面から 開いた とき（iPhone）: 上は 時計・電池の ぶん あける。下は ページの 高さが ステータスバーの ぶん 短く なる ことが あるので、その ぶん（--lost、game.js で 測る）下へ のばす */
+body.nav #title, body.nav #rank, body.nav #ev, body.nav #more { padding-top: calc(10px + env(safe-area-inset-top)); bottom: calc(-1 * var(--lost, 0px)); }
+body.nav #kzbox { padding-top: calc(12px + env(safe-area-inset-top)); bottom: calc(-1 * var(--lost, 0px)); }
+body.nav #navbar { bottom: calc(-1 * var(--lost, 0px)); }
+body.nav .advrow #vs { color: var(--ink); }
+body.nav .advrow .advgo { white-space: nowrap; font-size: min(22px, 5.4vw); }

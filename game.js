@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '122';
+const VERSION = '123';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1571,6 +1571,13 @@ function fitTmon() {
   c.style.width = c.style.height = sz + 'px';
 }
 window.addEventListener('resize', () => setTimeout(fitTmon, 0));
+// ホーム画面から 開いた iPhone で ページの 高さが 画面より 短い（ステータスバーの ぶん）ときの 差。タブと パネルを その ぶん 下へ（縦向き・90px まで）
+function fixStandalone() {
+  const sa = window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
+  const lost = sa && screen.height > screen.width ? Math.max(0, Math.min(90, screen.height - window.innerHeight)) : 0;
+  document.documentElement.style.setProperty('--lost', lost + 'px');
+}
+fixStandalone(); window.addEventListener('resize', fixStandalone);
 if (navOn()) {
   document.body.classList.add('nav');
   $('tmon').width = $('tmon').height = 480;   // トップの モンスターを 大きく 出すので 細かく
