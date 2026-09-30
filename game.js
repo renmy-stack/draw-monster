@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '129';
+const VERSION = '130';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -114,7 +114,12 @@ let friendRobot = null;
 { const m = /[#&]r=([A-Za-z0-9_-]+)/.exec(location.hash); if (m) friendRobot = RB.decodeDesign(m[1]); }
 
 // ---------- 画面 ----------
+// 画面の 上の よけるべき 高さ（ホーム画面から 開いた iPhone の 時計・電池）。キャンバスの 上の 表示（HP の バーなど）を この ぶん さげる
+let SAT = 0;
+const satProbe = document.createElement('div'); satProbe.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none';
+document.body.appendChild(satProbe);
 function resize() {
+  SAT = satProbe.offsetHeight || 0;
   DPR = Math.min(2, window.devicePixelRatio || 1);
   W = window.innerWidth; H = window.innerHeight;
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
@@ -656,7 +661,7 @@ function drawRobotWorld(b, color, flash, crown) {
   if (kz && kz[3] && (mode === 'battle' || mode === 'pause')) kzFxLayer(b, kz[3], true);   // かざり: 体の まえの えふぇくと
 }
 function drawHud() {
-  const top = 12, bw = (W - 110) / 2;
+  const top = 12 + SAT, bw = (W - 110) / 2;   // SAT: ホーム画面から 開いた ときの 時計の ぶん
   const bar = (x, hp, max, name, col, right) => {
     ctx.font = '800 14px sans-serif'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = right ? 'right' : 'left'; ctx.fillStyle = '#fff';
     ctx.fillText(name, right ? x + bw : x, top + 16);
