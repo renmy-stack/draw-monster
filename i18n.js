@@ -158,7 +158,7 @@
     // なかまランキング
     "みんな": "Everyone",
     "なかま": "Friends",
-    "なかまの 中だけで じゅんいを くらべよう（ランクせんの しょうりつで ならぶ）": "Compare ranks just among your friends (by Ranked win rate)",
+    "なかまで そうあたりして じゅんいを くらべよう（ランクせんに とうろくした モンスターで たたかう）": "Everyone in your group battles everyone (using their Ranked monsters)",
     "＋ なかまを つくる": "+ Make a group",
     "🔑 コードで はいる": "🔑 Join with a code",
     "📨 さそう": "📨 Invite",
@@ -167,6 +167,7 @@
     "やめる": "Cancel",
     "この なかまを ぬける": "Leave this group",
     "なかまへ もどる": "Back to friends",
+    "なかまが ランクせんに とうろくすると そうあたりで たたかうよ": "When friends enter Ranked, everyone battles everyone",
     // 下の タブ
     "まだ モンスターが いないよ": "No monster yet",
     "✏ タップで つくる": "✏ Tap to make one",
@@ -305,6 +306,10 @@
     [/いま: /, 'Now: '],
     [/^(\d+) たい さんか・20 ぷんごとに こうしん$/, '$1 entered · updates every 20 min'],
     [/<b>👑 きのうの チャンピオン<\/b>/, "<b>👑 Yesterday's champion</b>"],
+    [/^なかまリーグ けいさんちゅう (\d+) \/ (\d+)$/, 'Friends league: calculating $1 / $2'],
+    [/^なかまリーグ（そうあたり (\d+) せん）$/, 'Friends league (round robin, $1 matches)'],
+    [/^(\d+)しょう (\d+)はい(?: (\d+)わけ)?/, (m, w, l, d) => w + 'W ' + l + 'L' + (d ? ' ' + d + 'D' : '')],
+    [/（ぜんたい ([\d.]+)%）/, ' (all $1%)'],
     // きょうの イベント（お題の 名前は 英語の データ、日の 名前は あとの 言いまわしで）
     [/^(\d+) たい さんか・よる 0 じ しめきり（あと (\d+) じかん）$/, '$1 entered · closes at midnight ($2 h left)'],
     [/^🎀 きょうは (.+)$/, '🎀 Today: $1'],

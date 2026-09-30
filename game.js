@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '125';
+const VERSION = '126';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1277,16 +1277,8 @@ function renderNakama() {
   const inv = document.createElement('button'); inv.className = 'main'; inv.textContent = '📨 さそう'; inv.addEventListener('click', () => nkInvite(g));
   head.append(nm, inv); bd.append(head);
   const code = document.createElement('div'); code.className = 'nk-code'; code.textContent = 'なかまコード: ' + g.code; bd.append(code);
-  let i = 0;
-  for (const m of g.top || []) {
-    const row = document.createElement('button'); row.className = 'rk-row rk-top' + (m.me ? ' mine' : '');
-    const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = m.pct != null ? ++i : '-';
-    const n = document.createElement('span'); n.className = 'rk-opp'; n.textContent = m.name + (m.me ? '（あなた）' : '');
-    const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = m.pct != null ? m.pct + '%' + (m.pos ? '・' + m.pos + 'い' : '') : 'けいさんちゅう';
-    row.append(p, miniPreview(m.code, m.me ? ME.color : RANK_COLOR, 64, m.kz), n, sc);
-    if (!m.me) row.addEventListener('click', () => nkPractice(m));
-    bd.append(row);
-  }
+  const lg = document.createElement('div'); lg.id = 'nklg'; bd.append(lg);
+  nkLeague(g);
   if (g.unreg) { const u = document.createElement('div'); u.className = 'rk-note'; u.textContent = 'まだ ランクせんに とうろく してない なかま ' + g.unreg + ' にん'; bd.append(u); }
   if (!(g.top || []).some(m => m.me)) { const u = document.createElement('div'); u.className = 'rk-note'; u.textContent = 'あなたも ランクせんに とうろくすると ここに でるよ'; bd.append(u); }
   const lv = document.createElement('button'); lv.className = 'sub nk-leave'; lv.textContent = nkLeaveAsk ? 'ほんとうに ぬける？（もういちど おす）' : 'この なかまを ぬける'; lv.addEventListener('click', nkLeave); bd.append(lv);
@@ -1315,6 +1307,50 @@ function nkInvite(g) {
   const url = SITE_URL + '?g=' + g.code, text = 'かいて！モンスターバトルの なかま「' + g.name + '」に はいって、モンスターで しょうぶ！';
   TR('nkinvite', null);
   if (navigator.share) navigator.share({ text, url }).catch(() => {}); else showShareBox(text + ' ' + url);
+}
+// なかまリーグ: なかまの モンスターで 総当たり（左右 入れかえて 2 戦）を この 端末で 計算。結果は 形の 組み合わせごとに おぼえる（同じ 2 体・同じ 左右は いつも 同じ）
+// 画面を はなれたら 止める。1 戦 ≈ パソコン 40ms（スマホは その 数倍）なので 30ms ずつ 区切って 表を うめていく
+let nkLg = null, nkLgTimer = 0;
+const NK_RES_MAX = 6000;
+function nkRes() { try { return JSON.parse(lsGet('nk.res') || '{}'); } catch (e) { return {}; } }
+function nkResSave(r) { let ks = Object.keys(r); if (ks.length > NK_RES_MAX) { const o = {}; for (const k of ks.slice(-NK_RES_MAX / 2)) o[k] = r[k]; r = o; } lsSet('nk.res', JSON.stringify(r)); }
+function nkLeague(g) {
+  clearTimeout(nkLgTimer);
+  const mons = (g.top || []).filter(m => m.code && RB.decodeDesign(m.code)).map(m => Object.assign({ tag: codeTag(m.code) }, m));
+  const res = nkRes(), pairs = [];
+  for (const a of mons) for (const b of mons) if (a !== b) pairs.push([a, b, a.tag + '>' + b.tag]);
+  nkLg = { code: g.code, mons, pairs, res, todo: pairs.filter(p => !res[p[2]]), n: 0 };
+  const step = () => {
+    if (!nkLg || nkLg.code !== g.code || mode !== 'nakama') { if (nkLg) nkResSave(nkLg.res); return; }
+    const t0 = performance.now();
+    while (nkLg.todo.length && performance.now() - t0 < 30) { const [a, b, k] = nkLg.todo.shift(); nkLg.res[k] = RB.fight(RB.decodeDesign(a.code), RB.decodeDesign(b.code)).winner || 'D'; nkLg.n++; }
+    if (!nkLg.todo.length || nkLg.n % 40 === 0) nkResSave(nkLg.res);
+    renderLeague();
+    if (nkLg.todo.length) nkLgTimer = setTimeout(step, 16); else TR('nkleague', { n: mons.length, f: nkLg.n });
+  };
+  renderLeague(); nkLgTimer = setTimeout(step, 50);
+}
+function renderLeague() {
+  const box = $('nklg'); if (!box || !nkLg) return;
+  const st = new Map(nkLg.mons.map(m => [m, { w: 0, l: 0, d: 0 }]));
+  for (const [a, b, k] of nkLg.pairs) { const r = nkLg.res[k]; if (!r) continue; const A = st.get(a), B = st.get(b); if (r === 'A') { A.w++; B.l++; } else if (r === 'B') { B.w++; A.l++; } else { A.d++; B.d++; } }
+  const pts = m => { const s = st.get(m); return s.w + s.d / 2; };
+  const order = nkLg.mons.slice().sort((x, y) => pts(y) - pts(x) || (y.pct || 0) - (x.pct || 0));
+  box.innerHTML = '';
+  const left = nkLg.todo.length;
+  if (nkLg.mons.length >= 2) { const h = document.createElement('div'); h.className = 'rk-h'; h.textContent = left ? 'なかまリーグ けいさんちゅう ' + (nkLg.pairs.length - left) + ' / ' + nkLg.pairs.length : 'なかまリーグ（そうあたり ' + nkLg.pairs.length + ' せん）'; box.append(h); }
+  let pos = 0, prev = null;
+  order.forEach((m, i) => {
+    const s = st.get(m), p = pts(m); if (p !== prev) pos = i + 1; prev = p;
+    const row = document.createElement('button'); row.className = 'rk-row rk-top' + (m.me ? ' mine' : '');
+    const ps = document.createElement('span'); ps.className = 'rk-pos'; ps.textContent = nkLg.mons.length >= 2 ? pos : '-';
+    const n = document.createElement('span'); n.className = 'rk-opp'; n.textContent = m.name + (m.me ? '（あなた）' : '');
+    const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = (s.w + s.l + s.d ? s.w + 'しょう ' + s.l + 'はい' + (s.d ? ' ' + s.d + 'わけ' : '') : '') + (m.pct != null ? '（ぜんたい ' + m.pct + '%）' : '');
+    row.append(ps, miniPreview(m.code, m.me ? ME.color : RANK_COLOR, 64, m.kz), n, sc);
+    if (!m.me) row.addEventListener('click', () => nkPractice(m));
+    box.append(row);
+  });
+  if (nkLg.mons.length === 1) { const u = document.createElement('div'); u.className = 'rk-note'; u.textContent = 'なかまが ランクせんに とうろくすると そうあたりで たたかうよ'; box.append(u); }
 }
 function nkPractice(m) {
   if (!myRobot) { $('nkmsg').textContent = 'れんしゅうじあいは モンスターを つくってから'; return; }
