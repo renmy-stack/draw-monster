@@ -155,6 +155,18 @@
     // きょうの イベント
     "きょうの イベント": "Today's Event",
     "きょうの イベント<br>ランクせん": "Today's Event<br>Ranked",
+    // なかまランキング
+    "みんな": "Everyone",
+    "なかま": "Friends",
+    "なかまの 中だけで じゅんいを くらべよう（ランクせんの しょうりつで ならぶ）": "Compare ranks just among your friends (by Ranked win rate)",
+    "＋ なかまを つくる": "+ Make a group",
+    "🔑 コードで はいる": "🔑 Join with a code",
+    "📨 さそう": "📨 Invite",
+    "つくる": "Make",
+    "はいる": "Join",
+    "やめる": "Cancel",
+    "この なかまを ぬける": "Leave this group",
+    "なかまへ もどる": "Back to friends",
     // 下の タブ
     "まだ モンスターが いないよ": "No monster yet",
     "✏ タップで つくる": "✏ Tap to make one",

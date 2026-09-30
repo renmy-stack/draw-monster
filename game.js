@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '124';
+const VERSION = '125';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -121,7 +121,7 @@ function resize() {
   sizePad(); if (mode === 'draw') drawPad();
 }
 window.addEventListener('resize', resize);
-function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff', 'rank', 'ev', 'more']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); navSync(id); }
+function show(id) { for (const k of ['title', 'draw', 'result', 'sharebox', 'slotbox', 'handoff', 'rank', 'ev', 'more', 'nakama']) $(k).hidden = k !== id; $('quit').hidden = id !== 'none'; $('fast').hidden = id !== 'none' || !canFast(); updateFastBtn(); navSync(id); }
 // はやおくり: 一度でも倒した CPU との戦いだけ
 function canFast() { return mode === 'battle' && !isFriend && !!beaten[S && S.stage != null ? S.stage : stage]; }
 function updateFastBtn() { $('fast').textContent = fast ? '▶ ふつう' : '▶▶ はやおくり'; $('fast').classList.toggle('on', fast); }
@@ -714,7 +714,7 @@ function showResult() {
     $('rprog').innerHTML = '';
     $('next').hidden = true; $('again').hidden = false; $('again').className = 'main'; $('again').textContent = 'もういちど みる';
     $('share').hidden = true; $('redraw').hidden = S.rankKind !== 'practice'; $('redraw').textContent = 'モンスターを なおす';
-    $('vstitle').hidden = false; $('vstitle').textContent = S.evBattle ? 'イベントへ もどる' : 'ランクせんへ もどる';
+    $('vstitle').hidden = false; $('vstitle').textContent = S.evBattle ? 'イベントへ もどる' : S.nkBattle ? 'なかまへ もどる' : 'ランクせんへ もどる';
     return;
   }
   const win = S.winner === 'A', draw = S.winner == null;
@@ -1040,15 +1040,15 @@ function rankBattle(leftCode, rightCode, leftName, rightName, leftColor, rightCo
   const L = RB.decodeDesign(leftCode), R = RB.decodeDesign(rightCode); if (!L || !R) return;
   isFriend = true;
   opp = { name: rightName, color: rightColor, d: R };
-  S = RB.create(L, R); S.stage = 0; S.side = 'rank'; S.leftName = leftName; S.leftColor = leftColor; S.meSide = meSide; S.rankKind = kind; S.evBattle = rankEvMode;
+  S = RB.create(L, R); S.stage = 0; S.side = 'rank'; S.leftName = leftName; S.leftColor = leftColor; S.meSide = meSide; S.rankKind = kind; S.evBattle = rankEvMode; S.nkBattle = rankNkMode;
   S.crownA = false; S.crownB = false; S.kzA = kzParse(kzL); S.kzB = kzParse(kzR);
   rankLast = [leftCode, rightCode, leftName, rightName, leftColor, rightColor, meSide, kind, kzL, kzR];
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
   mode = 'battle'; show('none');
 }
-let rankLast = null, rankEvMode = false;
+let rankLast = null, rankEvMode = false, rankNkMode = false;
 async function rankReplay(me, r) {
-  TR('rankreplay', null); rankEvMode = false;
+  TR('rankreplay', null); rankEvMode = false; rankNkMode = false;
   let c = r.c, okz = null;
   try { const m = await (await fetch(RANK_API + '/mon?id=' + encodeURIComponent(r.o))).json(); c = c || m.code; okz = m.kz; } catch (e) {}   // かざりも（1 時間 おぼえて いる）
   if (!c) { $('rankmsg').textContent = 'あいてが みつからなかった'; return; }
@@ -1057,7 +1057,7 @@ async function rankReplay(me, r) {
 }
 function rankPractice(m) {
   if (!myRobot) { $('rankmsg').textContent = 'れんしゅうじあいは モンスターを つくってから'; return; }
-  TR('rankpractice', null); rankEvMode = false;
+  TR('rankpractice', null); rankEvMode = false; rankNkMode = false;
   rankBattle(plainCode(myRobot), m.code, ME.name, m.name, ME.color, RANK_COLOR, 'A', 'practice', KZ_ON ? kzStr(kzs.eq()) : '', m.kz);
 }
 onTap($('rankbtn'), () => showRank());
@@ -1208,7 +1208,7 @@ async function evRegister() {
 function evPractice(m) {
   const d = evRobot();
   if (!d) { $('evmsg').textContent = 'れんしゅうじあいは イベントの モンスターを かいてから'; return; }
-  TR('evpractice', null); rankEvMode = true;
+  TR('evpractice', null); rankEvMode = true; rankNkMode = false;
   rankBattle(evPlain(d), m.code, ME.name, m.name, ME.color, EV_COLOR, 'A', 'practice', KZ_ON ? kzStr(kzs.eq()) : '', m.kz);
 }
 async function evReplay(me, r) {
@@ -1225,6 +1225,104 @@ onTap($('evregbtn'), evRegister);
 onTap($('evdraw'), startEvDraw);
 onTap($('evback'), showTitle);
 onTap($('evtop'), showTitle);
+// ---------- なかまランキング（?nakamatest の 端末だけ、2026-09-30〜）----------
+// なかまコード（6 文字）で あつまった 人の 中だけの 順位。順位は ランクせんの 勝率を ならべる だけ（受付係の /g*）。企画メモ secretary/notes/draw-robot-nakama.md
+// さそう URL（?g=コード）を 開いた 端末は テスト中でも なかまが 出る（オーナーが さそった 人だけ）
+const gParam = (/[?&]g=([A-Za-z0-9]{6})(&|$)/.exec(location.search) || [])[1];
+if (/[?&]nakamatest(=|&|$)/.test(location.search) || gParam) lsSet('nakamatest', '1');
+const NK_ON = lsGet('nakamatest') === '1';
+let nkMine = null, nkBoard = null, nkSel = lsGet('nk.sel') || '', nkForm = null, nkPreview = gParam ? gParam.toUpperCase() : null, nkBusy = false, nkLeaveAsk = false;
+for (const el of document.querySelectorAll('.nk-seg')) el.hidden = !NK_ON;
+for (const b of document.querySelectorAll('.nk-seg button[data-go]')) onTap(b, () => { if (b.dataset.go === 'nakama') showNakama(); else showRank(); });
+const nkApi = (p, body) => fetch(RANK_API + p, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ dev: rankDev() }, body)) } : undefined).then(r => r.json());
+async function loadNakama() {
+  try {
+    nkMine = (await nkApi('/g/mine?dev=' + rankDev())).list || [];
+    if (typeof nkPreview === 'string') {   // さそう URL: もう はいって いれば その なかまを 出す。まだ なら「はいる？」
+      if (nkMine.some(g => g.code === nkPreview)) { nkSel = nkPreview; nkPreview = null; }
+      else { const p = await nkApi('/g?code=' + nkPreview); nkPreview = p && !p.error ? p : null; if (!nkPreview) $('nkmsg').textContent = 'その なかまは みつからないよ'; }
+    }
+    if (!nkMine.some(g => g.code === nkSel)) nkSel = nkMine.length ? nkMine[0].code : '';
+    nkBoard = nkSel ? await nkApi('/g?code=' + nkSel + '&dev=' + rankDev()) : null;
+  } catch (e) { $('nkmsg').textContent = 'つながらなかった…しばらく してから また きてね'; }
+}
+function showNakama(msg) {
+  mode = 'nakama'; show('nakama'); nkLeaveAsk = false;
+  if (msg != null) $('nkmsg').textContent = msg;
+  renderNakama();
+  loadNakama().then(() => { if (mode === 'nakama') renderNakama(); });
+}
+function renderNakama() {
+  // さそわれた とき:「○○に はいる？」
+  const pv = $('nkpreview'); pv.hidden = !(nkPreview && typeof nkPreview === 'object'); pv.innerHTML = '';
+  if (!pv.hidden) {
+    const t = document.createElement('div'); t.className = 'nk-head'; const b = document.createElement('b'); b.textContent = '「' + nkPreview.name + '」（' + nkPreview.count + ' にん）に はいる？'; t.append(b); pv.append(t);
+    const row = document.createElement('div'); row.className = 'rbtns';
+    const yes = document.createElement('button'); yes.className = 'main'; yes.textContent = 'はいる'; yes.addEventListener('click', () => nkJoin(nkPreview.code));
+    const no = document.createElement('button'); no.className = 'sub'; no.textContent = 'やめる'; no.addEventListener('click', () => { nkPreview = null; renderNakama(); });
+    row.append(yes, no); pv.append(row);
+  }
+  // 自分の なかま（えらぶ）＋ つくる・コードで はいる
+  const gs = $('nkgroups'); gs.innerHTML = '';
+  for (const g of nkMine || []) { const b = document.createElement('button'); b.className = g.code === nkSel ? 'on' : ''; b.textContent = g.name; b.addEventListener('click', () => { nkSel = g.code; lsSet('nk.sel', g.code); nkBoard = null; showNakama(''); }); gs.append(b); }
+  if (nkMine && nkMine.length < 3) for (const [k, label] of [['create', '＋ なかまを つくる'], ['join', '🔑 コードで はいる']]) { const b = document.createElement('button'); b.className = 'add'; b.textContent = label; b.addEventListener('click', () => { nkForm = nkForm === k ? null : k; renderNakama(); }); gs.append(b); }
+  $('nkform').hidden = !nkForm;
+  if (nkForm) { $('nklabel').textContent = nkForm === 'create' ? 'なかまの なまえ（10 もじまで）' : 'なかまコード（6 もじ）'; $('nkin').placeholder = nkForm === 'create' ? 'れい: 3くみ' : 'れい: K7M2QX'; $('nkgo').textContent = nkForm === 'create' ? 'つくる' : 'はいる'; }
+  // 順位表
+  const bd = $('nkboard'); bd.innerHTML = '';
+  if (nkMine && !nkMine.length && !nkPreview) { const n = document.createElement('div'); n.className = 'rk-note'; n.textContent = 'なかまを つくって、ともだちに コードを おくろう。なかまの 中で だれが いちばん つよいか くらべられるよ'; bd.append(n); return; }
+  const g = nkBoard; if (!g || g.error) return;
+  const head = document.createElement('div'); head.className = 'nk-head';
+  const nm = document.createElement('b'); nm.textContent = g.name + '（' + g.count + ' にん）';
+  const inv = document.createElement('button'); inv.className = 'main'; inv.textContent = '📨 さそう'; inv.addEventListener('click', () => nkInvite(g));
+  head.append(nm, inv); bd.append(head);
+  const code = document.createElement('div'); code.className = 'nk-code'; code.textContent = 'なかまコード: ' + g.code; bd.append(code);
+  let i = 0;
+  for (const m of g.top || []) {
+    const row = document.createElement('button'); row.className = 'rk-row rk-top' + (m.me ? ' mine' : '');
+    const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = m.pct != null ? ++i : '-';
+    const n = document.createElement('span'); n.className = 'rk-opp'; n.textContent = m.name + (m.me ? '（あなた）' : '');
+    const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = m.pct != null ? m.pct + '%' + (m.pos ? '・' + m.pos + 'い' : '') : 'けいさんちゅう';
+    row.append(p, miniPreview(m.code, m.me ? ME.color : RANK_COLOR, 64, m.kz), n, sc);
+    if (!m.me) row.addEventListener('click', () => nkPractice(m));
+    bd.append(row);
+  }
+  if (g.unreg) { const u = document.createElement('div'); u.className = 'rk-note'; u.textContent = 'まだ ランクせんに とうろく してない なかま ' + g.unreg + ' にん'; bd.append(u); }
+  if (!(g.top || []).some(m => m.me)) { const u = document.createElement('div'); u.className = 'rk-note'; u.textContent = 'あなたも ランクせんに とうろくすると ここに でるよ'; bd.append(u); }
+  const lv = document.createElement('button'); lv.className = 'sub nk-leave'; lv.textContent = nkLeaveAsk ? 'ほんとうに ぬける？（もういちど おす）' : 'この なかまを ぬける'; lv.addEventListener('click', nkLeave); bd.append(lv);
+}
+async function nkSubmit() {
+  if (nkBusy) return; const v = $('nkin').value.trim(); if (!v) { $('nkmsg').textContent = nkForm === 'create' ? 'なまえを いれてね' : 'コードを いれてね'; return; }
+  if (nkForm === 'join') return nkJoin(v);
+  nkBusy = true; $('nkmsg').textContent = 'つくってるよ…';
+  try { const r = await nkApi('/g/create', { name: v }); if (r.error) $('nkmsg').textContent = r.error; else { TR('nkcreate', null); nkSel = r.code; lsSet('nk.sel', r.code); nkForm = null; $('nkin').value = ''; $('nkmsg').textContent = '「' + r.name + '」が できたよ！ 📨 さそう で ともだちに おくろう'; await loadNakama(); } }
+  catch (e) { $('nkmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
+  nkBusy = false; if (mode === 'nakama') renderNakama();
+}
+async function nkJoin(code) {
+  if (nkBusy) return; nkBusy = true; $('nkmsg').textContent = 'はいってるよ…';
+  try { const r = await nkApi('/g/join', { code }); if (r.error) $('nkmsg').textContent = r.error; else { TR('nkjoin', { via: nkPreview ? 'url' : 'code' }); nkSel = r.code; lsSet('nk.sel', r.code); nkForm = null; nkPreview = null; $('nkin').value = ''; $('nkmsg').textContent = '「' + r.name + '」に はいったよ！'; await loadNakama(); } }
+  catch (e) { $('nkmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
+  nkBusy = false; if (mode === 'nakama') renderNakama();
+}
+async function nkLeave() {
+  if (!nkLeaveAsk) { nkLeaveAsk = true; renderNakama(); return; }
+  if (nkBusy || !nkSel) return; nkBusy = true;
+  try { await nkApi('/g/leave', { code: nkSel }); TR('nkleave', null); $('nkmsg').textContent = 'ぬけたよ'; nkSel = ''; nkLeaveAsk = false; await loadNakama(); } catch (e) { $('nkmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
+  nkBusy = false; if (mode === 'nakama') renderNakama();
+}
+function nkInvite(g) {
+  const url = SITE_URL + '?g=' + g.code, text = 'かいて！モンスターバトルの なかま「' + g.name + '」に はいって、モンスターで しょうぶ！';
+  TR('nkinvite', null);
+  if (navigator.share) navigator.share({ text, url }).catch(() => {}); else showShareBox(text + ' ' + url);
+}
+function nkPractice(m) {
+  if (!myRobot) { $('nkmsg').textContent = 'れんしゅうじあいは モンスターを つくってから'; return; }
+  TR('nkpractice', null); rankEvMode = false; rankNkMode = true;
+  rankBattle(plainCode(myRobot), m.code, ME.name, m.name, ME.color, RANK_COLOR, 'A', 'practice', KZ_ON ? kzStr(kzs.eq()) : '', m.kz);
+}
+onTap($('nkgo'), nkSubmit);
+$('nkin').addEventListener('keydown', e => { if (e.key === 'Enter') nkSubmit(); });
 // ---------- うら 5 人抜き: 王冠・でんどういり・エンディング ----------
 let endT0 = 0, confetti = [];
 function onUraClear() {
@@ -1412,7 +1510,7 @@ function renderEnding(now) {
   if (t > 1.2) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = '700 14px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('タップで つぎへ', W / 2, H - 40); ctx.globalAlpha = 1; }
 }
 onTap($('vs'), startVsMode);
-onTap($('vstitle'), () => { if (S && S.side === 'rank') { if (S.evBattle) showEv(); else showRank(); } else exitVs(); });
+onTap($('vstitle'), () => { if (S && S.side === 'rank') { if (S.evBattle) showEv(); else if (S.nkBattle) showNakama(); else showRank(); } else exitVs(); });
 onTap($('handoffgo'), () => { vs.step = 2; loadInto(vsLast(2)); showDraw(); });
 // ---------- ふたりで たたかう ----------
 function padColor() { return vs && vs.step === 2 ? P2.color : ME.color; }
@@ -1515,7 +1613,7 @@ function updateSideUi() {
 onTap($('sidebtn'), () => { const order = ['omote'].concat(uraOpen ? ['ura'] : [], MINNA_OPEN ? ['minna'] : []); side = order[(order.indexOf(side) + 1) % order.length]; lsSet('side', side); loadSide(); updateSideUi(); if (side === 'minna' && lsGet('minna.intro') !== '1') showMinnaInfo(); setHint(side === 'ura' ? 'うら かちぬき：とんでもなく つよい 5 たい' : side === 'minna' ? 'みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい' : ''); });
 onTap($('fast'), () => { fast = !fast; TR('fast', { on: fast }); lsSet('fast', fast ? '1' : '0'); updateFastBtn(); });
 // 戦いの途中で もどる（勝ち抜きの途中経過は そのまま。戦いは決定的なので やめても 得はしない）
-onTap($('quit'), () => { if ((mode === 'battle' || mode === 'pause') && S && S.side === 'rank') { if (S.evBattle) showEv(); else showRank(); return; } if (mode === 'battle' || mode === 'pause') { TR('quit', { side: S && S.side, stage: S && S.stage, t: S && Math.round(S.t * 10) / 10, d: S && S.d }); showDraw(); } });
+onTap($('quit'), () => { if ((mode === 'battle' || mode === 'pause') && S && S.side === 'rank') { if (S.evBattle) showEv(); else if (S.nkBattle) showNakama(); else showRank(); return; } if (mode === 'battle' || mode === 'pause') { TR('quit', { side: S && S.side, stage: S && S.stage, t: S && Math.round(S.t * 10) / 10, d: S && S.d }); showDraw(); } });
 onTap($('closeshare'), () => { $('sharebox').hidden = true; });
 onTap($('copy'), () => {
   const ta = $('sharetext'); ta.select();
@@ -1553,7 +1651,7 @@ if (/[?&]navtest(=|&|$)/.test(location.search)) lsSet('navtest', '1');
 function navOn() { return true; }   // 2026-09-30 全員に 公開（前は ?navtest の 端末だけ）
 function navSync(id) {
   const nb = $('navbar'); if (!nb) return;
-  const tab = navOn() ? { title: 'home', rank: 'rank', ev: 'ev', more: 'more', kz: 'kz' }[id] : null;
+  const tab = navOn() ? { title: 'home', rank: 'rank', nakama: 'rank', ev: 'ev', more: 'more', kz: 'kz' }[id] : null;
   nb.hidden = !tab; document.documentElement.classList.toggle('navshow', !!tab); if (!tab) return;
   for (const b of nb.querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === tab);
   nb.querySelector('[data-tab=rank]').classList.toggle('dot', lsGet('rank.reg') !== '1');
@@ -1592,6 +1690,7 @@ for (const b of document.querySelectorAll('#navbar button')) onTap(b, () => {
 });
 resize();
 showTitle();
+if (NK_ON && nkPreview) showNakama();   // さそう URL から 来た とき
 {
   // 開発用: ?draw で描く画面、?shot=秒&stage=n で その時点のバトル、&result で結果
   const q = new URLSearchParams(location.search);
@@ -1661,7 +1760,7 @@ async function bkLoad() {
     const r = await (await fetch(RANK_API + '/bk/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) })).json();
     if (r.error || !r.data) { $('bkmsg').textContent = r.error || 'うまく いかなかった…'; bkAsk = false; $('bkload').textContent = 'うけとる'; bkBusy = false; return; }
     TR('bkload', { n: Object.keys(r.data).length });
-    const keep = {}; for (const k of ['backuptest', 'gachatest', 'eventtest', 'navtest']) { const v = lsGet(k); if (v != null) keep[k] = v; }   // オーナーの 印は この 端末の ものを のこす
+    const keep = {}; for (const k of ['backuptest', 'gachatest', 'eventtest', 'navtest', 'nakamatest']) { const v = lsGet(k); if (v != null) keep[k] = v; }   // オーナーの 印は この 端末の ものを のこす
     try {
       for (const k of Object.keys(bkAll())) localStorage.removeItem(k);
       for (const [k, v] of Object.entries(r.data)) if (typeof k === 'string' && k.startsWith(KEY) && typeof v === 'string') localStorage.setItem(k, v);
