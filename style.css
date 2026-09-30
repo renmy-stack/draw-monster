@@ -469,9 +469,12 @@ body.nav .advrow .advgo { flex: 2.4 1 0; min-width: 0; margin: 0; padding: 8px 6
 body.nav .advrow #vs { flex: 1 1 0; min-width: 0; margin: 0; padding: 6px 8px; justify-content: center; align-items: center; text-align: center; }
 body.nav .advrow #vs b { font-size: 13px; }
 body.nav .advrow #vs small { display: none; }   /* 横並びでは 説明は 出さない（高さを ひくく） */
-/* ホーム画面から 開いた とき（iPhone）: 上は 時計・電池の ぶん あける。下は ページの 高さが ステータスバーの ぶん 短く なる ことが あるので、その ぶん（--lost、game.js で 測る）下へ のばす */
-body.nav #title, body.nav #rank, body.nav #ev, body.nav #more { padding-top: calc(10px + env(safe-area-inset-top)); bottom: calc(-1 * var(--lost, 0px)); }
-body.nav #kzbox { padding-top: calc(12px + env(safe-area-inset-top)); bottom: calc(-1 * var(--lost, 0px)); }
-body.nav #navbar { bottom: calc(-1 * var(--lost, 0px)); }
+/* ホーム画面から 開いた とき（iPhone）: 上は 時計・電池の ぶん あける。
+   ページが 画面より 短い（下に ページの 外の 帯が できる）ときは、ホームバーの ぶんは その 帯が うけもつので タブの 下の よはくを 小さく し、帯の 色を タブと おなじに（html.sa-short、game.js で 測る） */
+body.nav #title, body.nav #rank, body.nav #ev, body.nav #more { padding-top: calc(10px + env(safe-area-inset-top)); }
+body.nav #kzbox { padding-top: calc(12px + env(safe-area-inset-top)); }
+html.navshow { background: var(--paper); }   /* タブが 出て いる 画面だけ（描く・戦う 画面では 暗い まま） */
+html.sa-short #navbar { padding-bottom: 8px; }
+html.sa-short body.nav #title, html.sa-short body.nav #rank, html.sa-short body.nav #ev, html.sa-short body.nav #more, html.sa-short body.nav #kzbox { padding-bottom: 80px; }
 body.nav .advrow #vs { color: var(--ink); }
 body.nav .advrow .advgo { white-space: nowrap; font-size: min(22px, 5.4vw); }

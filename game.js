@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '123';
+const VERSION = '124';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1554,7 +1554,7 @@ function navOn() { return true; }   // 2026-09-30 全員に 公開（前は ?nav
 function navSync(id) {
   const nb = $('navbar'); if (!nb) return;
   const tab = navOn() ? { title: 'home', rank: 'rank', ev: 'ev', more: 'more', kz: 'kz' }[id] : null;
-  nb.hidden = !tab; if (!tab) return;
+  nb.hidden = !tab; document.documentElement.classList.toggle('navshow', !!tab); if (!tab) return;
   for (const b of nb.querySelectorAll('button')) b.classList.toggle('on', b.dataset.tab === tab);
   nb.querySelector('[data-tab=rank]').classList.toggle('dot', lsGet('rank.reg') !== '1');
   nb.querySelector('[data-tab=kz]').classList.toggle('dot', KZ_ON && kzs.coins() >= KZ.PRICE);
@@ -1571,11 +1571,10 @@ function fitTmon() {
   c.style.width = c.style.height = sz + 'px';
 }
 window.addEventListener('resize', () => setTimeout(fitTmon, 0));
-// ホーム画面から 開いた iPhone で ページの 高さが 画面より 短い（ステータスバーの ぶん）ときの 差。タブと パネルを その ぶん 下へ（縦向き・90px まで）
+// ホーム画面から 開いた iPhone で ページの 高さが 画面より 短い（下に ページの 外の 帯が できる）か。短い ときは タブの 下の よはくを へらす（style.css の html.sa-short）
 function fixStandalone() {
   const sa = window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
-  const lost = sa && screen.height > screen.width ? Math.max(0, Math.min(90, screen.height - window.innerHeight)) : 0;
-  document.documentElement.style.setProperty('--lost', lost + 'px');
+  document.documentElement.classList.toggle('sa-short', !!sa && screen.height > screen.width && screen.height - window.innerHeight > 8);
 }
 fixStandalone(); window.addEventListener('resize', fixStandalone);
 if (navOn()) {
