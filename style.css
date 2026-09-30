@@ -504,3 +504,6 @@ body.nav #nakama .panel { width: 100%; max-width: 520px; margin: 0 auto; max-hei
 .nk-bar i { display: block; height: 100%; background: repeating-linear-gradient(-45deg, #ef6c00 0 8px, #ffa040 8px 16px); background-size: 22px 22px; animation: nkbar .6s linear infinite; transition: width .25s; }
 @keyframes nkbar { from { background-position: 0 0; } to { background-position: 22px 0; } }
 .nk-ptext { margin-top: 3px; font-size: 12px; font-weight: 800; color: #bf360c; text-align: left; }
+.nk-nm { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; }
+.nk-nm .rk-opp { flex: none; white-space: normal; overflow-wrap: anywhere; }
+.nk-nm small { font-size: 11px; color: #666; font-weight: 700; white-space: normal; }

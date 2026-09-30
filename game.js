@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '128';
+const VERSION = '129';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1382,10 +1382,15 @@ function renderLeague() {
     const s = st.get(m), p = pts(m); if (p !== prev) pos = i + 1; prev = p;
     const row = document.createElement('button'); row.className = 'rk-row rk-top' + (m.me ? ' mine' : '');
     const ps = document.createElement('span'); ps.className = 'rk-pos'; ps.textContent = nkLg.mons.length >= 2 ? pos : '-';
+    // 名前は 上の 段、ランクせん 全体の 勝率は 下の 段に 小さく（1 行に つめると 名前が かくれる）
+    const nb = document.createElement('span'); nb.className = 'nk-nm';
     const n = document.createElement('span'); n.className = 'rk-opp'; n.textContent = m.name + (m.me ? '（あなた）' : '');
     const all = (nkLg.mons.length - 1) * 2, partial = busy && s.w + s.l + s.d < all;   // この 人の 試合が まだ のこって いる
-    const sc = document.createElement('span'); sc.className = 'rk-d'; sc.textContent = (s.w + s.l + s.d ? s.w + 'しょう ' + s.l + 'はい' + (s.d ? ' ' + s.d + 'わけ' : '') : '') + (partial ? ' …' : '') + (m.pct != null ? '（ぜんたい ' + m.pct + '%）' : '');
-    row.append(ps, miniPreview(m.code, m.me ? ME.color : RANK_COLOR, 64, m.kz), n, sc);
+    // 成績も 下の 段へ（名前が 横はばを ぜんぶ つかえる ように）
+    const sub = document.createElement('small'); sub.className = 'rk-d';
+    sub.textContent = (s.w + s.l + s.d ? s.w + 'しょう ' + s.l + 'はい' + (s.d ? ' ' + s.d + 'わけ' : '') : '') + (partial ? ' …' : '') + (m.pct != null ? '・ぜんたい ' + m.pct + '%' : '');
+    nb.append(n, sub);
+    row.append(ps, miniPreview(m.code, m.me ? ME.color : RANK_COLOR, 64, m.kz), nb);
     if (!m.me) row.addEventListener('click', () => nkPractice(m));
     box.append(row);
   });
