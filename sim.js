@@ -216,10 +216,31 @@ function contact2(A, jA, B, jB, px, py, qx, qy, nx, ny, pen) {
   else { A.x += nx * corr; A.y += ny * corr; }
   return hitSpeed;
 }
+// ---------- 闘技場（ちけい）----------
+// arena: { floor: [[x, 高さ], ...]（x の 小さい 順に 線で つなぐ。上が +。はしより 外は はしの 高さ）, hw: かべの 半幅（0 なら かべ なし）,
+//          ceil: 天井の 高さ（0 なら なし）, sx: 出る 位置（左右 ±sx、ない ときは 150）, fall: 足もとの 高さより これ以上 下に 落ちたら 負け（0 なら なし） }
+// arena が ない とき（ふつうの 戦い・ランクせん）は 前と まったく 同じ 計算
+let AR = null;
+function floorSeg(x) {
+  const f = AR.floor; if (!f || !f.length) return [0, 0];
+  if (x <= f[0][0]) return [f[0][1], 0];
+  for (let i = 1; i < f.length; i++) if (x <= f[i][0]) { const a = f[i - 1], b = f[i], k = (b[1] - a[1]) / (b[0] - a[0]); return [a[1] + (x - a[0]) * k, k]; }
+  return [f[f.length - 1][1], 0];
+}
+function floorH(arena, x) { const o = AR; AR = arena; const h = arena ? floorSeg(x)[0] : 0; AR = o; return h; }
 function ground(b, j, px, py) {
+  if (AR) { groundArena(b, j, px, py); return; }
   if (py + T > 0) contact2(b, j, null, null, px, py, 0, 0, 0, -1, py + T);
   if (px - T < -HW) contact2(b, j, null, null, px, py, 0, 0, 1, 0, -HW - (px - T));
   if (px + T > HW) contact2(b, j, null, null, px, py, 0, 0, -1, 0, px + T - HW);
+}
+function groundArena(b, j, px, py) {
+  const [h, k] = floorSeg(px), L = Math.sqrt(1 + k * k), pen = (py + T + h) / L;   // 床の 線までの きょり（上が +）
+  if (pen > 0 && pen < 60) contact2(b, j, null, null, px, py, 0, 0, k / L, -1 / L, pen);
+  if (AR.ceil && py - T < -AR.ceil) contact2(b, j, null, null, px, py, 0, 0, 0, 1, -AR.ceil - (py - T));
+  const hw = AR.hw;
+  if (hw && px - T < -hw) contact2(b, j, null, null, px, py, 0, 0, 1, 0, -hw - (px - T));
+  if (hw && px + T > hw) contact2(b, j, null, null, px, py, 0, 0, -1, 0, px + T - hw);
 }
 function closestOnPoly(P, px, py) {
   let best = null;
@@ -271,8 +292,12 @@ function versus(S, X, Y, j, px, py) {
 }
 
 // ---------- バトル ----------
-function create(dA, dB) {
-  return { t: 0, A: makeRobot(dA, 1, -150), B: makeRobot(dB, -1, 150), fx: [], over: false, winner: null, reason: '' };
+function create(dA, dB, arena) {
+  if (!arena) return { t: 0, A: makeRobot(dA, 1, -150), B: makeRobot(dB, -1, 150), fx: [], over: false, winner: null, reason: '' };
+  const sx = arena.sx || 150, A = makeRobot(dA, 1, -sx), B = makeRobot(dB, -1, sx);
+  A.y -= floorH(arena, A.x); B.y -= floorH(arena, B.x);   // 足もとを その場所の 床に
+  if (arena.ceil) for (const b of [A, B]) { let top = Infinity; eachPoint(b, (j, x, y) => { top = Math.min(top, y); }); if (top - T < -arena.ceil) b.tall = true; }   // 天井より 背が 高い（つぶれて 出る）
+  return { t: 0, A, B, fx: [], over: false, winner: null, reason: '', arena };
 }
 // 振り向く: 重心を通る たての線で 左右反転（位置・速さは そのまま。見た目も物理も つながる）
 function turnAround(b) {
@@ -333,6 +358,7 @@ function eachPoint(b, fn) {
 function step(S) {
   if (S.over) return;
   const A = S.A, B = S.B;
+  AR = S.arena || null;
   motors(S, A, B); motors(S, B, A);
   integrate(A); integrate(B);
   eachPoint(A, (j, x, y) => ground(A, j, x, y));
@@ -352,9 +378,14 @@ function step(S) {
     } else b.downT = 0;
   }
   S.t += DT;
+  if (AR && AR.fall) {   // おちた（足もとの 床より fall 以上 下）
+    const oA = A.y + floorSeg(A.x)[0] > AR.fall, oB = B.y + floorSeg(B.x)[0] > AR.fall;
+    if (oA || oB) { S.over = true; S.reason = 'fall'; S.winner = oA && oB ? null : oA ? 'B' : 'A'; S.fx.push({ t: 'fall', who: oA && oB ? 'AB' : oA ? 'A' : 'B' }); S.fx.push({ t: 'end' }); AR = null; return; }
+  }
   if (A.hp <= 0 || B.hp <= 0) { S.over = true; S.reason = 'ko'; S.winner = A.hp <= 0 && B.hp <= 0 ? null : A.hp > 0 ? 'A' : 'B'; }
   else if (S.t >= TIME - 1e-9) { S.over = true; S.reason = 'time'; S.winner = A.hp > B.hp ? 'A' : B.hp > A.hp ? 'B' : null; }   // 時間切れは のこり HP の数字が多いほう（画面の数字どおり）
   if (S.over) S.fx.push({ t: 'end' });
+  AR = null;
 }
 // 描く画面に出す つよさ（タフさ = HP、パンチ = 1 発の重さ、リーチ = 腕の長さ、はやさ = 1 秒に振る回数）
 function robotStats(d) {
@@ -362,7 +393,7 @@ function robotStats(d) {
   const lenF = clamp(Math.pow(K.lenRef / Math.max(am.len, 10), K.lenP), 0.4, 1.8);
   return { hp: b.maxHp, punch: K.dmg * am.power * b.weight * lenF, reach: am.len, speed: 2 / am.per };
 }
-function fight(dA, dB) { const S = create(dA, dB); while (!S.over) { step(S); S.fx.length = 0; } return S; }
+function fight(dA, dB, arena) { const S = create(dA, dB, arena); while (!S.over) { step(S); S.fx.length = 0; } return S; }
 
 // ---------- URL: 3 本の線を 2 バイトずつ ----------
 // からだは そのままの位置（x +128、y +235）。うで・あしは 描き始めからの ずれ（+128）。関節にくっつけるので位置はいらない
@@ -444,7 +475,7 @@ const MINNA = MINNA_RAW.map(c => Object.assign({ name: c.name, color: c.color },
 const API = {
   SIM_VERSION, K, HZ, DT, HW, HP, TIME, PAD, INK, T, CPU, URA, MINNA,
   cleanStroke, inkOf, design, validDesign, robotStats, joints, makeRobot, create, step, fight, world, eachPoint, shape,
-  encodeDesign, decodeDesign,
+  encodeDesign, decodeDesign, floorH,
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = API; else root.RB = API;
 })(this);

@@ -320,6 +320,9 @@ button:disabled { opacity: .45; }
 .rd-node.rd-omote.sel { background: #ede7f6; }
 .rd-node.rd-ura.sel { background: #ffebee; }
 .rd-node.rd-minna.sel { background: #e0f2f1; }
+.rd-node.rd-arena.sel { background: #fff3e0; }
+.main.arena { background: #ef6c00; border-color: var(--ink); color: #fff; }
+.main.arena small { display: block; font-size: 12px; font-weight: 700; opacity: .95; }
 .advgo { display: flex; flex-direction: column; align-items: center; width: 100%; margin: 12px 0 18px; font-size: 20px; }
 .advgo small { font-size: 12px; font-weight: 700; opacity: .9; }
 

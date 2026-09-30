@@ -91,7 +91,7 @@ const ITEMS = [
   { id: 80, slot: 'fx', name: 'きんいろの ひかり', r: 3, desc: 'そらから きんいろの ひかりが さしこむ' },
 ];
 const PRICE = 100, DUP_BACK = 30, RATE = [0, 0.6, 0.3, 0.1];
-const WIN = { omote: 10, ura: 30, minna: 60 }, CLEAR = { omote: 50, ura: 150, minna: 300 }, HIST_MAX = 30;
+const WIN = { omote: 10, ura: 30, minna: 60, arena: 20 }, CLEAR = { omote: 50, ura: 150, minna: 300, arena: 100 }, HIST_MAX = 30;   // arena: ちけい ぼうけん
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
 
 // ---------- 持ちもの（get/set は 呼ぶ側の localStorage） ----------
