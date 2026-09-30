@@ -73,6 +73,13 @@ const ARENA_CPU = {
       ['ウエノヒト', '#6d4c41', 'EJy7nMSc0IvQgNB10GTQZMRku2SyZKV1pYCli6WcpZyyCoCAi4OQc518om2vdrRmwm_GYNJoBYCAhYeLjpKVmJs'],
       ['タカミ', '#33691e', 'Eq1ur3Ohd5d7iX54fWl7YHZVc1BuWmlbY2pheWCIX5lfoWSqaAWAgJKNiWWlg5tbCICAgIp_lH6ee6h4sXS6bsM'],
     ],
+    ura: [   // 74% 44% 49% 59% 70%、実際の 形 1500 で 全部ぬけ 6.8%（75% 41% 49% 61% 73%）
+      ['ミオロシ', '#455a64', 'EMdywXeyfJt-gH9lfk58P3c5cj9tTmllZoBlm2ayacFtCYCAeouLkn6ejqWBspG5hMWVzAWAgISKh5WKoIuq'],
+      ['テンジョウ', '#4a148c', 'EN433kHeUKdQgFBZUCJQIkEiNyItIh9ZH4Afpx_eH94tBYCAfJqQeY-mkJkIgIB7iXeTdJ1yp3GxcLxxxg'],
+      ['タカビシャ', '#3e2723', 'DuR65I3kqKmogKhXqByoHI0cehxnHEtXS4BLqUsIgICNgHhmjW-CVI1di0ONTAeAgHqEd4hxiG6DcX93fw'],
+      ['ソビエ', '#b71c1c', 'EORB3FPHYqZsgHBabDliJFMcQSQvOSBaFoASphbHINwvB4CAcI2KkXShiqV3tYq5DoCAhoiNj5WVnZyloa6mt6vAr8my07Tdtue37bg'],
+      ['テッペンオウ', '#111111', 'DeSU5LLk3KncgNxX3BzcHLIclBx2HExXTIBMBoCAa46Kj2-hiqJztASAgIGHgo2ClA'],
+    ],
   },
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = ARENA_CPU;
