@@ -89,6 +89,8 @@
     "タイトルへ": "Title",
     "よみこみちゅう…": "Loading…",
     "🎀 れきだいの いちばん": "🎀 Past #1s",
+    "👑 れきだいの チャンピオン": "👑 Past champions",
+    "👑 れきだいの チャンピオン（とじる）": "👑 Past champions (close)",
     "🎀 れきだいの いちばん（とじる）": "🎀 Past #1s (close)",
     "まだ いないよ": "None yet",
     "いま ランクせんに つながらないよ。しばらく してから また きてね": "Can't reach Ranked right now. Please come back later.",
