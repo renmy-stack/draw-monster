@@ -2,25 +2,39 @@
 // [名前, 色, 形の コード]。数字は えらんだ ときの「その 段まで 勝ちのこった 挑戦者が 勝つ 割合」
 const ARENA_CPU = {
   yama: {
-    omote: [   // 79% 80% 67% 57% 52%、べつの 挑戦者で 全部ぬけ 12.5%（80% 76% 63% 56% 58%）
-      ['コロコロ', '#8d6e63', 'EJBJkGGQgoaCgIJ6gnCCcGFwSXAxcBB6EIAQhhCQEJAxBoCAjIyRb5-IpGyyhQqAgIOJhZOGnYanhrCGuoTEgs6A1w'],
-      ['ヤマイモ', '#7cb342', 'E7JYrWuuhZ6TjJZ8lW2PV5BSd1JiUU5PNlMabB98F4sgnh6zJqtFCICAjoWPbqB9oWazdLRdvGwNgICDiYeSipuNpJCtkreVwJfJmdKb3J3ln-o'],
-      ['ノボリン', '#00897b', 'C52TmqCMpnymZapmmWSNaH58gIx_n4UIgICFd4puj2WUXJpTn0qkQQWAgICKf5N7nHel'],
-      ['イワオ', '#6d4c41', 'Dalspn6Wh4SLdIlihFp0VGNhVHFKhUaUU6daCoCAiX2Sept3pXWucrdvwGzGacZjB4CAfYp6lHeedKhxsm67'],
-      ['ヤマノヌシ', '#33691e', 'EKNhoHeZio2WgJtzlmeKYHddYWBLZzhzK4AnjSuZOKBLDICAiYKSg5uGpIatibaKuXzHf8GbtJi2iguAgIKJhJOFnISmg6-BuH7Besp10m_a'],
+    omote: [   // 90% 79% 78% 67% 72%、実際の 形 1500 で 全部ぬけ 29.3%（89% 81% 80% 73% 69%）
+      ['コロコロ', '#8d6e63', 'D5VclGaKZ4JnemdxZ2tjbF5sVXFSelKCUYpRlFKTWAWAgId5j3OWbJ5mDoCAgIqAk3-dfad7sHm5dsNyzG7Uat1l5WDtWvU'],
+      ['ヤマイモ', '#7cb342', 'EKOqoLCZtY25gLpzuWe1YLBdqmCjZ55zmoCZjZqZnqCjBICAeoyRg4uPCYCAe4J1hW-CbH1ud3R0enZ9fA'],
+      ['ノボリン', '#00897b', 'EJK8kdGN4ofugPN57nPib9FuvG-nc5V5iYCFh4mNlZGnDYCAin2RdZt0omyta7RjvmLFWs9XyUvVRNxdBoCAhoiLjJCMmIydjA'],
+      ['イワオ', '#6d4c41', 'C6eSoqyOuHrAYrtbn2CHY2p7apFlp3UIgICNgYptnHWaYaxpqVW2VgiAgIGJg5OGnIqkj62UtJq8'],
+      ['ヤマノヌシ', '#33691e', 'EKBrnHOVeoyAgIJzgWh8ZXNha2NjaVx0WIBVjVaXXJ9jBYCAjZKRaqCPpGcEgICCh4aOi5M'],
+    ],
+    ura: [   // 73% 43% 40% 43% 59%、実際の 形 1500 で 全部ぬけ 2.3%（71% 42% 38% 30% 67%）
+      ['ガンセキ', '#455a64', 'Dsdkx2ydbIBsY2w5bDlnOWE5XGNcgFydXMdcx2EGgICJhJSDnYinh6eMCoCAeoh1kHCYa6FnqmOyYLxdxVrO'],
+      ['ヤマアラシ', '#4a148c', 'ENqv2sHa2qXagNpb2ibaJsEmryadJoRbhICEpYTahNqdBoCAlIV7ZZR2hlWUZgmAgH2EeIZzhHJ_dHp5eX57f4A'],
+      ['ナダレ', '#3e2723', 'ENqO06i_v6LOgNNezkG_Lagmji1zQVxeTYBIok2_XNNzCoCAjn2CaZRtjVmUXJRIlD2UMpRBCICAhoCLf5CCkIeKi4WHhYI'],
+      ['カザン', '#b71c1c', 'ENqt07m_w6LKgMxeykHDLbkmrS2hQZdekICOopC_l9OhBoCAk3t0aJRoeVWUVAeAgHh6c3lwc3NveW98dQ'],
+      ['ヤマノカミ', '#111111', 'ENqW06K_rKKzgLVes0GsLaImli2KQYFeeoB4onq_gdOKBoCAlIJ9ZpRziVaUYwmAgHl6dHpxdXJweW19cH51e3k'],
     ],
   },
   heya: {
-    omote: [   // 77% 83% 67% 54% 55%、べつの 挑戦者で 全部ぬけ 14.0%（78% 82% 65% 54% 63%）
-      ['ハコイリ', '#8d6e63', 'EJFHj0-LVYdcgF16WnNXcFBuR3E_dDd5MYAwhzGMOI8_CYCAhHaIbYxjkFqUUJhHnECkQA2AgH-KfpR9nXunerF4u3bEdM5x12_hbOpp9A'],
-      ['スミッコ', '#7cb342', 'C5BjjXeHhH6HdX9xbXFZdkp-QodEjlAHgICNh5BvoYGjabR6um0OgICCiYSThpyIpomvirmKw4rMitaK4InpiPOH-Q'],
-      ['カベドン', '#00897b', 'Dq52tIyxrY2rdKZVpkWPTHZRYU4-cj6MRa1DvVwIgICDjJOHkZmilKClsaGvsgqAgH-JfpN9nHumeq94uHfCdctz1A'],
-      ['トビラ', '#6d4c41', 'EKJCokeiTo5OgE5yTl5OXkdeQl49XjZyNoA2jjaiNqI9DICAi4SSdp5_pnKye7luxXfMasxzzGbMbwSAgICKgJOAnQ'],
+    omote: [   // 89% 82% 80% 70% 72%、実際の 形 1500 で 全部ぬけ 32.9%（88% 86% 82% 73% 73%）
+      ['ハコイリ', '#8d6e63', 'EJe4l8uX5YrlgOV25WnlactpuGmmaYt2i4CLiouXi5emBICAiIGHdY52BICAe4l6lHua'],
+      ['スミッコ', '#7cb342', 'EZyQmJqUpIyqg6x5qnGla55llmWLa4NveXl1gnWNdpR-mYYEgICGhYyKko4EgICAi32WeaA'],
+      ['カベドン', '#00897b', 'ErlJqliqbZ18iHl2gmd2V2xWWFFJUDdeLGoidxOJE5wXoiynOgiAgIV3im2PZJRamVGeR6I-DYCAg4qGlIqdjaeRsJW6msOezKPVqN6t57Lv'],
+      ['トビラ', '#6d4c41', 'EKx0rHmjfZaAhIB0gGR-WXpUdldtZGpzaIRolGmhbK1vCICAioCTgZ2BpoKwgrqCwYMJgIB_in2UfJ96qXmzd711x3TR'],
       ['ヘヤヌシ', '#33691e', 'EqxSr1-wcJpziXd4dGR2Um9OX1JSVUZZOmIreDKIL5wurzWsRgiAgIiGkY2Zk6KaqqCzp7utBoCAfop8lHyefKh-sw'],
+    ],
+    ura: [   // 74% 44% 40% 44% 59%、実際の 形 1500 で 全部ぬけ 3.5%（76% 41% 41% 45% 60%）
+      ['ロウヤ', '#455a64', 'DompicGJ4oTifOJ34nfBd6l3kXdwfHCEcIlwiZEEgIB9mJ16j6MRgICKe46Bj4iNj4iUgph7mXSXb5JrjGuFbH5xeXd1fnWFdw'],
+      ['カンゴク', '#4a148c', 'ENCKypK5mZ-dgJ9hnUeZNpIwijaCR3thd4B1n3e5e8qCBICAl3puaZpmC4CAhn-Ih4eMgZJ8knSOcYZygXl8gnw'],
+      ['ツメコミ', '#3e2723', 'Dt-K35SnlICUWZQhlCGOIYYhgVmBgIGngd-B34YFgICPemtoj2duVQaAgIJ7h3qKf4aDgYI'],
+      ['ギュウギュウ', '#b71c1c', 'EMJ_vYuvlZmbgJ5nm1GVQ4s-f0N0UWpnY4BhmWOvar10BoCAj4uOaqOEoWOsfRGAgHyEdoZwhmqDZn9keWVzZ21saXJneGd-aoJvhHWDe4GA'],
+      ['ミッシツオウ', '#111111', 'DuSZ5KGpoYChV6EcoRycHJUckFeQgJCpkOSQ5JUGgICKemtoimduVIpTB4CAgXqIeYt-iYOChH-A'],
     ],
   },
   dokutsu: {
-    omote: [   // 78% 81% 68% 62% 51%、べつの 挑戦者で 全部ぬけ 14.1%（天井に つかえる 形を のぞく 546 体。77% 81% 61% 75% 50%）
+    omote: [   // 78% 81% 68% 62% 51%、ランダムの 形で（前の ものさし） 全部ぬけ 14.1%（天井に つかえる 形を のぞく 546 体。77% 81% 61% 75% 50%）
       ['コウモリ', '#8d6e63', 'CoyAipeDn32edZl1gHVmfFyEWoxlB4CAiouUdZ6LqHWyi711B4CAf4p-lHudeKd1sHG5'],
       ['ツララ', '#7cb342', 'EJiAmJiYuoq6gLp2umi6aJhogGhnaEV2RYBFikWYRZhnB4CAi4SVe5-DqXu0g75-CYCAeYB1eXdyfm6FcIl2h36AgQ'],
       ['モグラ', '#00897b', 'DKGXnbCQwIDLcMBhsl2XY39wboBjkG2ffQaAgJCAg2mdcZBZqmIJgICEioiUjJ2SppevnbSktKq0'],
@@ -29,7 +43,7 @@ const ARENA_CPU = {
     ],
   },
   gake: {
-    omote: [   // 80% 82% 65% 55% 51%、べつの 挑戦者で 全部ぬけ 10.3%（77% 79% 62% 49% 56%）
+    omote: [   // 80% 82% 65% 55% 51%、ランダムの 形で（前の ものさし） 全部ぬけ 10.3%（77% 79% 62% 49% 56%）
       ['ガケマル', '#8d6e63', 'DYpKilKJXYNdelx2WHZOdkZ2PHo4fziJOIpCDICAin-Tfp19p3uwerp5w3jNd9d24HXkcgyAgIOKhZOHnYqni7GNu4_FkM-R2ZLjku0'],
       ['ヒュルル', '#7cb342', 'CotdiXuEj32Nd3x1XXdAfCyELIlABYCAfJWcf4yjrIwKgIB-in2UfJ57qHuye7x8xn3Qf9o'],
       ['オチソウ', '#00897b', 'C593moyMmHyebZJlgWZtbVp8U41Sl2MEgICKfpR9nXsGgICDiYaSipqOo5Kr'],
@@ -38,12 +52,12 @@ const ARENA_CPU = {
     ],
   },
   dansa: {
-    omote: [   // 80% 83% 66% 55% 51%、べつの 挑戦者で 全部ぬけ 11.4%（78% 83% 63% 54% 52%）
-      ['ダンダン', '#8d6e63', 'EZ10nXuUf4yDg4d3hm6CZ31keGBxZmtvZ3dig2SOY5ZpnG4MgICIh5CNmJSfmqehr6e3rr-0x7vOwdHICoCAf4p9lHqed6dzsW66acNjy13T'],
-      ['カイダン', '#7cb342', 'EZmJnqGcv4u5g8d5vGvFZ6pok2R-ZGVrTnhQg02OTZxTnHIGgICMi5Fwn4ilbbOFB4CAg4mGk4mci6aNr4-5'],
-      ['ノッポ', '#00897b', 'EZCMkZ6PsYq8g8F9uXe4brZwnG-Mcn1uYHhjfmOIZI5qkXoJgICKgZWCn4OphbOGvofIiNKJBYCAg4mGkYiai6M'],
-      ['ウエノヒト', '#6d4c41', 'EJw5mlWUbot-gIN1fmxuZlVkOWYdbAV1BYAFiwWUBZodB4CAjH-IbZpxll-oZKlXBYCAg4qHk42claM'],
-      ['タカミ', '#33691e', 'EJNpkYSNm4eqgLB5qnObb4RtaW9NczZ5J4AhhyeNNpFNBYCAlIJ-Zp9yilYKgICIf4yCj4mLkYSUfJF5iXyCgH8'],
+    omote: [   // 89% 81% 78% 70% 72%、実際の 形 1500 で 全部ぬけ 32.9%（89% 84% 82% 73% 74%）
+      ['ダンダン', '#8d6e63', 'EatcomCfZZtriGd9anBpXWlgYl9aYFByUX1Qik6WUKVSplcLgICLfYlumG6WYKVgo1KyUrBDv0S9NQ2AgH-Kf5R_nn-of7F_u4DFgM-B2YLjhO2F9g'],
+      ['カイダン', '#7cb342', 'EI28jcONzYXNgM17zXPNc8NzvHO1c6t7q4CrhauNq421DICAioOUgJ6FqIGyh72DxojRhdqK4YfhjAaAgH-LfpV9oHyrerI'],
+      ['ノッポ', '#00897b', 'Epucmqect5C8hb17u3C8ZrZlqGOcZJBlgnF-e3yFfJB8m4KakQyAgIiHkI6XlJ-bp6KvqbewvrbGvc7E08sHgIB9iniUc51tpmavX7Y'],
+      ['ウエノヒト', '#6d4c41', 'EJy7nMSc0IvQgNB10GTQZMRku2SyZKV1pYCli6WcpZyyCoCAi4OQc518om2vdrRmwm_GYNJoBYCAhYeLjpKVmJs'],
+      ['タカミ', '#33691e', 'Eq1ur3Ohd5d7iX54fWl7YHZVc1BuWmlbY2pheWCIX5lfoWSqaAWAgJKNiWWlg5tbCICAgIp_lH6ee6h4sXS6bsM'],
     ],
   },
 };

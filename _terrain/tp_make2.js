@@ -10,11 +10,16 @@ const old = new Set(RB.CPU.concat(RB.URA, RB.MINNA).map(plain));
 const R = shuffle(P.R), RK = shuffle(rank), UR = shuffle(P.ura.filter(c => !rank.includes(c)));
 // 候補は こちらで 作った 形だけ: おもて ＝ ランダム（人が 描きそうな 形・遺伝子の 形）、うら ＝ その 地形で 進化させた 形（evo_<地形>.json）
 const [tk, tier] = process.argv.slice(2);
+// ものさし: 実際の プレイヤーの 形（real_pool.json、9/29〜9/30 に 水平で 戦った 形）。確かめは real_ref.json の 1500 形（えらぶ ときは 使わない）
+// 目標: 水平で 同じ 形が 勝ちのこる 割合（tp_real_ref.js: おもて 全部ぬけ 28.1%・うら 3.2%。記録は 25.3%・2.7%）
+const RP = require('./real_pool.json'), RF = require('./real_ref.json');
+const inRef = { omote: new Set(RF.om), ura: new Set(RF.ur) };
+const evoC = () => { try { let e = require('./evo_' + tk + '.json'); try { e = require('./evo_' + tk + '_s.json').concat(e); } catch (x) {} return e.filter((_, i) => i % Math.max(1, Math.floor(e.length / 300)) === 0).map(x => x.c); } catch (e) { return []; } };
 const TIERS = {
-  omote: { target: [0.786, 0.823, 0.665, 0.559, 0.518], pool: R.slice(0, 600), cand: () => gen(420, 5000 + tk.length * 131 + tk.charCodeAt(0)), check: R.slice(1000) },   // 水平の 基準は tp_ref2.js（2000 体・全部ちがう形）
-  ura: { target: [0.90, 0.84, 0.78, 0.72, 0.66], pool: RK.slice(100, 500), cand: () => { const e = require('./evo_' + tk + '.json'); return e.filter((_, i) => i % Math.max(1, Math.floor(e.length / 320)) === 0).map(x => x.c); }, check: RK.slice(500) },
+  omote: { target: RF.omote.rates, pool: shuffle(RP.omote.filter(c => !inRef.omote.has(c))).slice(0, 600), cand: () => gen(260, 5000 + tk.length * 131 + tk.charCodeAt(0)).concat(evoC().slice(-160)), check: RF.om },
+  ura: { target: RF.ura.rates, pool: shuffle(RP.ura.filter(c => !inRef.ura.has(c))).slice(0, 600), cand: () => evoC(), check: RF.ur },
 };
-const OUT = __dirname + '/tp_out2.json';
+const OUT = __dirname + '/tp_out3.json';
 const out = fs.existsSync(OUT) ? JSON.parse(fs.readFileSync(OUT, 'utf8')) : {};
 const used = new Set(Object.values(out).flatMap(t => Object.values(t).flatMap(x => x.map(c => c.code))));
 const T = TIERS[tier];
@@ -22,7 +27,7 @@ const T = TIERS[tier];
   const t0 = Date.now();
   let alive = T.pool;
   if (TER[tk].ceil) { const r = await run(alive.map(a => [a, alive[0], tk])); alive = alive.filter((_, i) => r[i] !== 'T'); }
-  const inPool = new Set(P.R.concat(rank, P.ura)); let cand = T.cand().filter(c => !used.has(c) && !old.has(c) && !inPool.has(c));
+  const inPool = new Set(P.R.concat(rank, P.ura, RP.omote, RP.ura)); let cand = T.cand().filter(c => !used.has(c) && !old.has(c) && !inPool.has(c));
   if (TER[tk].ceil) { const r = await run(cand.map(c => [c, c, tk])); cand = cand.filter((_, i) => r[i] !== 'T'); }
   // 下見: 挑戦者 60 体に 対する 強さで ならべる（挑戦者が よく 勝つ ＝ 弱い CPU が 先）
   const smp = alive.slice(0, 40), pairs = [];

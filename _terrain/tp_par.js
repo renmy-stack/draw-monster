@@ -8,6 +8,13 @@ const TER = {
   dokutsu: { floor: [], hw: 380, ceil: 170 },
   gake: { floor: [[-290, -400], [-260, 0], [260, 0], [290, -400]], hw: 0, fall: 120 },
   dansa: { floor: [[-50, 0], [50, 60]], hw: 380 },
+  // きつく した 案（ひくい・がけ で 最適解が ほかと ちがう ように なるか 試す）
+  yama110: { floor: [[-150, 0], [0, 110], [150, 0]], hw: 380 },
+  dansa100: { floor: [[-60, 0], [60, 100]], hw: 380 },
+  dokutsu140: { floor: [], hw: 380, ceil: 140 },
+  dokutsu120: { floor: [], hw: 380, ceil: 120 },
+  gake180: { floor: [[-210, -400], [-180, 0], [180, 0], [210, -400]], hw: 0, fall: 120, sx: 110 },
+  gake150: { floor: [[-180, -400], [-150, 0], [150, 0], [180, -400]], hw: 0, fall: 120, sx: 90 },
 };
 if (!isMainThread) {
   const RB = require(SIM); const cache = new Map(); const dec = c => { if (!cache.has(c)) cache.set(c, RB.decodeDesign(c)); return cache.get(c); };

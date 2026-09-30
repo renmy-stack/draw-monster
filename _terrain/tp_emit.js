@@ -1,6 +1,9 @@
 // tp_out2.json（えらんだ 形）→ ../arena_cpu.js（名前・色 つき）。node tp_emit.js
 const fs = require('fs');
-const out = require('./tp_out2.json');
+// tp_out3.json（ものさし ＝ 実際の プレイヤーの 形）を 使い、まだ ない ところは tp_out2.json（ランダムの 形の ものさし）。SKIP は 作りなおし 中で 出さない
+const o2 = require('./tp_out2.json'), o3 = require('./tp_out3.json'), SKIP = (process.env.SKIP || '').split(',').filter(Boolean);
+const out = {};
+for (const k of ['yama', 'heya', 'dokutsu', 'gake', 'dansa']) { out[k] = {}; for (const t of ['omote', 'ura']) { if (SKIP.includes(k + '.' + t)) continue; const p = (o3[k] && o3[k][t]) || (t === 'omote' && o2[k] && o2[k][t]); if (p) { out[k][t] = p; p.yard = o3[k] && o3[k][t] ? 'real' : 'random'; } } }
 const NAMES = {
   yama: { omote: ['コロコロ', 'ヤマイモ', 'ノボリン', 'イワオ', 'ヤマノヌシ'], ura: ['ガンセキ', 'ヤマアラシ', 'ナダレ', 'カザン', 'ヤマノカミ'] },
   heya: { omote: ['ハコイリ', 'スミッコ', 'カベドン', 'トビラ', 'ヘヤヌシ'], ura: ['ロウヤ', 'カンゴク', 'ツメコミ', 'ギュウギュウ', 'ミッシツオウ'] },
@@ -16,7 +19,7 @@ let s = '// ちけい ぼうけんの 相手（_terrain/tp_emit.js で 作る。
 for (const [tk, tiers] of Object.entries(out)) {
   s += '  ' + tk + ': {\n';
   for (const [tier, pick] of Object.entries(tiers)) {
-    s += '    ' + tier + ': [   // ' + pick.map(p => Math.round(p.rate * 100) + '%').join(' ') + (pick[0].check ? '、べつの 挑戦者で 全部ぬけ ' + pick[0].check : '') + '\n';
+    s += '    ' + tier + ': [   // ' + pick.map(p => Math.round(p.rate * 100) + '%').join(' ') + (pick[0].check ? '、' + (pick.yard === 'real' ? '実際の 形 1500 で' : 'ランダムの 形で（前の ものさし）') + ' 全部ぬけ ' + pick[0].check : '') + '\n';
     pick.forEach((p, i) => { s += "      ['" + NAMES[tk][tier][i] + "', '" + COLORS[tier][i] + "', '" + p.code + "'],\n"; });
     s += '    ],\n';
   }

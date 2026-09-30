@@ -1,11 +1,12 @@
 // node tp_evo.js 地形 — その 地形で 相手（右がわ）として 強い 形を 進化で 育てる。うまれた 形は ぜんぶ おぼえる（うらの 候補）
 const fs = require('fs');
 const RB = require('../sim.js'), { run, TER } = require('./tp_par.js'), { G, plain } = require('./tp_gen.js');
-const tk = process.argv[2], P = 36, GEN = 14;
+const tk = process.argv[2], STRONG = process.argv[3] === 'strong', P = 36, GEN = STRONG ? 24 : 14;   // strong: 強い 挑戦者（記録で うらを 3 たい 以上 ぬいた 実際の 形）で 長く
 let seed = 99; const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; };
 const pool = require('./tp_pool.json'), rank = require('./gd_in.json').ranked.map(m => m.code);
 // 挑戦者（左）: ランクせんの 形 30（挑戦者 として だけ 使う）＋ 人が 描きそうな 形 10
-const ch = rank.filter((_, i) => i % 25 === 3).slice(0, 30).concat(pool.R.slice(1400, 1410));
+const RP = require('./real_pool.json'), RF = require('./real_ref.json'), inRef = new Set(RF.ur);
+const ch = STRONG ? RP.ura.filter(c => RP.reach.ura[c] >= 3 && !inRef.has(c)).slice(0, 40) : rank.filter((_, i) => i % 25 === 3).slice(0, 30).concat(pool.R.slice(1400, 1410));
 (async () => {
   G.setSeed(1234 + tk.length * 77);
   let pop = []; while (pop.length < P) { const p = G.randP(), d = G.build(p); if (d) pop.push({ p, c: plain(d) }); }
@@ -22,6 +23,6 @@ const ch = rank.filter((_, i) => i % 25 === 3).slice(0, 30).concat(pool.R.slice(
     while (next.length < P) { const q = G.randP(), d = G.build(q); if (d) next.push({ p: q, c: plain(d) }); }
     pop = next;
   }
-  fs.writeFileSync('evo_' + tk + '.json', JSON.stringify([...all.values()].sort((a, b) => b.fit - a.fit)));
+  fs.writeFileSync('evo_' + tk + (STRONG ? '_s' : '') + '.json', JSON.stringify([...all.values()].sort((a, b) => b.fit - a.fit)));
   console.log(tk, 'おわり', all.size, '体');
 })();
