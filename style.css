@@ -320,9 +320,11 @@ button:disabled { opacity: .45; }
 .rd-node.rd-omote.sel { background: #ede7f6; }
 .rd-node.rd-ura.sel { background: #ffebee; }
 .rd-node.rd-minna.sel { background: #e0f2f1; }
-.rd-node.rd-arena.sel { background: #fff3e0; }
-.main.arena { background: #ef6c00; border-color: var(--ink); color: #fff; }
-.main.arena small { display: block; font-size: 12px; font-weight: 700; opacity: .95; }
+.troad { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 6px; }
+.tr-chip { flex: 1 1 0; min-width: 0; padding: 4px 2px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.tr-chip.sel { background: #e8f5e9; border-color: var(--hot); box-shadow: 0 2px 0 var(--hot); }
+.tr-chip.done::after { content: ' ✓'; color: #2e7d32; }
+.tr-chip.locked { background: #eee; color: #999; border-style: dashed; }
 .advgo { display: flex; flex-direction: column; align-items: center; width: 100%; margin: 12px 0 18px; font-size: 20px; }
 .advgo small { font-size: 12px; font-weight: 700; opacity: .9; }
 

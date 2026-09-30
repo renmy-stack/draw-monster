@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '140';
+const VERSION = '141';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -75,10 +75,22 @@ let uraOpen = URA_TEST || lsGet('cleared') === '1';   // おもてを クリア�
 // みんなの さいきょう ぐんだん（3 つめの 勝ち抜き）: うらを クリアした 人に 出る（?minnatest の 端末は いつでも）
 if (/[?&]minnatest(=|&|$)/.test(location.search)) lsSet('minnatest', '1');
 let MINNA_OPEN = lsGet('minnatest') === '1' || lsGet('ura.cleared') === '1';   // うらを クリアしたら 出る
-// ちけい ぼうけん（2026-09-30〜）: 5 つの 闘技場（arena.js）。?arenatest の 端末だけ
+// ちけい ぼうけん（2026-10-01〜）: 6 つの 地形（arena.js）× おもて・うら・みんな。?arenatest の 端末だけ（?arenaall で 地形を ぜんぶ ひらく）
 if (/[?&]arenatest(=|&|$)/.test(location.search)) lsSet('arenatest', '1');
+if (/[?&]arenaall(=|&|$)/.test(location.search)) lsSet('arenaall', '1');
 const ARENA_ON = lsGet('arenatest') === '1' && !!window.ARENA;
-const SIDE_LABEL = { omote: 'おもて', ura: 'うら', minna: 'みんな', arena: 'ちけい' };
+const TERRAINS = ARENA_ON ? ARENA.TERRAINS : [];
+let terrain = TERRAINS.some(t => t.key === lsGet('terrain')) ? lsGet('terrain') : 'flat';
+function terrInfo() { return terrain === 'flat' ? null : TERRAINS.find(t => t.key === terrain); }   // 水平（いまの ぼうけん）は null
+const tpre = k => (k === 'flat' ? '' : 't.' + k + '.');   // 記録の キーの 頭
+function terrainOpen(i) { const t = TERRAINS[i]; if (!t || !t.cpu.omote) return false; if (i === 0 || lsGet('arenaall') === '1') return true; return lsGet(tpre(TERRAINS[i - 1].key) + 'cleared') === '1'; }
+function sideOpen(s) {   // いまの 地形で その 段が あそべるか
+  if (s === 'omote') return true;
+  if (terrain === 'flat') return s === 'ura' ? uraOpen : MINNA_OPEN;
+  const t = terrInfo(); if (!t || !t.cpu[s]) return false;
+  return lsGet('arenaall') === '1' || lsGet(tpre(terrain) + (s === 'ura' ? '' : 'ura.') + 'cleared') === '1';
+}
+const SIDE_LABEL = { omote: 'おもて', ura: 'うら', minna: 'みんな' };
 // タイトルの 整理（v75）: おもて → うら → みんな を「ぼうけん」の 1 本道に。v77 で 全員に 公開（前は ?titletest の 端末だけ）
 const TITLE_TEST = true;
 // かざり（v78〜）: コインと ガチャで 見た目だけの かざり。v93 で 全員に 公開（オーナー OK）
@@ -95,10 +107,11 @@ if (/[?&]backuptest(=|&|$)/.test(location.search)) lsSet('backuptest', '1');
 const BK_ON = true;
 const kzs = KZ.store(k => lsGet(k), (k, v) => lsSet(k, v));
 function withKz(d) { if (d && KZ_ON) { const e = kzs.eq(); d.kz = e.some(Boolean) ? e : null; } return d; }
-let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : ARENA_ON && lsGet('side') === 'arena' ? 'arena' : 'omote';
-const sk = n => (side === 'omote' ? '' : side + '.') + n;
-function CPUS() { return side === 'ura' ? RB.URA : side === 'minna' ? RB.MINNA : side === 'arena' ? ARENA.CPU : RB.CPU; }
-function arenaStage() { return side === 'arena' ? ARENA.STAGES[stage] : null; }
+let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : 'omote';
+if (terrain !== 'flat') side = ['ura', 'minna'].includes(lsGet('side')) && sideOpen(lsGet('side')) ? lsGet('side') : 'omote';
+const sk = n => tpre(terrain) + (side === 'omote' ? '' : side + '.') + n;
+function CPUS() { const t = terrInfo(); if (t) return t.cpu[side] || t.cpu.omote; return side === 'ura' ? RB.URA : side === 'minna' ? RB.MINNA : RB.CPU; }
+const tname = () => terrInfo() ? terrInfo().name + ' ' : '';
 let stage = 0, cleared = false, best = 0, beaten = [];
 function loadSide() {
   stage = Math.min(CPUS().length - 1, +(lsGet(sk('stage')) || 0));
@@ -113,7 +126,7 @@ const FAST = 4;
 // 勝ち抜き: 途中でモンスターを変えたら 1 体目から。負けたら その挑戦は おわり
 function resetRun() { stage = 0; lsSet(sk('stage'), '0'); }
 // モンスターを描きかえたら おもて・うら 両方の途中経過を 1 たいめに
-function resetAllRuns() { if (side !== 'arena') stage = 0; lsSet('stage', '0'); lsSet('ura.stage', '0'); }   // ちけいは 描きなおしても 進みは そのまま
+function resetAllRuns() { stage = 0; lsSet('stage', '0'); lsSet('ura.stage', '0'); for (const t of TERRAINS) if (t.key !== 'flat') for (const s of ['', 'ura.', 'minna.']) if (lsGet(tpre(t.key) + s + 'stage')) lsSet(tpre(t.key) + s + 'stage', '0'); }
 let friendRobot = null;
 { const m = /[#&]r=([A-Za-z0-9_-]+)/.exec(location.hash); if (m) friendRobot = RB.decodeDesign(m[1]); }
 
@@ -176,12 +189,25 @@ function showTitle() {
 function renderRoad() {
   $('trecord').hidden = true; $('start').parentNode.style.display = 'none'; $('adv').hidden = false;
   $('tmchint').textContent = myRobot ? '✏ タップで なおす・えらぶ' : '✏ タップで つくる';
-  const open = { omote: true, ura: uraOpen, minna: MINNA_OPEN, arena: ARENA_ON };
+  const open = { omote: true, ura: sideOpen('ura'), minna: sideOpen('minna') };
   const road = $('road'); road.innerHTML = '';
-  ['omote', 'ura', 'minna'].concat(ARENA_ON ? ['arena'] : []).forEach((s, i) => {
+  // 地形の えらびかた（ちけい ぼうけん）
+  let tr = $('troad');
+  if (ARENA_ON) {
+    if (!tr) { tr = document.createElement('div'); tr.id = 'troad'; tr.className = 'troad'; road.parentNode.insertBefore(tr, road); }
+    tr.innerHTML = '';
+    TERRAINS.forEach((t, i) => {
+      const op = terrainOpen(i), b = document.createElement('button');
+      b.className = 'tr-chip' + (terrain === t.key ? ' sel' : '') + (op ? '' : ' locked') + (lsGet(tpre(t.key) + 'cleared') === '1' ? ' done' : '');
+      b.textContent = op ? t.name : '？？？'; b.disabled = !op;
+      if (op) onTap(b, () => { if (terrain === t.key) return; terrain = t.key; lsSet('terrain', terrain); side = 'omote'; lsSet('side', side); loadSide(); TR('terrain', { t: terrain }); showTitle(); });
+      tr.appendChild(b);
+    });
+  }
+  ['omote', 'ura', 'minna'].forEach((s, i) => {
     if (i) { const ln = document.createElement('i'); ln.className = 'rd-line' + (open[s] ? ' on' : ''); road.appendChild(ln); }
-    const k = n => (s === 'omote' ? '' : s + '.') + n;
-    const done = lsGet(k('cleared')) === '1' || (s === 'omote' && uraOpen && !URA_TEST);
+    const k = n => tpre(terrain) + (s === 'omote' ? '' : s + '.') + n;
+    const done = lsGet(k('cleared')) === '1' || (terrain === 'flat' && s === 'omote' && uraOpen && !URA_TEST);
     const b = document.createElement('button');
     b.className = 'rd-node rd-' + s + (open[s] ? '' : ' locked') + (done ? ' done' : '') + (open[s] && side === s ? ' sel' : '');
     const st = +(lsGet(k('stage')) || 0);
@@ -192,14 +218,14 @@ function renderRoad() {
   });
   const go = $('advgo');
   if (!myRobot) { go.innerHTML = 'モンスターを つくる'; go.className = 'main advgo'; return; }
-  go.innerHTML = '▶ たたかう<small>' + SIDE_LABEL[side] + ' ' + (stage + 1) + ' / ' + CPUS().length + ' ' + (arenaStage() ? arenaStage().name + '・' : '') + CPUS()[stage].name + '</small>';
-  go.className = 'main advgo' + (side === 'ura' ? ' ura' : side === 'minna' ? ' minna' : side === 'arena' ? ' arena' : '');
-  if (arenaStage()) $('tmchint').textContent = '🏔 ' + arenaStage().name + '：' + arenaStage().hint;
+  go.innerHTML = '▶ たたかう<small>' + tname() + SIDE_LABEL[side] + ' ' + (stage + 1) + ' / ' + CPUS().length + ' ' + CPUS()[stage].name + '</small>';
+  go.className = 'main advgo' + (side === 'ura' ? ' ura' : side === 'minna' ? ' minna' : '');
+  if (terrInfo()) $('tmchint').textContent = '🏔 ' + terrInfo().name + '：' + terrInfo().hint;
 }
 onTap($('advgo'), () => {
   if (!myRobot) { showDraw(); return; }
   TR('advgo', { side, stage });
-  if (side === 'minna' && lsGet('minna.intro') !== '1') { minnaStartAfterInfo = true; showMinnaInfo(); return; }
+  if (side === 'minna' && terrain === 'flat' && lsGet('minna.intro') !== '1') { minnaStartAfterInfo = true; showMinnaInfo(); return; }
   startBattle(false);
 });
 function showDraw() {
@@ -212,7 +238,7 @@ function showDraw() {
   setPart(part);
   if (vs) setHint((vs.step === 1 ? '1P' : '2P') + ' の モンスターを かいてね' + (myRobot ? '（まえの モンスターが はいってるよ）' : ''));
   else if (evd) setHint('きょうの お題：' + PARTS[evd.t.part] + ' は' + evq(evd.t.name) + '（かえられない）');
-  else if (arenaStage()) setHint('ちけい ' + (stage + 1) + '「' + arenaStage().name + '」：' + arenaStage().hint + '（かきなおしても すすみは そのまま）');
+  else if (terrInfo()) setHint('🏔 ' + terrInfo().name + '：' + terrInfo().hint + (stage > 0 ? '（かちぬき ちゅう：かえると 1 たいめから）' : ''));
   else if (stage > 0) setHint('かちぬき ちゅう：モンスターを かえると 1 たいめから');
   sizePad(); drawPad();   // 文字やボタンが決まってから 測る
 }
@@ -276,7 +302,7 @@ function drawPad() {
     }
   } else if (raw) { g.strokeStyle = padColor(); g.lineWidth = 4; pline(g, RB.cleanStroke(raw, RB.INK.body)); g.stroke(); }
   // ちけいの どうくつ: 足もとから てんじょうまでの 高さを 点線で（いちばん 下の 点から はかる）
-  const ar = !vs && !evd && arenaStage();
+  const ar = !vs && !evd && terrInfo();
   if (ar && ar.arena.ceil && d.body && d.body.length > 1) {
     let low = -Infinity; for (const k of ['body', 'arm', 'leg']) for (const p of d[k] || []) low = Math.max(low, p[1]);
     const y = low - ar.arena.ceil + RB.T * 2;
@@ -522,10 +548,10 @@ let S = null, opp = null, acc = 0, last = 0, stop = 0, shake = 0, parts = [], po
 function startBattle(friend) {
   if (!myRobot) return;
   isFriend = !!friend;
-  const ar = friend ? null : arenaStage();
+  const ar = friend ? null : terrInfo();
   if (ar && RB.create(myRobot, CPUS()[stage], ar.arena).A.tall) { showDraw(); setHint('てんじょうに つかえて はいれない！ せを ひくく かきなおしてね（てんせんより したに）'); TR('arenatall', { stage }); return; }
   opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: CPUS()[stage].name, color: CPUS()[stage].color, d: CPUS()[stage] };
-  S = RB.create(myRobot, opp.d, ar && ar.arena); S.stageInfo = ar; S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend; S.legendB = !!opp.d.legend; S.champA = myRobot.champ || 0; S.champB = opp.d.champ || 0;
+  S = RB.create(myRobot, opp.d, ar && ar.arena); S.stageInfo = ar; S.terrain = ar ? terrain : null; S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend; S.legendB = !!opp.d.legend; S.champA = myRobot.champ || 0; S.champB = opp.d.champ || 0;
   S.d = designRef(myRobot);
   S.kzA = withKz(myRobot).kz || null; S.kzB = opp.d.kz || null;
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
@@ -708,7 +734,7 @@ function drawHud() {
   bar(W - 12 - bw, S.B.hp, S.B.maxHp, opp.name, S.side === 'ura' ? '#ff5252' : opp.color, true);   // うらの敵は色が暗いので バーは赤
   ctx.textAlign = 'center'; ctx.font = '900 26px sans-serif'; ctx.fillStyle = S.t > RB.TIME - 5 ? '#ff8a80' : '#fff';
   ctx.fillText(Math.max(0, Math.ceil(RB.TIME - S.t)), W / 2, top + 34);
-  if (!isFriend) { ctx.font = '700 12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText(S.stageInfo ? 'ちけい ' + (S.stage + 1) + ' / ' + CPUS().length + ' ' + S.stageInfo.name : (S.side === 'ura' ? 'うら ' : S.side === 'minna' ? 'みんなの さいきょう ' : '') + 'かちぬき ' + (S.stage + 1) + ' / ' + CPUS().length, W / 2, top + 54); }
+  if (!isFriend) { ctx.font = '700 12px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.fillText(S.stageInfo ? S.stageInfo.name + ' ' + SIDE_LABEL[S.side] + ' かちぬき ' + (S.stage + 1) + ' / ' + CPUS().length : (S.side === 'ura' ? 'うら ' : S.side === 'minna' ? 'みんなの さいきょう ' : '') + 'かちぬき ' + (S.stage + 1) + ' / ' + CPUS().length, W / 2, top + 54); }
   if (S.t < 1) big('ファイト！', '#ffd54f', 1 - S.t);
   if (S.over) big(S.reason === 'ko' ? 'KO！' : S.reason === 'fall' ? 'おちた！' : 'じかんぎれ', S.winner === 'A' ? '#ffd54f' : '#ff8a80', 1);
 }
@@ -730,7 +756,7 @@ function drawTitleBg() {
 // ---------- 結果 ----------
 function showResult() {
   mode = 'result'; show('result');
-  TR('result', { side: S.side, stage: S.stage, opp: opp && opp.name, win: S.winner === 'A' ? 'win' : S.winner === 'B' ? 'lose' : 'draw', reason: S.reason, t: Math.round(S.t * 10) / 10, d: S.d, fast: fast });
+  TR('result', { side: S.side, ter: S.terrain || undefined, stage: S.stage, opp: opp && opp.name, win: S.winner === 'A' ? 'win' : S.winner === 'B' ? 'lose' : 'draw', reason: S.reason, t: Math.round(S.t * 10) / 10, d: S.d, fast: fast });
   $('share').hidden = false; $('vstitle').hidden = true; $('redraw').hidden = false; $('redraw').textContent = 'モンスターを なおす';
   $('cert').hidden = true; $('torank').hidden = true;
   $('next').textContent = 'つぎの あいてへ'; $('next').classList.remove('ura', 'minna'); $('again').className = 'main'; goUra = false; goMinna = false;
@@ -767,14 +793,20 @@ function showResult() {
       if (stage < CPUS().length - 1) { stage++; lsSet(sk('stage'), String(stage)); showNext = true; }
       else {
         cleared = true; lsSet(sk('cleared'), '1'); resetRun();
-        if (side === 'ura') { onUraClear(); }
-        if (side === 'arena') { $('rsub').textContent += '\nちけい ぼうけん 5 つ ぜんぶ クリア！！'; TR('arenaclear', { me: plainCode(myRobot) }); }
-        if (side === 'minna') { onMinnaClear(); $('rsub').textContent += '\nみんなの さいきょう ぐんだん を\nたおした！！！\nでんせつ の モンスター に なった！'; }
-        if (side === 'ura') { $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！\nすごすぎる！'; const firstM = !MINNA_OPEN; MINNA_OPEN = true; $('rsub').textContent += firstM ? '\n…みんなの さいきょう ぐんだん が\nあらわれた！' : '\nみんなの さいきょう ぐんだん が\nまってるぞ…！'; goMinna = true; }
+        const ti = terrInfo();
+        if (side === 'ura' && !ti) { onUraClear(); }
+        if (ti) {   // ちけい: おもて → うら → みんな、おもてで つぎの 地形
+          $('rsub').textContent += '\n' + ti.name + ' の ' + SIDE_LABEL[side] + ' 5 たい かちぬき たっせい！';
+          TR('terrainclear', { t: terrain, s: side, me: plainCode(myRobot) });
+          if (side === 'omote' && ti.cpu.ura) { $('rsub').textContent += '\n…' + ti.name + ' の うら が あらわれた！'; goUra = true; }
+          if (side === 'ura' && ti.cpu.minna) { $('rsub').textContent += '\n…' + ti.name + ' の みんな が あらわれた！'; goMinna = true; }
+        }
+        if (side === 'omote' && ARENA_ON) { const i = TERRAINS.findIndex(t => t.key === terrain), nx = TERRAINS[i + 1]; if (nx && nx.cpu.omote) $('rsub').textContent += '\n🏔 つぎの ちけい「' + nx.name + '」が ひらいた！'; }
+        if (side === 'minna' && !ti) { onMinnaClear(); $('rsub').textContent += '\nみんなの さいきょう ぐんだん を\nたおした！！！\nでんせつ の モンスター に なった！'; }
+        if (ti) {}
+        else if (side === 'ura') { $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！\nすごすぎる！'; const firstM = !MINNA_OPEN; MINNA_OPEN = true; $('rsub').textContent += firstM ? '\n…みんなの さいきょう ぐんだん が\nあらわれた！' : '\nみんなの さいきょう ぐんだん が\nまってるぞ…！'; goMinna = true; }
         else if (side === 'omote') { $('rsub').textContent += '\n5 たい かちぬき たっせい！'; const firstUra = !uraOpen; uraOpen = true; $('rsub').textContent += firstUra ? '\n…うら かちぬき が あらわれた！' : '\nうら かちぬき が まってるぞ…！'; goUra = true; }
       }
-    } else if (side === 'arena') {
-      $('rsub').textContent += '\nこの ステージから もういちど。かたちを かえて みよう！';   // ちけいは 負けても 1 たいめに もどらない
     } else {
       resetRun();
       $('rsub').textContent += '\n' + wins + ' にんぬき で おわり';
@@ -782,7 +814,7 @@ function showResult() {
     if (wins > best) { best = wins; lsSet(sk('best'), String(best)); $('rsub').textContent += '\nさいこう きろく！'; }
     // かざりの コイン: 同じ 形で 同じ 相手に 勝つたび 半分（形を 変えれば 元どおり）
     if (KZ_ON && win) {
-      const rw = KZ.winReward(kzs, plainCode(myRobot), S.side, S.stage, S.stage === CPUS().length - 1);
+      const rw = KZ.winReward(kzs, plainCode(myRobot), S.side, S.stage, S.stage === CPUS().length - 1, tpre(terrain));
       TR('coin', { s: S.side, st: S.stage, got: rw.got, n: rw.n });
       $('rsub').textContent += '\n🪙 +' + rw.got + (rw.got === 0 ? '（おなじ かたちで かちすぎ！ かたちを かえると もどるよ）' : rw.n > 0 ? '（この かたちで ' + (rw.n + 1) + ' かいめ → へったよ）' : '') + '　もちコイン ' + kzs.coins();
     }
@@ -790,11 +822,11 @@ function showResult() {
   $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
   $('next').hidden = !showNext && !goUra && !goMinna;
   $('again').hidden = showNext;
-  if (RANK_ON && !isFriend && win && S.stage === 4 && S.side !== 'arena' && (!rankMe || rankMe.code !== plainCode(myRobot))) $('torank').hidden = false;
-  if (goUra) { $('next').innerHTML = 'うら かちぬき へ！<small>とんでもなく つよい 5 たい</small>'; $('next').classList.add('ura'); $('again').className = 'sub'; $('again').textContent = 'おもてを もういちど'; }
+  if (RANK_ON && !isFriend && win && S.stage === 4 && !S.stageInfo && (!rankMe || rankMe.code !== plainCode(myRobot))) $('torank').hidden = false;
+  if (goUra) { $('next').innerHTML = tname() + 'うら かちぬき へ！<small>とんでもなく つよい 5 たい</small>'; $('next').classList.add('ura'); $('again').className = 'sub'; $('again').textContent = 'おもてを もういちど'; }
   if (goMinna) { $('next').innerHTML = 'みんなの さいきょう<br>ぐんだん へ！<small>うらを クリアした みんなの 5 たい</small>'; $('next').classList.add('minna'); $('again').className = 'sub'; }
-  $('again').textContent = isFriend || side === 'arena' ? 'もういちど' : goUra ? 'おもてを もういちど' : goMinna ? 'うらを もういちど' : '1 たいめから もういちど';
-  $('redraw').textContent = !isFriend && stage > 0 && side !== 'arena' ? 'モンスターを なおす（1 たいめから）' : 'モンスターを なおす';
+  $('again').textContent = isFriend ? 'もういちど' : goUra ? 'おもてを もういちど' : goMinna ? 'うらを もういちど' : '1 たいめから もういちど';
+  $('redraw').textContent = !isFriend && stage > 0 ? 'モンスターを なおす（1 たいめから）' : 'モンスターを なおす';
   if (endingPending) startEnding();
 }
 function shareRobot() {
@@ -951,7 +983,7 @@ function showMinnaInfo() {
 // 紹介を 閉じたら、待って いた バトルを 始める（紹介を 読んで いる 間に 裏で 戦いが 進まない ように）
 let minnaStartAfterInfo = false;
 onTap($('minnaclose'), () => { $('minnainfo').hidden = true; if (minnaStartAfterInfo) { minnaStartAfterInfo = false; startBattle(false); } });
-function toMinna(from) { goMinna = false; side = 'minna'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotominna', { from }); if (lsGet('minna.intro') !== '1') { showMinnaInfo(); return true; } return false; }
+function toMinna(from) { goMinna = false; side = 'minna'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotominna', { from }); if (terrain === 'flat' && lsGet('minna.intro') !== '1') { showMinnaInfo(); return true; } return false; }
 onTap($('next'), () => { if (!vs && goMinna) { if (toMinna('result')) minnaStartAfterInfo = true; else startBattle(false); return; } if (vs) startVsMode(); else if (goUra) { goUra = false; side = 'ura'; lsSet('side', side); loadSide(); updateSideUi(); TR('gotoura', { from: 'result' }); startBattle(false); } else startBattle(false); });
 onTap($('again'), () => { if (S && S.side === 'rank' && rankLast) { rankBattle(...rankLast); return; } if (S && S.side === 'vs') startVsBattle(); else startBattle(isFriend); });
 onTap($('redraw'), () => { if (S && S.evBattle) startEvDraw(); else if (vs) startVsMode(); else showDraw(); });
@@ -1792,16 +1824,16 @@ onTap($('slots'), () => { slotSel = 0; slotDelAsk = false; slotOwAsk = false; re
 onTap($('closeslots'), () => { $('slotbox').hidden = true; });
 // おもて / うら の切りかえ（おもてを クリアしたら 出る）
 function updateSideUi() {
-  $('sidebtn').hidden = !uraOpen && !MINNA_OPEN && !ARENA_ON;
-  $('sidebtn').textContent = SIDE_LABEL[side];
+  $('sidebtn').hidden = !sideOpen('ura') && !sideOpen('minna');
+  $('sidebtn').textContent = tname() + SIDE_LABEL[side];
   $('sidebtn').classList.toggle('ura', side !== 'omote');
-  $('fight').innerHTML = (side === 'omote' ? '' : SIDE_LABEL[side] + ' ') + 'たたかう<small>' + (stage + 1) + ' / ' + CPUS().length + ' ' + CPUS()[stage].name + '</small>';
+  $('fight').innerHTML = tname() + (side === 'omote' ? '' : SIDE_LABEL[side] + ' ') + 'たたかう<small>' + (stage + 1) + ' / ' + CPUS().length + ' ' + CPUS()[stage].name + '</small>';
   $('fight').classList.toggle('ura', side !== 'omote');
   applyVsUi();
   applyEvUi();
 }
 // おもて ⇄ うら（押すたびに切りかえ）
-onTap($('sidebtn'), () => { const order = ['omote'].concat(uraOpen ? ['ura'] : [], MINNA_OPEN ? ['minna'] : [], ARENA_ON ? ['arena'] : []); side = order[(order.indexOf(side) + 1) % order.length]; lsSet('side', side); loadSide(); updateSideUi(); if (side === 'minna' && lsGet('minna.intro') !== '1') showMinnaInfo(); setHint(side === 'ura' ? 'うら かちぬき：とんでもなく つよい 5 たい' : side === 'minna' ? 'みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい' : ''); });
+onTap($('sidebtn'), () => { const order = ['omote'].concat(sideOpen('ura') ? ['ura'] : [], sideOpen('minna') ? ['minna'] : []); side = order[(order.indexOf(side) + 1) % order.length]; lsSet('side', side); loadSide(); updateSideUi(); if (side === 'minna' && terrain === 'flat' && lsGet('minna.intro') !== '1') showMinnaInfo(); setHint(side === 'ura' ? 'うら かちぬき：とんでもなく つよい 5 たい' : side === 'minna' ? 'みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい' : ''); });
 onTap($('fast'), () => { fast = !fast; TR('fast', { on: fast }); lsSet('fast', fast ? '1' : '0'); updateFastBtn(); });
 // 戦いの途中で もどる（勝ち抜きの途中経過は そのまま。戦いは決定的なので やめても 得はしない）
 onTap($('quit'), () => { if ((mode === 'battle' || mode === 'pause') && S && S.side === 'rank') { if (S.evBattle) showEv(); else if (S.nkBattle) showNakama(); else showRank(); return; } if (mode === 'battle' || mode === 'pause') { TR('quit', { side: S && S.side, stage: S && S.stage, t: S && Math.round(S.t * 10) / 10, d: S && S.d }); showDraw(); } });
@@ -1899,7 +1931,7 @@ if (NK_ON && nkPreview) showNakama();   // さそう URL から 来た とき
   if (q.has('certpreview')) { if (!myRobot) sample(); openCertBox(makeCert(plainCode(myRobot), '2026/9/27')); }   // オーナーの 確認用: でんせつ しょうめいしょ
   if (q.has('minna') && MINNA_OPEN) { side = 'minna'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: みんな
   if (q.has('ura')) { uraOpen = true; side = 'ura'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: うら
-  if (q.has('arena') && ARENA_ON) { side = 'arena'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: ちけい
+  if (q.has('terrain') && ARENA_ON) { terrain = q.get('terrain'); side = q.get('side') || 'omote'; loadSide(); if (q.has('stage')) stage = +q.get('stage'); }   // 開発用: ちけい（&terrain=yama&side=omote&stage=n）
   if (q.has('draw')) { if (!myRobot) sample(); if (q.get('draw') === 'arm') { strokes.arm = null; strokes.leg = null; myRobot = null; } showDraw(); }
   if (q.has('shot')) {
     if (!myRobot) sample();
