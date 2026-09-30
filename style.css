@@ -434,7 +434,7 @@ button:disabled { opacity: .45; }
 .ev-day { font-size: 12px; font-weight: 900; color: #8e24aa; }
 .ev-name { font-size: 20px; font-weight: 900; color: #4a148c; }
 .ev-champ { border-color: #b0bec5; background: #eceff1; }
-.ev-histbtn { display: block; margin: 6px auto 0; font-size: 13px; }
+.ev-histbtn { display: block; margin: 4px 2px 0 auto; padding: 2px 4px; border: 0; background: none; box-shadow: none; color: #555; font-size: 12px; font-weight: 700; text-decoration: underline; cursor: pointer; }   /* ルール と おなじ くらい ひかえめに */
 .hist { margin-top: 4px; }
 .hist .rk-pos { min-width: 3em; font-size: 12px; color: #607d8b; }
 .hist[hidden] { display: none; }
