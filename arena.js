@@ -8,7 +8,8 @@
 const RB = root.RB || require('./sim.js');
 const cpu = list => list.map(([name, color, code]) => Object.assign({ name, color }, RB.decodeDesign(code)));
 const AC = typeof ARENA_CPU !== 'undefined' ? ARENA_CPU : require('./arena_cpu.js');   // 地形ごとの 相手（arena_cpu.js）
-const cpus = (k, kari) => { const o = {}; for (const [t, l] of Object.entries(AC[k] || {})) o[t] = cpu(l); if (kari) { if (!o.omote) { o.omote = RB.CPU; Object.defineProperty(o, 'kari', { value: true }); } if (!o.ura) o.ura = RB.URA; } return o; };
+// kari: おもて・うら が そろう まで 仮（水平の 相手）で、一覧にも 出さない（?arenanew の 端末だけ）
+const cpus = (k, kari) => { const o = {}; for (const [t, l] of Object.entries(AC[k] || {})) o[t] = cpu(l); if (kari && (!o.omote || !o.ura)) { if (!o.omote) o.omote = RB.CPU; if (!o.ura) o.ura = RB.URA; Object.defineProperty(o, 'kari', { value: true }); } return o; };
 const TERRAINS = [
   { key: 'flat', name: '水平', arena: null, cpu: { omote: RB.CPU, ura: RB.URA, minna: RB.MINNA } },
   { key: 'yama', name: 'おやま', hint: 'まんなかが もりあがってる', arena: { floor: [[-120, 0], [0, 70], [120, 0]], hw: 380 },

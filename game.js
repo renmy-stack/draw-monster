@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '148';
+const VERSION = '149';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -79,7 +79,9 @@ let MINNA_OPEN = lsGet('minnatest') === '1' || lsGet('ura.cleared') === '1';   /
 if (/[?&]arenatest(=|&|$)/.test(location.search)) lsSet('arenatest', '1');
 if (/[?&]arenaall(=|&|$)/.test(location.search)) lsSet('arenaall', '1');
 const ARENA_ON = lsGet('arenatest') === '1' && !!window.ARENA;
-const TERRAINS = ARENA_ON ? ARENA.TERRAINS : [];
+if (/[?&]arenanew(=|&|$)/.test(location.search)) lsSet('arenanew', '1');
+// 相手が まだ 仮（kari）の 地形（こおり・みず・うごくゆか）は 出さない。?arenanew の 端末だけ ためせる
+const TERRAINS = ARENA_ON ? ARENA.TERRAINS.filter(t => !t.cpu.kari || lsGet('arenanew') === '1') : [];
 let terrain = TERRAINS.some(t => t.key === lsGet('terrain')) ? lsGet('terrain') : 'flat';
 function terrInfo() { return terrain === 'flat' ? null : TERRAINS.find(t => t.key === terrain); }   // 水平（いまの ぼうけん）は null
 const tpre = k => (k === 'flat' ? '' : 't.' + k + '.');   // 記録の キーの 頭
@@ -204,7 +206,7 @@ function renderRoad() {
       tr.appendChild(b);
     });
   }
-  ['omote', 'ura', 'minna'].forEach((s, i) => {
+  ['omote', 'ura', 'minna'].filter(s => s !== 'minna' || !terrInfo() || terrInfo().cpu.minna).forEach((s, i) => {   // みんなが まだ ない 地形は 2 つだけ
     if (i) { const ln = document.createElement('i'); ln.className = 'rd-line' + (open[s] ? ' on' : ''); road.appendChild(ln); }
     const k = n => tpre(terrain) + (s === 'omote' ? '' : s + '.') + n;
     const done = lsGet(k('cleared')) === '1' || (terrain === 'flat' && s === 'omote' && uraOpen && !URA_TEST);
