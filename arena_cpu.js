@@ -50,19 +50,19 @@ const ARENA_CPU = {
     ],
   },
   gake: {
-    omote: [   // 86% 80% 78% 71% 72%、実際の 形 1500 で 全部ぬけ 29.4%（84% 80% 83% 72% 74%）
-      ['ガケマル', '#8d6e63', 'DY9Fjk6IVYJYe1d1UnFKcUF1OXszgjKINo08CoCAjIGOcZ13oGeubbFewGTCVNFaCoCAgoqFlIidjKeQsJW5msGgyqbS'],
-      ['ヒュルル', '#7cb342', 'CpZIkWuHhHp4cWZsSHIseQ2GGI4sBICAg3qGc4ltDYCAgIqAk4CdgKaBsIG5gsODzYTWhuCI6Yny'],
-      ['オチソウ', '#00897b', 'EpZvl3STeYt7hH98fnJ9bXlqdGhvZ2puZnVje1-EYY1hlGWYagSAgIN6hnOJbQWAgIGKgpOCnYGn'],
-      ['フチッコ', '#6d4c41', 'DLdPr2uhiYB_ZIFKb0lPSjBlIIAbmiGxMweAgI9-gmmabY5YpVyZRw6AgH-Kf5N_nYCngbCCuoPDhs2I1ovgjumR8pX2'],
-      ['ガケノヌシ', '#33691e', 'Crd9t42Sk26TS41JfUltbmeSZ7RuBYCAiHuQdZdwn2sJgICCioaUip6OqJSxmrmgwajJ'],
+    omote: [   // 86% 79% 80% 70% 72%、実際の 形 1500 で 全部ぬけ 30.2%（84% 79% 84% 74% 73%）
+      ['ガケマル', '#8d6e63', 'EY9LkFaQZYdjgmp7a3NqcF1zUHBGcTt1MHw1gTCIL48zkj8EgICIhpCMmJIOgICBioKThJ2Gpoiwi7mOwpHLldSZ3Z3mou6n9g'],
+      ['ヒュルル', '#7cb342', 'DopqiHyGioScfZZ5k3d-d2p3VHlEfUCDP4ZJh1gFgICHeI5xlWmcYgWAgH2JeZN1m2-k'],
+      ['オチソウ', '#00897b', 'DIyGiJKFnYCke553k3aGd3d6aoBrhmmJeQaAgH-SmYKQn6qPoawIgIB_in2Te515p3ewdLlxww'],
+      ['フチッコ', '#6d4c41', 'EJfCl96X_4r_gP92_2n_ad5pwmmnaYF2gYCBioGXgZenBoCAg4uThpKWopGlnAmAgHiAcX9ueHFweG5_cYJ4f38'],
+      ['ガケノヌシ', '#33691e', 'EJV7k5ePr4i_gMV4v3GvbZdre21ecUZ4NoAwiDaPRpNeBoCAjIWOcJ59n2irbQmAgHyEd4J0fHd3fHSCd4R8goI'],
     ],
-    ura: [   // 74% 47% 40% 40% 64%、実際の 形 1500 で 全部ぬけ 4.1%（76% 46% 41% 42% 66%）
-      ['ツキオトシ', '#455a64', 'DoyIi5GImISdfJ14mHWRdIh1f3h4fHOEc4h4i38EgIBxj5mJipgLgICCioOThJ2Ep4Sxg7uCxYDOfth74g'],
-      ['ナライキ', '#4a148c', 'EKhYpWCcZo9qgGxxamRmW2BYWFtQZEpxRYBEj0WcSqVQBICAf5uec5KkB4CAe4J2g3N_dHl5d357'],
-      ['ダンガイ', '#3e2723', 'ENZNz1O9WKFcgF1fXENYMVMqTTFHQ0JfP4A-oT-9Qs9HBICAeZmYeoilEYCAfoV4iHKJbYdog2V-ZXhncmpucGt2antsgHCDdYN7gYE'],
-      ['フウジン', '#b71c1c', 'EN2D1orCkKSUgJZclD6QKoojgyp7PnVccYBwpHHCddZ7BoCAkXlxaZFldVSRUAmAgHyHdIlthGt8b3Z3dH54gIA'],
-      ['ガケノオウ', '#111111', 'EN2G1o7ClKSZgJpcmT6UKo4jhip-Pndcc4BxpHPCd9Z-BoCAkntzaJJnd1SSUwuAgIGFe4xyjWuHaYJseXB2eXV9eIKA'],
+    ura: [   // 73% 47% 38% 43% 61%、実際の 形 1500 で 全部ぬけ 3.2%（74% 44% 38% 44% 59%）
+      ['ツキオトシ', '#455a64', 'EJZ1ln2Wh4mHgId3h2qHan1qdWpuamR3ZIBkiWSWZJZuDoCAiIeUgZqNpoetkrmNwJjLktKe2JjYo9ie2KUHgICHhI2FjoqJjoSLhYU'],
+      ['ナライキ', '#4a148c', 'ELhetHOohJWQgJRrkFiETHNIXkxJWDdrK4AnlSuoN7RJBYCAiJOXcZ2WrHMJgICAeYZ2jXeQfY-EiYiChn6A'],
+      ['ダンガイ', '#3e2723', 'EMihwqSzp5upgKllqU2nPqQ4oT6eTZxlmoCZm5qznMKeBYCAiJGVcpyTpnQRgICDd4t4kXuWgZmImI-Vlo-biJ2BnHqZdZRzjXOFd358eg'],
+      ['フウジン', '#b71c1c', 'ENVxzne8fKB_gIBgf0R8MncrcTJrRGdgZIBioGS8Z85rBYCAl4d-Ypl3jVIRgIBzf3R5d3R8cIJuiW-OcpJ3k36ThI-Jio2Ej36OeIt0hg'],
+      ['ガケノオウ', '#111111', 'EORk3GvGcaZ1gHdadTpxJGscZCRdOlZaUoBRplLGVtxdBoCAinprZ4plb1KKUBGAgHN_dHh4cn1uhGyLbZFwlXaXfZaEkoqNjoaQf495i3WF'],
     ],
   },
   dansa: {
