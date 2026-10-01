@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '168';
+const VERSION = '169';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -139,7 +139,9 @@ const FAST = 4;
 // 勝ち抜き: 途中でモンスターを変えたら 1 体目から。負けたら その挑戦は おわり
 function resetRun() { stage = 0; lsSet(sk('stage'), '0'); }
 // モンスターを描きかえたら おもて・うら 両方の途中経過を 1 たいめに
-function resetAllRuns() { stage = 0; lsSet('stage', '0'); lsSet('ura.stage', '0'); lsSet('minna.stage', '0'); if (KAMI_SHOW) lsSet('kami.stage', '0'); for (const t of TERRAINS) if (t.key !== 'flat') for (const s of ['', 'ura.', 'minna.']) if (lsGet(tpre(t.key) + s + 'stage')) lsSet(tpre(t.key) + s + 'stage', '0'); }
+// 勝ち抜きの とちゅうか（水平の おもて・うら・みんな・かみ と 各地形の 3 つ。いま いない 地形の ぶんも 見る）
+function runInProgress() { if (stage > 0) return true; for (const k of ['stage', 'ura.stage', 'minna.stage', 'kami.stage']) if (+(lsGet(k) || 0) > 0) return true; for (const t of TERRAINS) if (t.key !== 'flat') for (const p of ['', 'ura.', 'minna.']) if (+(lsGet(tpre(t.key) + p + 'stage') || 0) > 0) return true; return false; }
+function resetAllRuns() { stage = 0; lsSet('stage', '0'); lsSet('ura.stage', '0'); lsSet('minna.stage', '0'); lsSet('kami.stage', '0'); for (const t of TERRAINS) if (t.key !== 'flat') for (const s of ['', 'ura.', 'minna.']) if (lsGet(tpre(t.key) + s + 'stage')) lsSet(tpre(t.key) + s + 'stage', '0'); }
 let friendRobot = null;
 { const m = /[#&]r=([A-Za-z0-9_-]+)/.exec(location.hash); if (m) friendRobot = RB.decodeDesign(m[1]); }
 
@@ -538,7 +540,7 @@ const endStroke = () => {
   const need = part === 'body' ? 80 : 20;
   if (pts.length < 2 || RB.inkOf(pts) < need) { setHint('もうすこし おおきく かいてね'); drawPad(); return; }
   strokes[part] = pts;
-  if (!vs && !evd && (stage > 0 || +(lsGet('stage') || 0) > 0 || +(lsGet('ura.stage') || 0) > 0 || +(lsGet('minna.stage') || 0) > 0 || +(lsGet('kami.stage') || 0) > 0)) { resetAllRuns(); updateSideUi(); }
+  if (!vs && !evd && runInProgress()) { resetAllRuns(); updateSideUi(); }
   if (part === 'body' && (strokes.arm || strokes.leg)) setHint('からだを かえたので、うで・あしも くっつけなおしたよ');
   else setHint('');
   saveRobot();
@@ -1860,7 +1862,7 @@ function loadSlot(i, d) {
   TR('slotload', { i });
   const same = myRobot && RB.encodeDesign(myRobot) === RB.encodeDesign(d);
   myRobot = d; strokes = { body: d.body, arm: d.arm, leg: d.leg }; if (!vs) lsSet('robot', RB.encodeDesign(d));
-  const reset = !vs && !same && (+(lsGet('stage') || 0) > 0 || +(lsGet('ura.stage') || 0) > 0);
+  const reset = !vs && !same && runInProgress();   // みんな・かみ・地形の とちゅうも（v168 まで おもて・うら だけ 見て いた）
   if (reset) resetAllRuns();
   $('slotbox').hidden = true; setPart('leg'); updateSideUi();
   setHint(reset ? i + ' を よびだしたので かちぬきは 1 たいめから' : i + ' を よびだしました');
