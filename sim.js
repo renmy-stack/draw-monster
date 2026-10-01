@@ -388,8 +388,8 @@ function step(S) {
     } else b.downT = 0;
   }
   S.t += DT;
-  if (AR && AR.fall) {   // おちた（足もとの 床より fall 以上 下）
-    const oA = A.y + floorSeg(A.x)[0] > AR.fall, oB = B.y + floorSeg(B.x)[0] > AR.fall;
+  if (AR && AR.fall) {   // おちた（台の 高さ 0 より fall 以上 下。足もとの 床で 測ると 谷底に 着地して 戦いが つづいて しまう ので 0 から）
+    const oA = A.y > AR.fall, oB = B.y > AR.fall;
     if (oA || oB) { S.over = true; S.reason = 'fall'; S.winner = oA && oB ? null : oA ? 'B' : 'A'; S.fx.push({ t: 'fall', who: oA && oB ? 'AB' : oA ? 'A' : 'B' }); S.fx.push({ t: 'end' }); AR = null; return; }
   }
   if (A.hp <= 0 || B.hp <= 0) { S.over = true; S.reason = 'ko'; S.winner = A.hp <= 0 && B.hp <= 0 ? null : A.hp > 0 ? 'A' : 'B'; }

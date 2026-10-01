@@ -81,5 +81,39 @@ const ARENA_CPU = {
       ['テッペンオウ', '#111111', 'DeSU5LLk3KncgNxX3BzcHLIclBx2HExXTIBMBoCAa46Kj2-hiqJztASAgIGHgo2ClA'],
     ],
   },
+  kori: {
+    omote: [   // 88% 79% 81% 69% 73%、実際の 形 1500 で 全部ぬけ 28.3%（87% 83% 79% 65% 76%）
+      ['ツルリン', '#8d6e63', 'EI5gjm-Ke4eGgot5hXV8c25yYHNSdUR5O341hzuKRY1RB4CAhZCYe5iXq4KrnrmWCICAg4qHlIydkaaWr5y4o8A'],
+      ['スベラー', '#7cb342', 'EZ-XmpuSo4ikfaR0o2ygZJ5nmWmSb5B1jX6Lho2RjJeQnpMFgICEdolsjWGSVwSAgH2GeItyjw'],
+      ['ユキダマ', '#00897b', 'ELJ8ro2km5OkgKdtpV2aUo1NfFFrXV5tVYBRk1SkXa9sBoCAjHyDa5ZrjVqZVgqAgIOKhpSInomoibKJvYjHhtGD2A'],
+      ['ヒョウザン', '#6d4c41', 'DK2aqKybvoC9aLtXrUeaWolpeoBwmneshgyAgIl7knWbcKRqrWW2YL9awVXBT8FKwUUKgIB9inuUep55qHmyebx7woLCi8I'],
+      ['コオリノヌシ', '#33691e', 'Ds5vznmgeYB5YHkyeTJzMmsyZWBlgGWgZc5lzmsFgICVe3JomWd2VQmAgIN4g3KHbY1tknGSeI58iHw'],
+    ],
+    ura: [   // 74% 45% 39% 42% 63%、実際の 形 1500 で 全部ぬけ 2.7%（73% 41% 40% 45% 51%）
+      ['フブキ', '#455a64', 'EJEukUSRZIdkgGR5ZG9kb0RvLm8XbwV5BYAFhwWRBZEXB4CAhY-XfZeXqoWqn7yOEYCAin6MhYuLiJGDlX2XdpdwlGyPaohqgm58c3d5dYB2hnk'],
+      ['ツララオニ', '#4a148c', 'EL47uUSsTJhRgFNoUVRMR0RCO0cyVCpoJYAjmCWsKrkyCYCAjH6LbppxmWGpZKhUsFewShGAgIiBiYeIjYSSf5V5lnKUbpBqi2qFa39venR3enaAeIV7'],
+      ['アイスバーン', '#3e2723', 'EL62vsq-5prmgOZm5kLmQspCtkKjQodmh4CHmoe-h76jD4CAiHqOcZdsnWOmXatUsE-wRrBBsDiwM7AqsCWwHQaAgIV8i3uOf4uEhoM'],
+      ['ゼッタイレイド', '#b71c1c', 'Dt2k3b7d46fjgONZ4yPjI74jpCOJI2RZZIBkp2QQgICDd4ZtiWSMWpBQkUeRPZE0kSqRIZEXkQ2RBJEAkQAJgICCeoJ1hnGMcY91j3uLfoZ-'],
+      ['コオリノオウ', '#111111', 'EMjDyNzI_57_gP9i_zj_ONw4wziqOIdih4CHnofIh8iqDoCAiXyRdZtzomumYqZYpk6mRaY8pjCmKaZBpkgHgICHeYl0j3SReY19iHs'],
+    ],
+  },
+  mizu: {
+    omote: [   // 89% 79% 81% 71% 74%、実際の 形 1500 で 全部ぬけ 30.9%（88% 78% 84% 76% 70%）
+      ['プカプカ', '#8d6e63', 'EZBOkV6QcIl3gnh7dHJ5b2hvVm9GcDdzJXsngiaJI5ArkT4LgICMfYZsl22RXaNdnU2uTqhHuke0Rw6AgICKf5R_nn-nfrF-u37Ffs9_2X_jf-2A9oD_'],
+      ['クラゲン', '#7cb342', 'ErKWq6ikuZnIiMh30WjGWbxVqFKWUIFccmppeGOJWphlpHKuggSAgJGKgmiTcgWAgHyKeJRznW2m'],
+      ['カッパ', '#00897b', 'ELasssem3pXugPNr7lreTsdKrE6RWnpraoBllWqmerKRBICAb5CZf4iPCYCAeoF2fnR5d3R9c4F2g3uAgA'],
+      ['ウミガメ', '#6d4c41', 'DqZXm1uYYIdheWFoYGRbXldeUmtPeU6HTpVPnFMPgICIhpGMmZKimKqes6S7qsSwyLbIvMjCyMjIzsjUCoCAf4l9k3qcd6Vzrm62ab5kxl3N'],
+      ['ミズノヌシ', '#33691e', 'D65hqnelkY6Ve5pmlleEV2tUVlQ8aDF7J48rpjCxSAiAgIqClISdh6eJsYu7jb2SDICAg4qGk4qdjqaTrpm3n7-lxqzNtNS82g'],
+    ],
+    ura: [   // 73% 44% 38% 41% 60%、実際の 形 1500 で 全部ぬけ 2.9%（72% 45% 42% 34% 64%）
+      ['ウズマキ', '#455a64', 'ELejt7S3y5fLgMtpy0nLSbRJo0mTSXtpe4B7l3u3e7eTBICAiJiXbJyaBoCAf4p8k3icdKVurQ'],
+      ['シンカイギョ', '#4a148c', 'ENhM0ma-fKKLgJBei0J8LmYoTC4yQhxeDYAIog2-HNIyCoCAi3yGa5Zrll-MV5RLllyWZ5ZfCYCAe4N3h3GHbYNtfXF5d3l7fQ'],
+      ['オオダコ', '#3e2723', 'DtZA1l3WhqSGgIZchiqGKl0qQCokKgVcBYAFpAUNgICBjI-Pi52YoZWvmLOYwZjTmNmY0pjemOwMgIB_in6Tfp1_poCwgrmFw4jMi9WQ3ZXm'],
+      ['ツナミ', '#b71c1c', 'ENRMzWW7eqCIgI1giEV6M2UsTDMzRR5gEIALoBC7Hs0zC4CAhnaBaothhlWMS39IgjqaQZpOjEsHgIB5gnSGb4JwfHZ7eoA'],
+      ['ミズノオウ', '#111111', 'ENKjy7u60J_dgOJh3UbQNbsuozWLRnZhaYBkn2m6dsuLCICAeIuNknufkaV-spS4gsURgICIcY51knyTg5GKjZCHlH-VeJRyj26JbYJvenN0eXGBbw'],
+    ],
+  },
+  belt: {
+  },
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = ARENA_CPU;

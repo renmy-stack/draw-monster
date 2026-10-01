@@ -3,12 +3,15 @@ const fs = require('fs');
 // tp_out3.json（ものさし ＝ 実際の プレイヤーの 形）を 使い、まだ ない ところは tp_out2.json（ランダムの 形の ものさし）。SKIP は 作りなおし 中で 出さない
 const o2 = require('./tp_out2.json'), o3 = require('./tp_out3.json'), SKIP = (process.env.SKIP || '').split(',').filter(Boolean);
 const out = {};
-for (const k of ['yama', 'heya', 'dokutsu', 'gake', 'dansa']) { out[k] = {}; for (const t of ['omote', 'ura']) { if (SKIP.includes(k + '.' + t)) continue; const p = (o3[k] && o3[k][t]) || (t === 'omote' && o2[k] && o2[k][t]); if (p) { out[k][t] = p; p.yard = o3[k] && o3[k][t] ? 'real' : 'random'; } } }
+for (const k of ['yama', 'heya', 'dokutsu', 'gake', 'dansa', 'kori', 'mizu', 'belt']) { out[k] = {}; for (const t of ['omote', 'ura']) { if (SKIP.includes(k + '.' + t)) continue; const p = (o3[k] && o3[k][t]) || (t === 'omote' && o2[k] && o2[k][t]); if (p) { out[k][t] = p; p.yard = o3[k] && o3[k][t] ? 'real' : 'random'; } } }
 const NAMES = {
   yama: { omote: ['コロコロ', 'ヤマイモ', 'ノボリン', 'イワオ', 'ヤマノヌシ'], ura: ['ガンセキ', 'ヤマアラシ', 'ナダレ', 'カザン', 'ヤマノカミ'] },
   heya: { omote: ['ハコイリ', 'スミッコ', 'カベドン', 'トビラ', 'ヘヤヌシ'], ura: ['ロウヤ', 'カンゴク', 'ツメコミ', 'ギュウギュウ', 'ミッシツオウ'] },
   dokutsu: { omote: ['コウモリ', 'ツララ', 'モグラ', 'ヒカリゴケ', 'ドウクツヌシ'], ura: ['ヤミコウモリ', 'ショウニュウ', 'イワツバメ', 'マグマ', 'チテイオウ'] },
   gake: { omote: ['ガケマル', 'ヒュルル', 'オチソウ', 'フチッコ', 'ガケノヌシ'], ura: ['ツキオトシ', 'ナライキ', 'ダンガイ', 'フウジン', 'ガケノオウ'] },
+  kori: { omote: ['ツルリン', 'スベラー', 'ユキダマ', 'ヒョウザン', 'コオリノヌシ'], ura: ['フブキ', 'ツララオニ', 'アイスバーン', 'ゼッタイレイド', 'コオリノオウ'] },
+  mizu: { omote: ['プカプカ', 'クラゲン', 'カッパ', 'ウミガメ', 'ミズノヌシ'], ura: ['ウズマキ', 'シンカイギョ', 'オオダコ', 'ツナミ', 'ミズノオウ'] },
+  belt: { omote: ['ゴロゴロ', 'ベルトン', 'ハコビヤ', 'ユラユラ', 'ユカノヌシ'], ura: ['ナガレボシ', 'ベルトコンベア', 'ツキトバシ', 'ジシン', 'ユカノオウ'] },
   dansa: { omote: ['ダンダン', 'カイダン', 'ノッポ', 'ウエノヒト', 'タカミ'], ura: ['ミオロシ', 'テンジョウ', 'タカビシャ', 'ソビエ', 'テッペンオウ'] },
 };
 const COLORS = {
