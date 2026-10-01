@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '156';
+const VERSION = '157';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -874,7 +874,8 @@ onTap($('start'), showDraw);
 onTap($('tmycard'), showDraw);
 onTap($('minnaabout'), showMinnaInfo);
 // ---------- かざり（ガチャ・かざる）----------
-function kzSorted(slot) { return KZ.ITEMS.filter(it => it && it.slot === slot).sort((a, b) => a.r - b.r || a.id - b.id); }
+const kzShown = it => it && (!it.lim || ARENA_ON || kzs.own().includes(it.id));   // ちけいの 限定かざりは ちけいが 出ている 端末だけ（もって いれば 出す）
+function kzSorted(slot) { return KZ.ITEMS.filter(it => kzShown(it) && it.slot === slot).sort((a, b) => a.r - b.r || a.id - b.id); }
 const kzOpen = new Set((() => { try { return JSON.parse(lsGet('kz.open') || '[]'); } catch (e) { return []; } })());
 // NEW: 手に 入れて から まだ 一覧で タップして いない かざり（ガチャで 自動で ついた ぶんも まだ NEW）。はじめは 持っている ものを ぜんぶ 見た ことに
 function kzSeen() { try { const v = lsGet('kz.seen'); if (v == null) { const o = kzs.own(); lsSet('kz.seen', JSON.stringify(o)); return o; } return JSON.parse(v); } catch (e) { return []; } }
@@ -891,7 +892,7 @@ function showKz(msg) {
     // 場所ごとに 折りたたみ（見出しに 集めた数 と いま つけている もの）。開いて いるかは おぼえておく
     const box = document.createElement('details'); box.className = 'kz-slot'; box.open = kzOpen.has(slot);
     box.addEventListener('toggle', () => { if (box.open) kzOpen.add(slot); else kzOpen.delete(slot); lsSet('kz.open', JSON.stringify([...kzOpen])); });
-    const cur = KZ.ITEMS[eq[si]], total = KZ.ITEMS.filter(it => it && it.slot === slot), got = total.filter(it => own.includes(it.id)).length;
+    const cur = KZ.ITEMS[eq[si]], total = KZ.ITEMS.filter(it => kzShown(it) && it.slot === slot), got = total.filter(it => own.includes(it.id)).length;
     const nNew = total.filter(it => own.includes(it.id) && !seen.includes(it.id)).length;
     box.innerHTML = '<summary><b>' + KZ.SLOT_LABEL[slot] + '</b><span class="kz-cnt">' + got + ' / ' + total.length + '</span>' + (nNew ? '<span class="kz-new">NEW ' + nNew + '</span>' : '') + '<span class="kz-cur">' + (cur ? 'いま: ' + cur.name : 'なし') + '</span></summary>' + (cur && cur.desc ? '<small class="kz-desc">' + cur.desc + '</small>' : '') + '<div class="kz-items"></div>';
     const row = box.querySelector('.kz-items');
