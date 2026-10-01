@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '147';
+const VERSION = '148';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -75,7 +75,7 @@ let uraOpen = URA_TEST || lsGet('cleared') === '1';   // おもてを クリア�
 // みんなの さいきょう ぐんだん（3 つめの 勝ち抜き）: うらを クリアした 人に 出る（?minnatest の 端末は いつでも）
 if (/[?&]minnatest(=|&|$)/.test(location.search)) lsSet('minnatest', '1');
 let MINNA_OPEN = lsGet('minnatest') === '1' || lsGet('ura.cleared') === '1';   // うらを クリアしたら 出る
-// ちけい ぼうけん（2026-10-01〜）: 6 つの 地形（arena.js）× おもて・うら・みんな。?arenatest の 端末だけ（?arenaall で 地形を ぜんぶ ひらく）
+// ちけい ぼうけん（2026-10-01〜）: 6 つの 地形（arena.js）× おもて・うら・みんな。?arenatest の 端末だけ（?arenaall で 地形だけ ぜんぶ ひらく）
 if (/[?&]arenatest(=|&|$)/.test(location.search)) lsSet('arenatest', '1');
 if (/[?&]arenaall(=|&|$)/.test(location.search)) lsSet('arenaall', '1');
 const ARENA_ON = lsGet('arenatest') === '1' && !!window.ARENA;
@@ -88,7 +88,7 @@ function sideOpen(s) {   // いまの 地形で その 段が あそべるか
   if (s === 'omote') return true;
   if (terrain === 'flat') return s === 'ura' ? uraOpen : MINNA_OPEN;
   const t = terrInfo(); if (!t || !t.cpu[s]) return false;
-  return lsGet('arenaall') === '1' || lsGet(tpre(terrain) + (s === 'ura' ? '' : 'ura.') + 'cleared') === '1';
+  return lsGet(tpre(terrain) + (s === 'ura' ? '' : 'ura.') + 'cleared') === '1';   // ?arenaall でも うら・みんな は ふつうどおり（その 地形の 前の 段を クリアで）
 }
 const SIDE_LABEL = { omote: 'おもて', ura: 'うら', minna: 'みんな' };
 // タイトルの 整理（v75）: おもて → うら → みんな を「ぼうけん」の 1 本道に。v77 で 全員に 公開（前は ?titletest の 端末だけ）
