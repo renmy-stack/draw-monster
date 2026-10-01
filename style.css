@@ -167,8 +167,8 @@ button:disabled { opacity: .45; }
 #rsub { white-space: pre-line; line-height: 1.5; }
 #result .main small { display: block; font-size: 12px; font-weight: 700; opacity: .9; }
 
-/* 5 体の名前の札を 1 行に */
-#rprog { gap: 3px; flex-wrap: nowrap; }
+/* 5 体の名前の札は ふつう 1 行。名前が 長い（ちけいの 相手）ときは 2 段に 折りかえす */
+#rprog { gap: 3px; flex-wrap: wrap; }
 #rprog .dot { padding: 3px 5px; font-size: 11px; white-space: nowrap; }
 
 /* タイトル: ボタンを上に、説明は 3 つの まとまり。ことばの 途中で 折れない（スペースの ところで 改行） */
