@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '163';
+const VERSION = '164';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1008,7 +1008,7 @@ function showMinnaInfo() {
   const list = $('minnalist'); list.innerHTML = '';
   RB.MINNA.forEach((m, i) => {
     const el = document.createElement('div'); el.className = 'hall';
-    el.innerHTML = '<canvas width="220" height="220"></canvas><span>' + (i + 1) + '. ' + m.name + '</span>';
+    el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + (i + 1) + '. ' + m.name + '</span>';
     list.appendChild(el); drawPreview(el.querySelector('canvas'), m, m.color);
   });
   $('minnainfo').hidden = false; lsSet('minna.intro', '1'); TR('minnainfo', null);
@@ -1718,7 +1718,7 @@ function renderLegend() {
   for (const h of lh.slice(-12)) {
     const d = RB.decodeDesign(h.c); if (!d) continue; withCrown(d); d.legend = true;
     const el = document.createElement('div'); el.className = 'hall';
-    el.innerHTML = '<canvas width="220" height="220"></canvas><span>' + h.d + '</span>';
+    el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + h.d + '</span>';
     list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color);
     el.addEventListener('click', () => showCert(h.c, h.d));
   }
@@ -1732,7 +1732,7 @@ function renderHall() {
   for (const h of hall.slice(-12)) {
     const d = RB.decodeDesign(h.c); if (!d) continue; d.crown = true;
     const el = document.createElement('div'); el.className = 'hall';
-    el.innerHTML = '<canvas width="220" height="220"></canvas><span>' + h.d + '</span>';
+    el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + h.d + '</span>';
     list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color);
   }
 }
@@ -1746,7 +1746,7 @@ function renderTerrainHall() {
     const sec = document.createElement('div'); sec.className = 'thall'; box.appendChild(sec);   // 水平の でんどういりと おなじ わく（みどり）
     const h = document.createElement('div'); h.className = 'hall-title thall-title'; h.innerHTML = '<span class="tstar">★</span>'; h.append(document.createTextNode(t.name + ' でんどういり（' + hallCount('hall.' + t.key) + '）')); sec.appendChild(h);   // 星は しるしと おなじ みどり
     const list = document.createElement('div'); list.className = 'thall-list'; sec.appendChild(list);
-    for (const x of a.slice(-12)) { const d = RB.decodeDesign(x.c); if (!d) continue; d.tstar = tmarkCount(d); const el = document.createElement('div'); el.className = 'hall'; el.innerHTML = '<canvas width="220" height="220"></canvas><span>' + x.d + '</span>'; list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color); }
+    for (const x of a.slice(-12)) { const d = RB.decodeDesign(x.c); if (!d) continue; d.tstar = tmarkCount(d); const el = document.createElement('div'); el.className = 'hall'; el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + x.d + '</span>'; list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color); }
   }
   box.hidden = !box.children.length;
 }
