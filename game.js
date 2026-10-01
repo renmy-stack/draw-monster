@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '161';
+const VERSION = '162';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -191,7 +191,7 @@ function showTitle() {
   const nl = hallCount('legendhall'), nh = hallCount('hall');
   const nt = window.ARENA ? ARENA.TERRAINS.reduce((n, t) => n + (t.key === 'flat' ? 0 : hallCount('hall.' + t.key)), 0) : 0;   // ちけいの でんどういり
   $('collection').hidden = !nl && !nh && !nt;
-  $('collsum').textContent = 'コレクション　' + (nl ? '⭐ でんせつ ' + nl + '　' : '') + (nh ? '👑 でんどういり ' + nh + '　' : '') + (nt ? '🏔 ちけい ' + nt : '');
+  $('collsum').textContent = 'コレクション　' + (nl ? '⭐ でんせつ ' + nl + '　' : '') + (nh ? '👑 でんどういり ' + nh + '　' : '') + (nt ? 'ちけい ' + nt : '');
   drawTitleBg();
   setTimeout(fitTmon, 0);
 }
@@ -1743,8 +1743,9 @@ function renderTerrainHall() {
     if (t.key === 'flat') continue;
     let a = []; try { a = JSON.parse(lsGet('hall.' + t.key) || '[]'); } catch (e) {}
     if (!a.length) continue;
-    const h = document.createElement('div'); h.className = 'hall-title'; h.textContent = '⭐ ' + t.name + ' でんどういり（' + hallCount('hall.' + t.key) + '）'; box.appendChild(h);
-    const list = document.createElement('div'); list.className = 'thall-list'; box.appendChild(list);
+    const sec = document.createElement('div'); sec.className = 'thall'; box.appendChild(sec);   // 水平の でんどういりと おなじ わく（みどり）
+    const h = document.createElement('div'); h.className = 'hall-title thall-title'; h.innerHTML = '<span class="tstar">★</span>'; h.append(document.createTextNode(t.name + ' でんどういり（' + hallCount('hall.' + t.key) + '）')); sec.appendChild(h);   // 星は しるしと おなじ みどり
+    const list = document.createElement('div'); list.className = 'thall-list'; sec.appendChild(list);
     for (const x of a.slice(-12)) { const d = RB.decodeDesign(x.c); if (!d) continue; d.tstar = tmarkCount(d); const el = document.createElement('div'); el.className = 'hall'; el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + x.d + '</span>'; list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color); }
   }
   box.hidden = !box.children.length;
