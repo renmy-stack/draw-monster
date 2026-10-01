@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '172';
+const VERSION = '173';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -883,7 +883,7 @@ function showResult() {
     if (KZ_ON && win) {
       const rw = KZ.winReward(kzs, plainCode(myRobot), S.side, S.stage, S.stage === CPUS().length - 1, tpre(terrain));
       TR('coin', { s: S.side, st: S.stage, got: rw.got, n: rw.n });
-      $('rsub').textContent += '\n🪙 +' + rw.got + (rw.got === 0 ? '（おなじ かたちで かちすぎ！ かたちを かえると もどるよ）' : rw.n > 0 ? '（この かたちで ' + (rw.n + 1) + ' かいめ → へったよ）' : '') + '　もちコイン ' + kzs.coins();
+      $('rsub').textContent += '\n🪙 +' + rw.got + (rw.got === 0 && rw.win.base > 0 ? '（おなじ かたちで かちすぎ！ かたちを かえると もどるよ）' : rw.n > 0 ? '（この かたちで ' + (rw.n + 1) + ' かいめ → へったよ）' : '') + '　もちコイン ' + kzs.coins();
     }
   }
   $('rprog').innerHTML = isFriend ? 'ともだちの モンスター と しょうぶ' : CPUS().map((c, i) => '<span class="dot ' + (i < wins ? 'ok' : i === wins && !win ? 'lost' : i === wins ? 'now' : '') + '">' + c.name + '</span>').join('');
