@@ -1,0 +1,38 @@
+{
+ "note": "v170 で 採用（オーナー: 時間切れ 勝ち 93% の ムゲンは イライラ → KO タイプだけ）。強さだけなら v168（best_kami.json）が 上",
+ "saved": "2026-10-02",
+ "metrics": {
+  "real": 4318,
+  "leak": 20,
+  "leakTest": 6,
+  "rankTop30Leak": 0,
+  "timeoutShareVsMinnaClear": "2.3%（v168 は 21%）"
+ },
+ "squad": [
+  {
+   "name": "ハジマリ",
+   "color": "#fff8e1",
+   "c": "IJ-JoY6ilpOagJFwmG2QU5BZiVOCXnxzfYB6kXmhfKaDn4mhjqKWk5qAkXCYbZBTkFmJU4JefHN9gHqReaF8poMPgIB8dntrgGKAWH1NdEd5PnszcyxoLF8nVyFMIEQZBYCAe4B2hXN_dnk"
+  },
+  {
+   "name": "ムゲン",
+   "color": "#ffe082",
+   "c": "GqKCoZGhqI2lgLd2nmmcY5BTgmN1X114bIBOklKhXo97oYKfkKCmjKOAtXadaptkj1aCZXYPgIB9ioCVfZ98qnezer1xwnbLdtZ24XzphPGD-3j7DICAi4GVho-PjZqEn3qZcJxmoFykUaVGpQ"
+  },
+  {
+   "name": "ゼツボウ",
+   "color": "#ffca28",
+   "c": "GqCNop-aroaggMV0sWOyX55cjVd4ZWpzZIBVim-WcZx-oI2in5quhqCAxXSxY7JfnlyNV3gPgIB6eHZucWZnZF1hV1lWT1JFSz5DNz4vNSsuIyoaDYCAendxcmtpYm5XcE11Un9WiViTU51LpEKq"
+  },
+  {
+   "name": "シンエン",
+   "color": "#ffb300",
+   "c": "GsjIudSm25vogOtl6E7hPtZGyEG8T7FlqYCmmayxsb68yMi51Kbbm-iA62XoTuA-1kfIQbwNgICJepJ1nXSle6aCpoumkqaJpn-mdaZupngNgICFh4iOhZR9knmLeoN9e4V4jXqRgZKJi44"
+  },
+  {
+   "name": "カミサマ",
+   "color": "#ffffff",
+   "c": "G8jFwtGu2pvjgOZl41DbQNFExT-4Tq5lp4ComKqqsbm6xsXB0azZm-KA5WXiUdpC0UXFQLlPrg2AgIl6k3WddKV8poOmjaaUpo-mhaZ7pnKmeQ2AgIeGhpCAl3iRdoh6f4J5i3qSgZGLiZGAkw"
+  }
+ ]
+}
