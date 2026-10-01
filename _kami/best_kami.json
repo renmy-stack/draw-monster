@@ -1,0 +1,41 @@
+{
+ "note": "かみ いちばん よい 組み合わせ（v168）。sim.js の KAMI と 同じ。並びは よわい→つよい",
+ "saved": "2026-10-02",
+ "version": "v168 (commit 6aa1813 / main v169 7b2b7bf)",
+ "metrics": {
+  "real": 4318,
+  "leak": 8,
+  "leakTrain": 6,
+  "leakTest": 2,
+  "test": 1059,
+  "rankTop30Leak": 0,
+  "atkFoundLeak": "28/28（攻めの 進化で 見つけた 形には ぬけられる）"
+ },
+ "squad": [
+  {
+   "name": "ハジマリ",
+   "color": "#fff8e1",
+   "c": "KajDnciYzI_RgNFx0V_PXshVw1m-X7h4vIC5krShuKu9qMOdyJjMj9GA0XHRX89eyFXDWb5fuHi8gLmStKG4q72ow53ImMyP0YDRcdFfz17IVcMPgIB5eG53ZHpfcVZsTGhBaTdnLmAlWxxUElAIUQBSB4CAe3p_coZzh3qDgYCF"
+  },
+  {
+   "name": "ムゲン",
+   "color": "#ffe082",
+   "c": "Du5I0WCuaaqSgHFpcFJpNF9fSB8qPhdhEYAKqgUOgIB6h3iRgJeAoYCogLJ8qnKpaqRlm1uaV5FTiQyAgH6Ld5NtmGOdYKdbsF27ZMRozmnZbuI"
+  },
+  {
+   "name": "ゼツボウ",
+   "color": "#ffca28",
+   "c": "HMdXw2Oxa5xygG5lck5sU19MV0BNUURlPoBMmj6nSLVPwle-Yq1qmnCAbGdwUmpWXlBXRU5URmhAD4CAdnx7coVvjmmVYZ5bpWOgbKR2oICnh6eBp3anbAeAgId9j32We5p4k3eTfw"
+  },
+  {
+   "name": "シンエン",
+   "color": "#ffb300",
+   "c": "GqCNop-aroaggMV0sWOyX55cjVd4ZWpzZIBVim-WcZx-oI2in5quhqCAxXSxY7JfnlyNV3gPgIB6eHZucWZnZF1hV1lWT1JFSz5DNz4vNSsuIyoaDYCAendxcmtpYm5XcE11Un9WiViTU51LpEKq"
+  },
+  {
+   "name": "カミサマ",
+   "color": "#ffffff",
+   "c": "G8jIttOo3JvogOtl6FDgPtZFyEW9TrBlqYCnmqqwsb28xsi106fbmueA6mXnUd9A1UbIR71PsQ2AgIl6knWdcqR6poKmi6aSpoymgaZ2pm-meA2AgIaGjI2KlIGTfIx8g4F8iXmRe5SDlIyNkQ"
+  }
+ ]
+}
