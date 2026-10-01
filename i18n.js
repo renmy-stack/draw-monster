@@ -88,6 +88,9 @@
     "モンスターを つくる・なおす": "Make / edit monster",
     "タイトルへ": "Title",
     "よみこみちゅう…": "Loading…",
+    "おちた！": "Fell!", "あいてが おちた！": "The opponent fell!", "おちちゃった…": "You fell…", "どっちも おちた": "Both fell",
+    "てんじょうに つかえて はいれない！ せを ひくく かきなおしてね（てんせんより したに）": "Too tall for the ceiling! Redraw it lower (below the dotted line)",
+    "てんじょう": "ceiling", "⭐ しるしを もらった！": "⭐ You got a mark!", "（あいては かり）": " (temporary opponents)",
     "🎀 れきだいの いちばん": "🎀 Past #1s",
     "👑 れきだいの チャンピオン": "👑 Past champions",
     "👑 れきだいの チャンピオン（とじる）": "👑 Past champions (close)",
@@ -305,7 +308,22 @@
   const R = [
     [/(おもて|うら|みんな) クリア/g, (m, a) => SIDE[a] + ' ✓'],
     [/✓ クリア/g, '✓ Clear'],
-    [/^コレクション ?(?:⭐ でんせつ (\d+) ?)?(?:👑 でんどういり (\d+))?$/, (m, a, b) => 'Collection' + (a ? ' ⭐ Legends ' + a : '') + (b ? ' 👑 Hall of Fame ' + b : '')],
+    [/^コレクション ?(?:⭐ でんせつ (\d+) ?)?(?:👑 でんどういり (\d+) ?)?(?:🏔 ちけい (\d+))?$/, (m, a, b, c) => 'Collection' + (a ? ' ⭐ Legends ' + a : '') + (b ? ' 👑 Hall of Fame ' + b : '') + (c ? ' 🏔 Terrain ' + c : '')],
+    // ちけい ぼうけん（地形の 名前は ARENA の データごと 英語に して ある）
+    [/^(.+) の (おもて|うら) 5 たい かちぬき たっせい！$/, (m, t, sd) => t + ' ' + SIDE[sd] + ': beat all 5!'],
+    [/^…(.+) の うら が あらわれた！$/, '…$1 Hidden appeared!'],
+    [/^🏔 つぎの ちけい「(.+)」が ひらいた！$/, '🏔 New terrain unlocked: $1!'],
+    [/^⭐ (.+) の しるしを もらった！（この モンスター (\d+) こ）$/, '⭐ Got the $1 mark! (this monster has $2)'],
+    [/^⭐ (.+) の しるし（もう もってる）（この モンスター (\d+) こ）$/, '⭐ $1 mark (already had it) (this monster has $2)'],
+    [/^🎁 うらを (\d+) つの ちけいで クリア！ げんてい かざり「(.+)」を もらった！$/, '🎁 Hidden cleared on $1 terrains! Got the limited item "$2"!'],
+    [/^(.+) うら かちぬき へ！$/, '$1 Hidden →'],
+    [/^(.+) うら かちぬき へ！<small>とんでもなく つよい 5 たい<\/small>$/, '$1: on to Hidden!<small>5 super strong monsters</small>'],
+    [/^(.+) の うら 5 にんぬき たっせい！$/, '$1 Hidden: beat all 5!'],
+    [/^⭐ (.+) でんどういり（(\d+)）$/, '⭐ $1 Hall of Fame ($2)'],
+    [/^🏔 (.+)：(.+)$/, '🏔 $1: $2'],
+    [/^(.+) (おもて|うら) かちぬき (\d) \/ (\d)$/, (m, t, sd, a, b) => t + ' ' + SIDE[sd] + ' ' + a + ' / ' + b],
+    [/（かちぬき ちゅう：かえると 1 たいめから）/, ' (mid-run: changing restarts from #1)'],
+    [/^ちけいの うらを (\d+) つ クリアで もらえる（水平も 1 つ）$/, 'Clear Hidden on $1 terrains (Flat counts too)'],
     [/(1P|2P) の モンスターを かいてね/, '$1, draw your monster'],
     [/（まえの モンスターが はいってるよ）/, ' (your last monster is loaded)'],
     [/^うら かちぬき (\d+) \/ (\d+)$/, 'Hidden $1 / $2'],
@@ -417,8 +435,20 @@
   window.TRL = tr;
 
   // ---- データ そのものを 英語に ----
-  const KZN = { 'つの': 'Horns', 'リボン': 'Ribbon', 'はちまき': 'Headband', 'シルクハット': 'Top hat', 'まほうの ぼうし': 'Wizard hat', 'てんしの わ': 'Halo', 'ぐるぐるめ': 'Swirly eyes', 'サングラス': 'Sunglasses', 'ちょびひげ': 'Mustache', 'でっかい きば': 'Big fangs', 'ひとつめ': 'Cyclops eye', 'ハートの め': 'Heart eyes', 'しましま': 'Stripes', 'みずたま': 'Polka dots', 'ほしぞら': 'Starry sky', 'きんいろ': 'Gold', 'にじいろ': 'Rainbow', 'クリスタル': 'Crystal', 'あしあとに はな': 'Flower steps', 'パンチで ほし': 'Star punch', 'あせ': 'Sweat', 'ほのお': 'Flames', 'かみなり': 'Thunder', 'オーラ': 'Aura', 'ねこみみ': 'Cat ears', 'うさみみ': 'Bunny ears', 'ヘルメット': 'Helmet', 'アンテナ': 'Antenna', 'はっぱ': 'Leaves', 'ベレーぼう': 'Beret', 'かぼちゃの ぼうし': 'Pumpkin hat', 'ナイトの かぶと': 'Knight helm', 'サンタぼう': 'Santa hat', 'きょうりゅうの とさか': 'Dino crest', 'ヘッドホン': 'Headphones', 'ほのおの かみ': 'Flame hair', 'ユニコーンの つの': 'Unicorn horn', 'うちゅうの ヘルメット': 'Space helmet', 'ほっぺ': 'Blush', 'まゆげ': 'Eyebrows', 'ばんそうこう': 'Bandage', 'べろ': 'Tongue', 'まるメガネ': 'Round glasses', 'ねむいめ': 'Sleepy eyes', 'ピエロの はな': 'Clown nose', 'かいぞくの アイパッチ': 'Pirate patch', 'ロボの め': 'Robot eyes', 'キラキラの め': 'Sparkly eyes', 'ヒーローマスク': 'Hero mask', 'レーザーアイ': 'Laser eyes', 'ぎんがの め': 'Galaxy eyes', 'ほのおの め': 'Fire eyes', 'チェック': 'Checks', 'ハートもよう': 'Hearts', 'ひょうがら': 'Leopard', 'うろこ': 'Scales', 'ツギハギ': 'Patchwork', 'めいさい': 'Camo', 'マグマ': 'Magma', 'こおり': 'Ice', 'メカ': 'Mecha', 'ドラゴンの うろこ': 'Dragon scales', 'さくら': 'Cherry blossom', 'うちゅう': 'Space', 'ホログラム': 'Hologram', 'オーロラ': 'Aurora', 'ハート': 'Hearts', 'おんぷ': 'Music notes', 'しゃぼんだま': 'Bubbles', 'すなぼこり': 'Dust', 'ゆき': 'Snow', 'ふぶき': 'Blizzard', 'どく': 'Poison', 'かぜ': 'Wind', 'みず': 'Water', 'かげぶんしん': 'Shadow clone', 'ドラゴンの つばさ': 'Dragon wings', 'ブラックホール': 'Black hole', 'きんいろの ひかり': 'Golden light' };
+  const KZN = { 'たんけんぼう': 'Explorer hat', 'ちけいの かんむり': 'Terrain crown', 'せかいの かんむり': 'World crown', 'つの': 'Horns', 'リボン': 'Ribbon', 'はちまき': 'Headband', 'シルクハット': 'Top hat', 'まほうの ぼうし': 'Wizard hat', 'てんしの わ': 'Halo', 'ぐるぐるめ': 'Swirly eyes', 'サングラス': 'Sunglasses', 'ちょびひげ': 'Mustache', 'でっかい きば': 'Big fangs', 'ひとつめ': 'Cyclops eye', 'ハートの め': 'Heart eyes', 'しましま': 'Stripes', 'みずたま': 'Polka dots', 'ほしぞら': 'Starry sky', 'きんいろ': 'Gold', 'にじいろ': 'Rainbow', 'クリスタル': 'Crystal', 'あしあとに はな': 'Flower steps', 'パンチで ほし': 'Star punch', 'あせ': 'Sweat', 'ほのお': 'Flames', 'かみなり': 'Thunder', 'オーラ': 'Aura', 'ねこみみ': 'Cat ears', 'うさみみ': 'Bunny ears', 'ヘルメット': 'Helmet', 'アンテナ': 'Antenna', 'はっぱ': 'Leaves', 'ベレーぼう': 'Beret', 'かぼちゃの ぼうし': 'Pumpkin hat', 'ナイトの かぶと': 'Knight helm', 'サンタぼう': 'Santa hat', 'きょうりゅうの とさか': 'Dino crest', 'ヘッドホン': 'Headphones', 'ほのおの かみ': 'Flame hair', 'ユニコーンの つの': 'Unicorn horn', 'うちゅうの ヘルメット': 'Space helmet', 'ほっぺ': 'Blush', 'まゆげ': 'Eyebrows', 'ばんそうこう': 'Bandage', 'べろ': 'Tongue', 'まるメガネ': 'Round glasses', 'ねむいめ': 'Sleepy eyes', 'ピエロの はな': 'Clown nose', 'かいぞくの アイパッチ': 'Pirate patch', 'ロボの め': 'Robot eyes', 'キラキラの め': 'Sparkly eyes', 'ヒーローマスク': 'Hero mask', 'レーザーアイ': 'Laser eyes', 'ぎんがの め': 'Galaxy eyes', 'ほのおの め': 'Fire eyes', 'チェック': 'Checks', 'ハートもよう': 'Hearts', 'ひょうがら': 'Leopard', 'うろこ': 'Scales', 'ツギハギ': 'Patchwork', 'めいさい': 'Camo', 'マグマ': 'Magma', 'こおり': 'Ice', 'メカ': 'Mecha', 'ドラゴンの うろこ': 'Dragon scales', 'さくら': 'Cherry blossom', 'うちゅう': 'Space', 'ホログラム': 'Hologram', 'オーロラ': 'Aurora', 'ハート': 'Hearts', 'おんぷ': 'Music notes', 'しゃぼんだま': 'Bubbles', 'すなぼこり': 'Dust', 'ゆき': 'Snow', 'ふぶき': 'Blizzard', 'どく': 'Poison', 'かぜ': 'Wind', 'みず': 'Water', 'かげぶんしん': 'Shadow clone', 'ドラゴンの つばさ': 'Dragon wings', 'ブラックホール': 'Black hole', 'きんいろの ひかり': 'Golden light' };
   const KZD = { 'あるくと あしあとに はなが さく': 'Flowers bloom where you step', 'パンチが あたると ほしが とびちる': 'Stars fly when a punch lands', 'たたかって いると あせが とぶ': 'Sweat flies while fighting', 'からだから ほのおが もえあがる': 'Flames rise from the body', 'でんきが はしって ときどき かみなりが おちる': 'Electricity crackles and lightning strikes', 'むらさきの オーラが あふれだす': 'A purple aura overflows', 'ハートが ふわふわ でてくる': 'Hearts float out', 'おんぷが ぽんぽん とびだす': 'Music notes pop out', 'しゃぼんだまが ふわっと うかぶ': 'Bubbles float up', 'あるくと すなぼこりが たつ': 'Dust rises as you walk', 'はっぱが まわりを まう': 'Leaves dance around', 'まわりに ゆきが ふる': 'Snow falls around you', 'こおりの かけらが まわりを まわる': 'Ice shards circle around', 'みどりの どくの もやと あわ': 'Green poison mist and bubbles', 'かぜが うずを まいて まわる': 'Wind swirls around', 'みずの おびが まわって しぶきが とぶ': 'A ribbon of water spins and splashes', 'うしろに かげの ぶんしんが ついてくる': 'A shadow clone follows behind', 'せなかに ドラゴンの つばさが はえて はばたく': 'Dragon wings sprout and flap', 'うしろで ブラックホールが うずまく': 'A black hole swirls behind', 'そらから きんいろの ひかりが さしこむ': 'Golden light shines from the sky' };
+  // ちけいの 地形の 名前・説明
+  const ARN = { '水平': 'Flat', 'おやま': 'Hill', 'がけ': 'Cliff', 'せまい': 'Narrow room', 'ひくい': 'Low cave', 'だんさ': 'Step', 'こおり': 'Ice', 'みず': 'Water', 'うごくゆか': 'Moving floor' };
+  const ARH = { 'まんなかが もりあがってる': 'The middle bulges up', 'かべが ない。おちたら まけ': 'No walls. Fall off and you lose', 'かべが すぐ そこ': 'The walls are close', 'てんじょうが ひくい（せが たかいと はいれない）': 'Low ceiling (too tall = no entry)', 'あいては たかい ところに いる': 'The opponent stands higher', 'つるつる すべる': 'Slippery', 'みずの なか。ふわっと うく・うごきが おそい': 'Underwater: you float and move slowly', 'ゆかが 右へ 左へ うごく。おちたら まけ': 'The floor slides left and right. Fall off and you lose' };
+  const ARC = { 'コロコロ': 'Roly', 'ヤマイモ': 'Yam', 'ノボリン': 'Climby', 'イワオ': 'Rocky', 'ヤマノヌシ': 'Hill Lord', 'ガンセキ': 'Boulder', 'ヤマアラシ': 'Porcupine', 'ナダレ': 'Avalanche', 'カザン': 'Volcano', 'ヤマノカミ': 'Mountain God',
+    'ハコイリ': 'Boxed-in', 'スミッコ': 'Corner', 'カベドン': 'Wall Slam', 'トビラ': 'Door', 'ヘヤヌシ': 'Room Lord', 'ロウヤ': 'Jail', 'カンゴク': 'Prison', 'ツメコミ': 'Cram', 'ギュウギュウ': 'Squeeze', 'ミッシツオウ': 'Locked-Room King',
+    'コウモリ': 'Bat', 'ツララ': 'Icicle', 'モグラ': 'Mole', 'ヒカリゴケ': 'Glowmoss', 'ドウクツヌシ': 'Cave Lord', 'ヤミコウモリ': 'Dark Bat', 'ショウニュウ': 'Stalactite', 'イワツバメ': 'Cave Swift', 'マグマ': 'Magma', 'チテイオウ': 'Underworld King',
+    'ガケマル': 'Cliffy', 'ヒュルル': 'Whoosh', 'オチソウ': 'Teeter', 'フチッコ': 'Edgey', 'ガケノヌシ': 'Cliff Lord', 'ツキオトシ': 'Shover', 'ナライキ': 'Abyss', 'ダンガイ': 'Precipice', 'フウジン': 'Wind God', 'ガケノオウ': 'Cliff King',
+    'ダンダン': 'Steppy', 'カイダン': 'Stairs', 'ノッポ': 'Lanky', 'ウエノヒト': 'Upstairs', 'タカミ': 'Highness', 'ミオロシ': 'Overlook', 'テンジョウ': 'Ceiling', 'タカビシャ': 'Haughty', 'ソビエ': 'Tower', 'テッペンオウ': 'Summit King',
+    'ツルリン': 'Slippy', 'スベラー': 'Slider', 'ユキダマ': 'Snowball', 'ヒョウザン': 'Iceberg', 'コオリノヌシ': 'Ice Lord', 'フブキ': 'Blizzard', 'ツララオニ': 'Icicle Ogre', 'アイスバーン': 'Black Ice', 'ゼッタイレイド': 'Absolute Zero', 'コオリノオウ': 'Ice King',
+    'プカプカ': 'Bobby', 'クラゲン': 'Jelly', 'カッパ': 'Kappa', 'ウミガメ': 'Sea Turtle', 'ミズノヌシ': 'Water Lord', 'ウズマキ': 'Whirlpool', 'シンカイギョ': 'Deep-Sea Fish', 'オオダコ': 'Giant Octopus', 'ツナミ': 'Tsunami', 'ミズノオウ': 'Water King',
+    'ゴロゴロ': 'Rolly', 'ベルトン': 'Belton', 'ハコビヤ': 'Carrier', 'ユラユラ': 'Wobbly', 'ユカノヌシ': 'Floor Lord', 'ナガレボシ': 'Shooting Star', 'ベルトコンベア': 'Conveyor', 'ツキトバシ': 'Launcher', 'ジシン': 'Quake', 'ユカノオウ': 'Floor King' };
+  if (window.ARENA) for (const t of ARENA.TERRAINS) { if (ARN[t.name]) t.name = ARN[t.name]; if (t.hint && ARH[t.hint]) t.hint = ARH[t.hint]; if (t.key !== 'flat') for (const l of Object.values(t.cpu)) for (const c of l) if (ARC[c.name]) c.name = ARC[c.name]; }
   if (window.KZ) {
     for (const it of KZ.ITEMS) if (it) { if (KZN[it.name]) it.name = KZN[it.name]; if (it.desc && KZD[it.desc]) it.desc = KZD[it.desc]; }
     if (KZ.SLOT_LABEL) for (const k of Object.keys(KZ.SLOT_LABEL)) KZ.SLOT_LABEL[k] = SLOT[KZ.SLOT_LABEL[k]] || KZ.SLOT_LABEL[k];

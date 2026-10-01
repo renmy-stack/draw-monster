@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '159';
+const VERSION = '160';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -78,17 +78,19 @@ let uraOpen = URA_TEST || lsGet('cleared') === '1';   // おもてを クリア�
 // みんなの さいきょう ぐんだん（3 つめの 勝ち抜き）: うらを クリアした 人に 出る（?minnatest の 端末は いつでも）
 if (/[?&]minnatest(=|&|$)/.test(location.search)) lsSet('minnatest', '1');
 let MINNA_OPEN = lsGet('minnatest') === '1' || lsGet('ura.cleared') === '1';   // うらを クリアしたら 出る
-// ちけい ぼうけん（2026-10-01〜）: 6 つの 地形（arena.js）× おもて・うら・みんな。?arenatest の 端末だけ（?arenaall で 地形だけ ぜんぶ ひらく）
+// ちけい ぼうけん（2026-10-01〜）: 地形（arena.js）× おもて・うら。2026-10-01 全員に 公開（水平・がけ・せまい、オーナー OK）
+// ?arenatest を 開いた 端末（オーナー）だけ: ?arenaall で 地形を ぜんぶ ひらく、?arenanew で まだ 出して いない 地形（wait）も 出す
 if (/[?&]arenatest(=|&|$)/.test(location.search)) lsSet('arenatest', '1');
-if (/[?&]arenaall(=|&|$)/.test(location.search)) lsSet('arenaall', '1');
-const ARENA_ON = lsGet('arenatest') === '1' && !!window.ARENA;
-if (/[?&]arenanew(=|&|$)/.test(location.search)) lsSet('arenanew', '1');
+const ARENA_OWNER = lsGet('arenatest') === '1';
+if (ARENA_OWNER && /[?&]arenaall(=|&|$)/.test(location.search)) lsSet('arenaall', '1');
+const ARENA_ON = !!window.ARENA;
+if (ARENA_OWNER && /[?&]arenanew(=|&|$)/.test(location.search)) lsSet('arenanew', '1');
 // オーナーの OK 待ち（wait）と 相手が まだ 仮（kari）の 地形は 出さない。?arenanew の 端末だけ ためせる
-const TERRAINS = ARENA_ON ? ARENA.TERRAINS.filter(t => !(t.wait || t.cpu.kari) || lsGet('arenanew') === '1') : [];
+const TERRAINS = ARENA_ON ? ARENA.TERRAINS.filter(t => !(t.wait || t.cpu.kari) || (ARENA_OWNER && lsGet('arenanew') === '1')) : [];
 let terrain = TERRAINS.some(t => t.key === lsGet('terrain')) ? lsGet('terrain') : 'flat';
 function terrInfo() { return terrain === 'flat' ? null : TERRAINS.find(t => t.key === terrain); }   // 水平（いまの ぼうけん）は null
 const tpre = k => (k === 'flat' ? '' : 't.' + k + '.');   // 記録の キーの 頭
-function terrainOpen(i) { const t = TERRAINS[i]; if (!t || !t.cpu.omote) return false; if (i === 0 || lsGet('arenaall') === '1') return true; return lsGet(tpre(TERRAINS[i - 1].key) + 'cleared') === '1'; }
+function terrainOpen(i) { const t = TERRAINS[i]; if (!t || !t.cpu.omote) return false; if (i === 0 || (ARENA_OWNER && lsGet('arenaall') === '1')) return true; return lsGet(tpre(TERRAINS[i - 1].key) + 'cleared') === '1'; }
 function sideOpen(s) {   // いまの 地形で その 段が あそべるか
   if (s === 'omote') return true;
   if (terrain === 'flat') return s === 'ura' ? uraOpen : MINNA_OPEN;
