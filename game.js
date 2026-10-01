@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '157';
+const VERSION = '158';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -821,7 +821,7 @@ function showResult() {
       else {
         cleared = true; lsSet(sk('cleared'), '1'); resetRun();
         const ti = terrInfo();
-        if (side === 'ura' && !ti) { onUraClear(); }
+        if (side === 'ura' && !ti) { onUraClear(); checkLimitKz(); }
         if (ti) {   // ちけい: おもて → うら → みんな、おもてで つぎの 地形
           $('rsub').textContent += '\n' + ti.name + ' の ' + SIDE_LABEL[side] + ' 5 たい かちぬき たっせい！';
           TR('terrainclear', { t: terrain, s: side, me: plainCode(myRobot) });
@@ -1587,14 +1587,20 @@ function onUraClear() {
 }
 let endingPending = false;
 let endingTerrain = null;   // ちけいの うらで エンディング: その 地形（水平は null）
+// 限定かざり: うらを クリアした 地形の 数（水平も 1 つに 数える、オーナー 2026-10-01）が lim に とどいたら もらえる。水平・ちけい どちらの うら クリアでも 見る
+function checkLimitKz() {
+  if (!ARENA_ON) return 0;
+  const nT = ARENA.TERRAINS.filter(t => lsGet(tpre(t.key) + 'ura.cleared') === '1').length, own = kzs.own();
+  for (const it of KZ.ITEMS) if (it && it.lim && nT >= it.lim && !own.includes(it.id)) { own.push(it.id); kzs.setOwn(own); $('rsub').textContent += '\n🎁 うらを ' + it.lim + ' つの ちけいで クリア！ げんてい かざり「' + it.name + '」を もらった！'; TR('kzlimit', { id: it.id }); }
+  return nT;
+}
 // ちけいの うら クリア: しるし（形ごと）・地形の でんどういり・うらを クリアした 地形の 数で 限定かざり・エンディング（水平の 王冠と おなじ あつかい）
 function onTerrainUraClear(ti) {
   const code = plainCode(myRobot), tg = codeTag(code), L = tmarkList(terrain), fresh = !L.includes(tg);
   if (fresh) { L.push(tg); lsSet('tmark.' + terrain, JSON.stringify(L)); hallAdd('hall.' + terrain, { c: code, d: (new Date().getMonth() + 1) + '/' + new Date().getDate() }); }
   myRobot.tstar = tmarkCount(myRobot); S.tstarA = myRobot.tstar;
   $('rsub').textContent += '\n⭐ ' + ti.name + ' の しるし' + (fresh ? 'を もらった！' : '（もう もってる）') + '（この モンスター ' + myRobot.tstar + ' こ）';
-  const nT = ARENA.TERRAINS.filter(t => t.key !== 'flat' && lsGet(tpre(t.key) + 'ura.cleared') === '1').length, own = kzs.own();
-  for (const it of KZ.ITEMS) if (it && it.lim && nT >= it.lim && !own.includes(it.id)) { own.push(it.id); kzs.setOwn(own); $('rsub').textContent += '\n🎁 うらを ' + it.lim + ' つの ちけいで クリア！ げんてい かざり「' + it.name + '」を もらった！'; TR('kzlimit', { id: it.id }); }
+  const nT = checkLimitKz();
   TR('terrainmark', { t: terrain, n: myRobot.tstar, all: nT });
   endingTerrain = ti; endingPending = true;
 }

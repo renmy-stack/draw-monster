@@ -90,9 +90,9 @@ const ITEMS = [
   { id: 79, slot: 'fx', name: 'ブラックホール', r: 3, desc: 'うしろで ブラックホールが うずまく' },
   { id: 80, slot: 'fx', name: 'きんいろの ひかり', r: 3, desc: 'そらから きんいろの ひかりが さしこむ' },
   // ちけい ぼうけんの ごほうび（ガチャには 出ない。lim ＝ うらを クリアした 地形の 数）
-  { id: 81, slot: 'head', name: 'たんけんぼう', r: 3, lim: 3, desc: 'ちけいの うらを 3 つ クリアで もらえる' },
-  { id: 82, slot: 'head', name: 'ちけいの かんむり', r: 3, lim: 6, desc: 'ちけいの うらを 6 つ クリアで もらえる' },
-  { id: 83, slot: 'head', name: 'せかいの かんむり', r: 3, lim: 9, desc: 'ちけいの うらを 9 つ クリアで もらえる' },
+  { id: 81, slot: 'head', name: 'たんけんぼう', r: 3, lim: 3, desc: 'ちけいの うらを 3 つ クリアで もらえる（水平も 1 つ）' },
+  { id: 82, slot: 'head', name: 'ちけいの かんむり', r: 3, lim: 6, desc: 'ちけいの うらを 6 つ クリアで もらえる（水平も 1 つ）' },
+  { id: 83, slot: 'head', name: 'せかいの かんむり', r: 3, lim: 9, desc: 'ちけいの うらを 9 つ クリアで もらえる（水平も 1 つ）' },
 ];
 const PRICE = 100, DUP_BACK = 30, RATE = [0, 0.6, 0.3, 0.1];
 const WIN = { omote: 10, ura: 30, minna: 60 }, CLEAR = { omote: 50, ura: 150, minna: 300 }, HIST_MAX = 30;
