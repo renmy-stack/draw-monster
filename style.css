@@ -320,8 +320,8 @@ button:disabled { opacity: .45; }
 .rd-node.rd-omote.sel { background: #ede7f6; }
 .rd-node.rd-ura.sel { background: #ffebee; }
 .rd-node.rd-minna.sel { background: #e0f2f1; }
-.troad { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 6px; }
-.tr-chip { flex: 1 0 calc(20% - 4px); min-width: 0; padding: 4px 2px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.troad { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin: 0 0 6px; }   /* 3 つずつ（6 → 2 段、9 → 3 段）。Safari は minmax(0, 1fr) */
+.tr-chip { min-width: 0; padding: 4px 2px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); font-size: 12px; font-weight: 800; white-space: nowrap; }
 .tr-chip.sel { background: #e8f5e9; border-color: var(--hot); box-shadow: 0 2px 0 var(--hot); }
 .tr-chip.done::after { content: ' ✓'; color: #2e7d32; }
 .tr-chip.locked { background: #eee; color: #999; border-style: dashed; }
