@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '170';
+const VERSION = '171';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -56,6 +56,31 @@ const PART_HINT = {
 const KEY = 'drawrobot.';
 function lsGet(k) { try { return localStorage.getItem(KEY + k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(KEY + k, v); } catch (e) {} }
+// オーナーの 端末: ?dev=合言葉 を 1 回 ひらいた 端末だけ。合言葉 そのものは コードに 書かない（SHA-256 だけ）。テストの 印（?kamitest など）と 開発用の URL は オーナーの 端末でだけ 効く（2026-10-02）
+function sha256hex(s) {
+  const b = unescape(encodeURIComponent(s)), P = [], K = [], H = [];
+  for (let c = 2, n = 0; n < 64; c++) { if (P.some(p => c % p === 0)) continue; P.push(c); if (n < 8) H[n] = (Math.pow(c, 1 / 2) * 4294967296) | 0; K[n++] = (Math.pow(c, 1 / 3) * 4294967296) | 0; }
+  const w = [], L = b.length * 8;
+  for (let i = 0; i < b.length; i++) w[i >> 2] |= b.charCodeAt(i) << (24 - (i % 4) * 8);
+  w[b.length >> 2] |= 0x80 << (24 - (b.length % 4) * 8);
+  const N = ((b.length + 8 >> 6) + 1) * 16; w[N - 1] = L;
+  const r = (x, n) => (x >>> n) | (x << (32 - n));
+  for (let j = 0; j < N; j += 16) {
+    const W = []; let [a, bb, c, d, e, f, g, h] = H;
+    for (let i = 0; i < 64; i++) {
+      if (i < 16) W[i] = w[j + i] | 0;
+      else { const x = W[i - 15], y = W[i - 2]; W[i] = (W[i - 16] + (r(x, 7) ^ r(x, 18) ^ (x >>> 3)) + W[i - 7] + (r(y, 17) ^ r(y, 19) ^ (y >>> 10))) | 0; }
+      const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + W[i]) | 0, t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & bb) ^ (a & c) ^ (bb & c))) | 0;
+      h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = bb; bb = a; a = (t1 + t2) | 0;
+    }
+    [a, bb, c, d, e, f, g, h].forEach((v, k) => H[k] = (H[k] + v) | 0);
+  }
+  return H.map(v => (v >>> 0).toString(16).padStart(8, '0')).join('');
+}
+const DEV_H = 'd279613f79af7c5747561599d5b55fc02cdf2f73e24f963f3dd480c555df784e';
+{ const m = /[?&]dev=([^&#]+)/.exec(location.search); if (m) { const k = decodeURIComponent(m[1]); if (sha256hex(k) === DEV_H) lsSet('devkey', k); } }
+const OWNER = (() => { const k = lsGet('devkey'); return !!k && sha256hex(k) === DEV_H; })();
+const devFlag = n => OWNER && lsGet(n) === '1';
 // うら の並びを 変えたときは うら の途中経過と「倒したことがある」を 消す
 const URA_VER = '2';
 try { if (lsGet('uraver') !== URA_VER) { localStorage.removeItem(KEY + 'ura.stage'); localStorage.removeItem(KEY + 'ura.beaten'); lsSet('uraver', URA_VER); } } catch (e) {}
@@ -72,22 +97,22 @@ let myRobot = null;
 { const w = lsGet('robot'); if (w) { const d = RB.decodeDesign(w); if (d) { myRobot = d; strokes = { body: d.body, arm: d.arm, leg: d.leg }; } } }
 // 勝ち抜きは おもて と うら（おもてを クリアすると 出る）。記録は べつべつ（うらは キーの頭に 'ura.'）
 // うら は おもてクリアで 出る（2026-09-26 に一般公開）。?uratest を開いた端末は クリア前でも 出る（オーナーのテスト用）
-if (/[?&]uratest(=|&|$)/.test(location.search)) lsSet('uratest', '1');
-let URA_TEST = lsGet('uratest') === '1';
+if (OWNER && /[?&]uratest(=|&|$)/.test(location.search)) lsSet('uratest', '1');
+let URA_TEST = devFlag('uratest');
 let uraOpen = URA_TEST || lsGet('cleared') === '1';   // おもてを クリアしたら 出る（オーナーの端末は テスト用に いつでも）
 // みんなの さいきょう ぐんだん（3 つめの 勝ち抜き）: うらを クリアした 人に 出る（?minnatest の 端末は いつでも）
-if (/[?&]minnatest(=|&|$)/.test(location.search)) lsSet('minnatest', '1');
-let MINNA_OPEN = lsGet('minnatest') === '1' || lsGet('ura.cleared') === '1';   // うらを クリアしたら 出る
+if (OWNER && /[?&]minnatest(=|&|$)/.test(location.search)) lsSet('minnatest', '1');
+let MINNA_OPEN = devFlag('minnatest') || lsGet('ura.cleared') === '1';   // うらを クリアしたら 出る
 // かみ（4 つめの 勝ち抜き、2026-10-01〜）: 作者が 作った 意味わからん くらい つよい 5 たい（水平だけ）。みんなを クリアしたら 出る。
 // まだ ?kamitest を 開いた 端末（オーナー）だけ（いつでも あそべる）。全員に 出す ときは KAMI_ON を true に
-if (/[?&]kamitest(=|&|$)/.test(location.search)) lsSet('kamitest', '1');
-const KAMI_TEST = lsGet('kamitest') === '1', KAMI_ON = false;
+if (OWNER && /[?&]kamitest(=|&|$)/.test(location.search)) lsSet('kamitest', '1');
+const KAMI_TEST = devFlag('kamitest'), KAMI_ON = false;
 const KAMI_SHOW = !!RB.KAMI && (KAMI_ON || KAMI_TEST);   // 道に「かみ」の 段が ある（？？？ も ふくむ）
 let KAMI_OPEN = KAMI_SHOW && (KAMI_TEST || lsGet('minna.cleared') === '1');
 // ちけい ぼうけん（2026-10-01〜）: 地形（arena.js）× おもて・うら。2026-10-01 全員に 公開（水平・がけ・せまい、オーナー OK）
 // ?arenatest を 開いた 端末（オーナー）だけ: ?arenaall で 地形を ぜんぶ ひらく、?arenanew で まだ 出して いない 地形（wait）も 出す
-if (/[?&]arenatest(=|&|$)/.test(location.search)) lsSet('arenatest', '1');
-const ARENA_OWNER = lsGet('arenatest') === '1';
+if (OWNER && /[?&]arenatest(=|&|$)/.test(location.search)) lsSet('arenatest', '1');
+const ARENA_OWNER = devFlag('arenatest');
 if (ARENA_OWNER && /[?&]arenaall(=|&|$)/.test(location.search)) lsSet('arenaall', '1');
 const ARENA_ON = !!window.ARENA;
 if (ARENA_OWNER && /[?&]arenanew(=|&|$)/.test(location.search)) lsSet('arenanew', '1');
@@ -108,15 +133,15 @@ const SIDE_LABEL = { omote: 'おもて', ura: 'うら', minna: 'みんな', kami
 const TITLE_TEST = true;
 // かざり（v78〜）: コインと ガチャで 見た目だけの かざり。v93 で 全員に 公開（オーナー OK）
 // ?gachatest を 開いた 端末（オーナー）だけ 確認用の 一覧（?kzgallery）と 当たりの 見本（?kzreveal）が 使える
-if (/[?&]gachatest(=|&|$)/.test(location.search)) lsSet('gachatest', '1');
-const KZ_ON = true, KZ_OWNER = lsGet('gachatest') === '1';
+if (OWNER && /[?&]gachatest(=|&|$)/.test(location.search)) lsSet('gachatest', '1');
+const KZ_ON = true, KZ_OWNER = devFlag('gachatest');
 // ランクせんの「じゅんい カード」: 2026-09-29 全員に 公開（前は ?cardtest の 端末だけ）
-if (/[?&]cardtest(=|&|$)/.test(location.search)) lsSet('cardtest', '1');
+if (OWNER && /[?&]cardtest(=|&|$)/.test(location.search)) lsSet('cardtest', '1');
 const CARD_ON = true;
 // モンスターの ほぞん 12 こ（2026-09-29 全員に。前は 3 こ）
 const SLOT_N = 12;
 // 「データの ひきつぎ」: 2026-09-29 全員に 公開（前は ?backuptest の 端末だけ）
-if (/[?&]backuptest(=|&|$)/.test(location.search)) lsSet('backuptest', '1');
+if (OWNER && /[?&]backuptest(=|&|$)/.test(location.search)) lsSet('backuptest', '1');
 const BK_ON = true;
 const kzs = KZ.store(k => lsGet(k), (k, v) => lsSet(k, v));
 function withKz(d) { if (d && KZ_ON) { const e = kzs.eq(); d.kz = e.some(Boolean) ? e : null; } return d; }
@@ -1224,7 +1249,7 @@ onTap($('ranktop'), showTitle);
 // ---------- きょうの イベント（1 日で 完結する ランクせん。お題の パーツは きまった 形）----------
 // 2026-09-30 全員に 公開（前は ?eventtest の 端末だけ）。お題は event.js（60 日で 一周）、受付は ランクせんと おなじ 受付係（/ev/*）、計算は tools/ev_batch.js
 // イベントの モンスターは ふだんの モンスターと べつに 端末へ（ev.robot・その 日だけ）。お題の パーツは 描く 画面で さわれない（サーバーでも 上書き）
-if (/[?&]eventtest(=|&|$)/.test(location.search)) lsSet('eventtest', '1');
+if (OWNER && /[?&]eventtest(=|&|$)/.test(location.search)) lsSet('eventtest', '1');
 const EV_ON = true;
 const EV_COLOR = '#8e24aa';
 const PART_DAY = { arm: 'うでの日', leg: 'あしの日', body: 'からだの日' };
@@ -1407,7 +1432,7 @@ for (const k of Object.keys(HIST)) onTap($(HIST[k].btn), () => { if ($(HIST[k].b
 // なかまコード（6 文字）で あつまった 人の 中だけの 順位。順位は ランクせんの 勝率を ならべる だけ（受付係の /g*）。企画メモ secretary/notes/draw-robot-nakama.md
 // さそう URL（?g=コード）を 開いた 端末は テスト中でも なかまが 出る（オーナーが さそった 人だけ）
 const gParam = (/[?&]g=([A-Za-z0-9]{6})(&|$)/.exec(location.search) || [])[1];
-if (/[?&]nakamatest(=|&|$)/.test(location.search) || gParam) lsSet('nakamatest', '1');
+if ((OWNER && /[?&]nakamatest(=|&|$)/.test(location.search)) || gParam) lsSet('nakamatest', '1');
 const NK_ON = true;   // 2026-09-30 全員に 公開（前は ?nakamatest の 端末だけ）
 const NK_EN = window.LANG === 'en';
 // なかまの 名前は 英語の 置きかえに かけない（nk-raw、i18n.js）。名前が 入る 文は ここで 英語も 作る
@@ -1955,7 +1980,7 @@ checkVersion();
 // ---------- 下の タブ（2026-09-30〜、v122 で 全員に）----------
 // トップが 長く なって きたので: ぼうけん（ホーム）・ランクせん・イベント・ガチャ・そのほか。描く 画面と 戦いの 画面では 出さない
 // そのほか には トップに あった コレクション・データの ひきつぎ・English・あそびかた を 移す（同じ 部品を 動かすので 動きは おなじ）。ふたりで は ぼうけんの 下
-if (/[?&]navtest(=|&|$)/.test(location.search)) lsSet('navtest', '1');
+if (OWNER && /[?&]navtest(=|&|$)/.test(location.search)) lsSet('navtest', '1');
 function navOn() { return true; }   // 2026-09-30 全員に 公開（前は ?navtest の 端末だけ）
 function navSync(id) {
   const nb = $('navbar'); if (!nb) return;
@@ -2005,13 +2030,12 @@ for (const b of document.querySelectorAll('#navbar button')) onTap(b, () => {
 resize();
 showTitle();
 if (NK_ON && nkPreview) showNakama();   // さそう URL から 来た とき
-{
-  // 開発用: ?draw で描く画面、?shot=秒&stage=n で その時点のバトル、&result で結果
+if (OWNER) {
+  // 開発用（オーナーの 端末だけ）: ?draw で描く画面、?shot=秒&stage=n で その時点のバトル、&result で結果
   const q = new URLSearchParams(location.search);
   const sample = () => { const c = RB.CPU[2]; myRobot = RB.design(c.body, c.arm, c.leg); strokes = { body: myRobot.body, arm: myRobot.arm, leg: myRobot.leg }; };
   if (q.has('stage') && !q.has('shot')) stage = +q.get('stage');
   if (q.has('beaten')) beaten = [true, true, true, true, true];   // 開発用: 早送りボタンを見る
-  if (q.get('use')) { const d = RB.decodeDesign(q.get('use')); if (d) { myRobot = withCrown(d); strokes = { body: d.body, arm: d.arm, leg: d.leg }; lsSet('robot', RB.encodeDesign(myRobot)); resetAllRuns(); showTitle(); } }   // オーナーの 確認用: その モンスターを じぶんの モンスターに
   if (KZ_OWNER && q.has('kzgallery')) kzGallery(q.get('kzgallery') || 'head', q.has('nocrown'));   // オーナーの 確認用: ?gachatest&kzgallery=head|face|body|fx（&nocrown で 王冠なし）
   if (KZ_OWNER) {
     if (q.get('kzreveal')) { const it = KZ.ITEMS[+q.get('kzreveal')]; showKz(''); const rv = $('kzreveal'); rv.className = 'r' + it.r; rv.hidden = false; $('kzrstars').textContent = '★'.repeat(it.r); $('kzrname').textContent = it.name; $('kzrsub').textContent = '👀 おためし（まだ つけて ないよ）\nNEW！ ' + KZ.SLOT_LABEL[it.slot] + 'の いちらんから つけてね' + (it.desc ? '\n' + it.desc : ''); kzShow = it; kzRevealDraw(); }
@@ -2077,7 +2101,7 @@ async function bkLoad() {
     const r = await (await fetch(RANK_API + '/bk/load', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code }) })).json();
     if (r.error || !r.data) { $('bkmsg').textContent = r.error || 'うまく いかなかった…'; bkAsk = false; $('bkload').textContent = 'うけとる'; bkBusy = false; return; }
     TR('bkload', { n: Object.keys(r.data).length });
-    const keep = {}; for (const k of ['backuptest', 'gachatest', 'eventtest', 'navtest', 'nakamatest']) { const v = lsGet(k); if (v != null) keep[k] = v; }   // オーナーの 印は この 端末の ものを のこす
+    const keep = {}; for (const k of ['devkey', 'backuptest', 'gachatest', 'eventtest', 'navtest', 'nakamatest', 'kamitest', 'arenatest', 'uratest', 'minnatest']) { const v = lsGet(k); if (v != null) keep[k] = v; }   // オーナーの 印は この 端末の ものを のこす
     try {
       for (const k of Object.keys(bkAll())) localStorage.removeItem(k);
       for (const [k, v] of Object.entries(r.data)) if (typeof k === 'string' && k.startsWith(KEY) && typeof v === 'string') localStorage.setItem(k, v);
@@ -2096,7 +2120,7 @@ $('bkin').addEventListener('input', () => { bkAsk = false; $('bkload').textConte
 onTap($('bkclose'), () => { $('bkbox').hidden = true; });
 
 // ---------- 言語の 切りかえ（2026-09-30 全員に）----------
-if (/[?&]langtest(=|&|$)/.test(location.search)) lsSet('langtest', '1');
+if (OWNER && /[?&]langtest(=|&|$)/.test(location.search)) lsSet('langtest', '1');
 $('langbtn').hidden = false;
 $('langbtn').textContent = window.LANG === 'en' ? '🌐 日本語' : '🌐 English';
 onTap($('langbtn'), () => { const to = window.LANG === 'en' ? 'ja' : 'en'; TR('lang', { to }); window.setLang(to); });
