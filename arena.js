@@ -24,11 +24,12 @@ const TERRAINS = [
   { key: 'dansa', name: 'だんさ', hint: 'あいては たかい ところに いる', arena: { floor: [[-50, 0], [50, 60]], hw: 380 },
     sky: ['#0f1a3a', '#3a2a63'], ground: '#3f4a8f', edge: '#9fa8da', cpu: cpus('dansa') },
   // 2026-10-01〜 あたらしい しくみ（sim.js の mu・water・belt）。相手が まだ えらべて いない 間は 水平の 相手を 仮に（kari）
-  { key: 'kori', name: 'こおり', hint: 'つるつる すべる', arena: { floor: [], hw: 380, mu: 0.08 },
+  // wait: オーナーの OK まで 一覧に 出さない（相手が そろっても）。?arenanew の 端末だけ ためせる。OK が 出たら wait を けす
+  { key: 'kori', wait: true, name: 'こおり', hint: 'つるつる すべる', arena: { floor: [], hw: 380, mu: 0.08 },
     sky: ['#0d2233', '#2c5a78'], ground: '#b3e5fc', edge: '#ffffff', ice: true, cpu: cpus('kori', true) },
-  { key: 'mizu', name: 'みず', hint: 'みずの なか。ふわっと うく・うごきが おそい', arena: { floor: [], hw: 380, water: 400, buoy: 0.7, drag: 1.5 },
+  { key: 'mizu', wait: true, name: 'みず', hint: 'みずの なか。ふわっと うく・うごきが おそい', arena: { floor: [], hw: 380, water: 400, buoy: 0.7, drag: 1.5 },
     sky: ['#06223a', '#0b4f6c'], ground: '#1b5e20', edge: '#81c784', cpu: cpus('mizu', true) },
-  { key: 'belt', name: 'うごくゆか', hint: 'ゆかが 右へ 左へ うごく。おちたら まけ', arena: { floor: [[-290, -400], [-260, 0], [260, 0], [290, -400]], hw: 0, fall: 120, belt: 150, beltT: 5 },
+  { key: 'belt', wait: true, name: 'うごくゆか', hint: 'ゆかが 右へ 左へ うごく。おちたら まけ', arena: { floor: [[-290, -400], [-260, 0], [260, 0], [290, -400]], hw: 0, fall: 120, belt: 150, beltT: 5 },
     sky: ['#1f1a2e', '#4a3b5c'], ground: '#5d5d5d', edge: '#ffca28', cpu: cpus('belt', true) },
 ];
 root.ARENA = { TERRAINS };
