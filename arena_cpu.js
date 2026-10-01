@@ -114,6 +114,20 @@ const ARENA_CPU = {
     ],
   },
   belt: {
+    omote: [   // 88% 80% 79% 69% 73%、実際の 形 1500 で 全部ぬけ 26.1%（87% 82% 76% 70% 69%）
+      ['ゴロゴロ', '#8d6e63', 'D5eElp2QsIjCfrlyvmypZ5FoeGxgc019QYhFj1yXawmAgIqBlYKfg6qEtIS_hcmG1IcFgICBi4OVhqCKqg'],
+      ['ベルトン', '#7cb342', 'DaRIo2CWcYV8cnZiallUWztjJnMZhRWXHKMvCoCAioKUhZ6HqImyjLyOxpDKlcqcBoCAf4l_koCbg6SIrA'],
+      ['ハコビヤ', '#00897b', 'DYxSjWqJfoKGfHl4bXNddUh3NnwogiWIJ4w7BICAiH-Qfph9CYCAgoqDlISeg6iCsoC8fcZ60A'],
+      ['ユラユラ', '#6d4c41', 'EMNCw1zDgZyBgIFkgT2BPVw9Qj0oPQVkBYAFnAXDBcMoB4CAioyVdJ-MqXSrjKt1DICAe4h2kXOZb6JtrGu1ar9qyGvSbNtu5Q'],
+      ['ユカノヌシ', '#33691e', 'D9Bc0HfQnqGegJ5fnjCeMHcwXDBBMBpfGoAaoRrQGg6AgIqCk3iefp50nnqecJ52nmyecp5snl-ed55sC4CAgoqEk4Sdg6eBsX66esR2zHDUadw'],
+    ],
+    ura: [   // 75% 45% 38% 40% 65%、実際の 形 1500 で 全部ぬけ 3.0%（74% 47% 41% 38% 55%）
+      ['ナガレボシ', '#455a64', 'EN5m14DClqSlgKpcpT6WKYAiZilLPjVcJoAhpCbCNddLBYCAhpWQcZCYkHQJgIB7hXODcHxydXlxgHOEeoKB'],
+      ['ベルトコンベア', '#4a148c', 'ELBysHmwgpSCgIJsglCCUHlQclBsUGJsYoBilGKwYrBsB4CAhY-XfJiVqoKrnL2JDYCAen95enxxgW-Kbo9xknqRf4uGhoeBhn2D'],
+      ['ツキトバシ', '#3e2723', 'EOSA3IPHhqaIgIlaiDmGJIMcgCR8OXpaeIB3pnjHetx8B4CAinxyZ4pod1SKVXxBCYCAfIR3hHOBc3x2eHt3f3uAgA'],
+      ['ジシン', '#b71c1c', 'ENKFy4u6kZ-UgJVhlEaRNYsuhTV_RnphdoB1n3a6est_BYCAeJObhYSjnJURgIBzf3R3d3F9bIRqi2uSbpZ0mXuYg5SJj46IkICPeox1hg'],
+      ['ユカノオウ', '#111111', 'EOSc3KHGpaaogKlaqDqlJKEcnCSXOpNakICPppDGk9yXBoCAintrZ4pnb1OKUxGAgH6GeIdzh26EaoBoeml1a3BwbHVqe2uAbYRyhXeFfYKC'],
+    ],
   },
 };
 if (typeof module !== 'undefined' && module.exports) module.exports = ARENA_CPU;
