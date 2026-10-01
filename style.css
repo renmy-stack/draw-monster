@@ -528,3 +528,8 @@ body.nav #nakama .panel { width: 100%; max-width: 520px; margin: 0 auto; max-hei
 .nk-nm { flex: 1; min-width: 0; display: flex; flex-direction: column; text-align: left; }
 .nk-nm .rk-opp { flex: none; white-space: normal; overflow-wrap: anywhere; }
 .nk-nm small { font-size: 11px; color: #666; font-weight: 700; white-space: normal; }
+/* かみ（4 つめの 勝ち抜き、?kamitest の 端末だけ） */
+.main.kami { background: #1a1400; border-color: #fff; color: #fff8e1; box-shadow: 0 4px 0 var(--ink), 0 0 18px rgba(255, 255, 255, .8); }
+.main.kami small { display: block; font-size: 12px; font-weight: 700; opacity: .95; }
+.rd-node.rd-kami.sel { background: #fff8e1; }
+.rd-node.rd-kami:not(.locked) b { color: #8d6e00; }

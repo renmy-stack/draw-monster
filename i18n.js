@@ -136,7 +136,7 @@
     // かく 画面
     "からだ": "Body", "うで": "Arm", "あし": "Leg",
     "タフさ": "Tough", "パンチ": "Punch", "リーチ": "Reach", "はやさ": "Speed",
-    "おもて": "Normal", "うら": "Hidden", "みんな": "Squad",
+    "おもて": "Normal", "うら": "Hidden", "みんな": "Squad", "かみ": "GOD",
     "たたかう": "Fight",
     "ともだち<small>と たたかう</small>": "Fight<small>your friend</small>",
     "この パーツを けす": "Erase this part",
@@ -148,6 +148,9 @@
     "からだを かえたので、うで・あしも くっつけなおしたよ": "The body changed, so the arm and leg were reattached",
     "かちぬき ちゅう：モンスターを かえると 1 たいめから": "On a streak: changing your monster restarts from #1",
     "うら かちぬき：とんでもなく つよい 5 たい": "Hidden streak: 5 super strong monsters",
+    "かみ：さくしゃが つくった いみわからん くらい つよい 5 たい": "GOD: 5 absurdly strong monsters made by the creator",
+    "かみ へ！<small>さくしゃが つくった いみわからん くらい つよい 5 たい</small>": "On to GOD!<small>5 absurdly strong monsters made by the creator</small>",
+    "…かみ が あらわれた！": "…GOD has appeared!", "かみ が まってるぞ…": "GOD is waiting…", "…うそでしょ？": "…No way?!", "かみ を たおした！！！！": "You beat GOD!!!!", "みんなを もういちど": "Squad again",
     "みんなの さいきょう ぐんだん：うらを クリアした みんなの モンスターから えらばれた 5 たい":"Everyone's Strongest Squad: 5 monsters picked from players who beat Hidden",
     "できた！<small>2P に わたす</small>": "Done!<small>pass to 2P</small>",
     "たたかう！<small>1P たい 2P</small>": "Fight!<small>1P vs 2P</small>",
@@ -306,7 +309,7 @@
 
   // ---- 数字の 入る 文（上から じゅんに 置きかえ）----
   const R = [
-    [/(おもて|うら|みんな) クリア/g, (m, a) => SIDE[a] + ' ✓'],
+    [/(おもて|うら|みんな|かみ) クリア/g, (m, a) => SIDE[a] + ' ✓'],
     [/✓ クリア/g, '✓ Clear'],
     [/^コレクション ?(?:⭐ でんせつ (\d+) ?)?(?:👑 でんどういり (\d+) ?)?(?:ちけい (\d+))?$/, (m, a, b, c) => 'Collection' + (a ? ' ⭐ Legends ' + a : '') + (b ? ' 👑 Hall of Fame ' + b : '') + (c ? ' 🏔 Terrain ' + c : '')],
     // ちけい ぼうけん（地形の 名前は ARENA の データごと 英語に して ある）
@@ -329,6 +332,7 @@
     [/（まえの モンスターが はいってるよ）/, ' (your last monster is loaded)'],
     [/^うら かちぬき (\d+) \/ (\d+)$/, 'Hidden $1 / $2'],
     [/^みんなの さいきょう かちぬき (\d+) \/ (\d+)$/, 'Squad $1 / $2'],
+    [/^かみの かちぬき (\d+) \/ (\d+)$/, 'GOD $1 / $2'],
     [/^かちぬき (\d+) \/ (\d+)$/, 'Streak $1 / $2'],
     [/KO（([\d.]+) びょう）/g, 'KO ($1 s)'],
     [/じかんぎれ（のこり HP (\d+) たい (\d+)）/g, 'Time up (HP left $1 vs $2)'],
@@ -405,7 +409,7 @@
     [/>なし</g, '>None<'],
   ];
   // ---- のこった 言いまわし ----
-  const SIDE = { 'おもて': 'Normal', 'うら': 'Hidden', 'みんな': 'Squad' };
+  const SIDE = { 'おもて': 'Normal', 'うら': 'Hidden', 'みんな': 'Squad', 'かみ': 'GOD' };
   const SLOT = { 'あたま': 'Head', 'かお': 'Face', 'からだ': 'Body', 'えふぇくと': 'Effect' };
   const P = Object.entries(Object.assign({
     'かいて！モンスターバトル': 'Draw! Monster Battle', 'ランクせん': 'Ranked', 'けいさんちゅう': 'calculating',
