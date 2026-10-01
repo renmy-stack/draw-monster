@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '173';
+const VERSION = '174';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -39,12 +39,13 @@ function tagList(k) { try { return JSON.parse(lsGet(k) || '[]').map(c => String(
 function crownedList() { return tagList('crowned'); }
 function isCrowned(d) { return !!d && crownedList().includes(codeTag(plainCode(d))); }
 function legendList() { return tagList('legend'); }
+function kamiList() { return tagList('kamigoe'); }   // かみを たおした 形（てんしの わ）
 // ちけいの しるし: 地形の うらを その 形で クリアした（地形ごとに 形の 印の リスト 'tmark.<地形>'）。モンスターには ⭐ の 数だけ 出す
 function tmarkList(k) { return tagList('tmark.' + k); }
 function tmarkCount(d) { if (!d || !window.ARENA) return 0; const tg = codeTag(plainCode(d)); return ARENA.TERRAINS.filter(t => t.key !== 'flat' && tmarkList(t.key).includes(tg)).length; }
 // チャンピオン メダル: ランクせんで 1 位に なった 形 → 日数（{ 形: 日数 }）
 function champMap() { try { return JSON.parse(lsGet('champ') || '{}'); } catch (e) { return {}; } }
-function withCrown(d) { if (d) { const c = plainCode(d); d.crown = d.crown || isCrowned(d); d.legend = d.legend || legendList().includes(codeTag(c)); d.champ = Math.max(d.champ || 0, champMap()[c] || 0); } d.tstar = tmarkCount(d); return d; }
+function withCrown(d) { if (d) { const c = plainCode(d); d.crown = d.crown || isCrowned(d); d.legend = d.legend || legendList().includes(codeTag(c)); d.halo = d.halo || kamiList().includes(codeTag(c)); d.champ = Math.max(d.champ || 0, champMap()[c] || 0); } d.tstar = tmarkCount(d); return d; }
 const PARTS = { body: 'からだ', arm: 'うで', leg: 'あし' };
 const PART_HINT = {
   body: '<b>からだ</b> を かこむように かいてね',
@@ -381,11 +382,12 @@ function drawRobotLocal(g, d, color, alpha, open) {
   if (!open && d.body && d.body.length > 2 && (kz[1] || kz[2])) kzBodyFace(g, d.body.map(p => ({ x: p[0], y: p[1] })), kz, 1, true, false);
   if (d.leg && d.leg.length > 1) limb(g, d.leg, '#455a64', 1);
   if (d.arm && d.arm.length > 1) arm(g, d.arm, color);
-  if ((d.crown || d.legend || kz[0]) && d.body && d.body.length > 2) {
+  if ((d.crown || d.legend || d.halo || kz[0]) && d.body && d.body.length > 2) {
     const c = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] })));
     const hh = kz[0] ? KZ.drawHead(g, kz[0], c.x, c.y - 1, c.hs) : 0;   // かざりの ぼうしの 上に 王冠・星
     if (d.crown) drawCrown(g, c.x, c.y - 1 - hh, c.s);
     if (d.legend) drawStar(g, c.x, c.y - 1 - hh - (d.crown ? c.s * 0.8 : 0) - c.s * 0.45, c.s * 0.45);
+    if (d.halo) drawHalo(g, c.x, c.y - 1 - hh - (d.crown ? c.s * 0.8 : 0) - (d.legend ? c.s * 0.95 : 0) - c.s * 0.35, c.s);
   }
   if (d.tstar && d.body && d.body.length > 2) { const c = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); drawTStar(g, c.x + c.s * 1.15, c.y - 1 - c.s * 0.35, c.s * 0.42, d.tstar); }
   if (d.champ && d.body && d.body.length > 2) { const m = medalSpot(d.body.map(p => ({ x: p[0], y: p[1] })), 1, true); drawMedal(g, m.x, m.y, m.r); }
@@ -451,6 +453,14 @@ function drawStar(g, x, y, r) {
   g.beginPath();
   for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.45 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
   g.closePath(); g.fillStyle = '#ffeb3b'; g.fill(); g.lineWidth = Math.max(2, r * 0.14); g.strokeStyle = '#b8860b'; g.stroke();
+}
+function drawHalo(g, x, y, s) {
+  const rx = s * 0.95, ry = s * 0.3, t = performance.now() / 1000;
+  g.save(); g.shadowColor = '#fff3b0'; g.shadowBlur = s * 0.9;
+  g.lineWidth = Math.max(3, s * 0.2); g.strokeStyle = '#b8860b'; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g.stroke();
+  g.lineWidth = Math.max(2, s * 0.12); g.strokeStyle = '#ffe066'; g.beginPath(); g.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2); g.stroke();
+  g.shadowBlur = 0; g.lineWidth = Math.max(1.5, s * 0.07); g.strokeStyle = '#fffbe6'; const a0 = (t * 1.6) % (Math.PI * 2);
+  g.beginPath(); g.ellipse(x, y, rx, ry, 0, a0, a0 + 0.9); g.stroke(); g.restore();
 }
 function body(g, pts, color, open, d) {
   pline(g, pts); if (!open) g.closePath();
@@ -523,7 +533,7 @@ function drawPreview(c, d, color, anim) {
   for (const k of ['body', 'arm', 'leg']) for (const p of d[k]) { x0 = Math.min(x0, p[0]); x1 = Math.max(x1, p[0]); y0 = Math.min(y0, p[1]); y1 = Math.max(y1, p[1]); }
   // 王冠と でんせつの 星の ぶんも 上に 入れる（はみ出さない ように）
   const hat = d.kz && d.kz[0];
-  if ((d.crown || d.legend || hat) && d.body && d.body.length > 2) { const cs = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); y0 = Math.min(y0, cs.y - (d.crown ? cs.s * 0.8 : 0) - (d.legend ? cs.s * 0.95 : 0) - (hat ? cs.hs * 1.05 : 0)); }
+  if ((d.crown || d.legend || d.halo || hat) && d.body && d.body.length > 2) { const cs = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); y0 = Math.min(y0, cs.y - (d.crown ? cs.s * 0.8 : 0) - (d.legend ? cs.s * 0.95 : 0) - (d.halo ? cs.s * 0.75 : 0) - (hat ? cs.hs * 1.05 : 0)); }
   const fx = anim && d.kz && d.kz[3] && d.body && d.body.length > 2 ? d.kz[3] : 0;
   if (fx) { const big = [24, 73, 75, 76, 78, 79, 80].includes(fx) ? 60 : 30; y0 -= 55; x0 -= big; x1 += big; y1 += 10; }   // えふぇくとの ぶん 広く（つばさ・ブラックホール などは もっと）
   const s = Math.min(c.width / (x1 - x0 + 40), c.height / (y1 - y0 + 40));
@@ -602,7 +612,7 @@ function startBattle(friend) {
   const ar = friend ? null : terrInfo();
   if (ar && RB.create(myRobot, CPUS()[stage], ar.arena).A.tall) { showDraw(); setHint('てんじょうに つかえて はいれない！ せを ひくく かきなおしてね（てんせんより したに）'); TR('arenatall', { stage }); return; }
   opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: CPUS()[stage].name, color: CPUS()[stage].color, d: CPUS()[stage] };
-  S = RB.create(myRobot, opp.d, ar && ar.arena); S.stageInfo = ar; S.terrain = ar ? terrain : null; S.tstarA = friend ? 0 : tmarkCount(myRobot); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend; S.legendB = !!opp.d.legend; S.champA = myRobot.champ || 0; S.champB = opp.d.champ || 0;
+  S = RB.create(myRobot, opp.d, ar && ar.arena); S.stageInfo = ar; S.terrain = ar ? terrain : null; S.tstarA = friend ? 0 : tmarkCount(myRobot); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend; S.legendB = !!opp.d.legend; S.haloA = !!myRobot.halo; S.haloB = !!opp.d.halo; S.champA = myRobot.champ || 0; S.champB = opp.d.champ || 0;
   S.d = designRef(myRobot);
   S.kzA = withKz(myRobot).kz || null; S.kzB = opp.d.kz || null;
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
@@ -773,8 +783,8 @@ function drawRobotWorld(b, color, flash, crown) {
   const down = b.downT > 0 || b.hp <= 0;
   face(ctx, tf, ex, ey, r, b.facing, down);
   if (kz && kz[1]) { ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.th); kzBodyFace(ctx, b.bodyPts, [0, kz[1], 0, 0], b.facing, false, down); ctx.restore(); }
-  const legend = (b === S.A && S.legendA) || (b === S.B && S.legendB), hat = kz ? kz[0] : 0;
-  if (crown || legend || hat) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); const hh = hat ? KZ.drawHead(ctx, hat, 0, -1, cs.hs) : 0; if (crown) drawCrown(ctx, 0, -1 - hh, cs.s); if (legend) drawStar(ctx, 0, -1 - hh - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
+  const legend = (b === S.A && S.legendA) || (b === S.B && S.legendB), halo = (b === S.A && S.haloA) || (b === S.B && S.haloB), hat = kz ? kz[0] : 0;
+  if (crown || legend || halo || hat) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); const hh = hat ? KZ.drawHead(ctx, hat, 0, -1, cs.hs) : 0; if (crown) drawCrown(ctx, 0, -1 - hh, cs.s); if (legend) drawStar(ctx, 0, -1 - hh - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); if (halo) drawHalo(ctx, 0, -1 - hh - (crown ? cs.s * 0.8 : 0) - (legend ? cs.s * 0.95 : 0) - cs.s * 0.35, cs.s); ctx.restore(); }
   if (kz && kz[3] && (mode === 'battle' || mode === 'pause')) kzFx(kz[3], tf, w, ex, ey, legA, legB);
   const tst = b === S.A ? S.tstarA : 0;
   if (tst) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawTStar(ctx, b.facing * cs.s * 1.15, -1 - cs.s * 0.35, cs.s * 0.42, tst); ctx.restore(); }
@@ -869,7 +879,7 @@ function showResult() {
         }
         if (side === 'omote' && ARENA_ON) { const i = TERRAINS.findIndex(t => t.key === terrain), nx = TERRAINS[i + 1]; if (nx && nx.cpu.omote) $('rsub').textContent += '\n🏔 つぎの ちけい「' + nx.name + '」が ひらいた！'; }
         if (side === 'minna' && !ti) { onMinnaClear(); $('rsub').textContent += '\nみんなの さいきょう ぐんだん を\nたおした！！！\nでんせつ の モンスター に なった！'; if (KAMI_SHOW) { const firstK = !KAMI_OPEN; KAMI_OPEN = true; $('rsub').textContent += firstK ? '\n…かみ が あらわれた！' : '\nかみ が まってるぞ…'; goKami = true; } }
-        if (side === 'kami' && !ti) { TR('kamiclear', { me: plainCode(myRobot) }); $('rsub').textContent += '\n…うそでしょ？\nかみ を たおした！！！！'; }
+        if (side === 'kami' && !ti) { onKamiClear(); $('rsub').textContent += '\n…うそでしょ？\nかみ を たおした！！！！\nきみの モンスターは「かみごえ」に なった！'; }
         if (ti) {}
         else if (side === 'ura') { $('rsub').textContent += '\nうら 5 たい かちぬき たっせい！！\nすごすぎる！'; const firstM = !MINNA_OPEN; MINNA_OPEN = true; $('rsub').textContent += firstM ? '\n…みんなの さいきょう ぐんだん が\nあらわれた！' : '\nみんなの さいきょう ぐんだん が\nまってるぞ…！'; goMinna = true; }
         else if (side === 'omote') { $('rsub').textContent += '\n5 たい かちぬき たっせい！'; const firstUra = !uraOpen; uraOpen = true; $('rsub').textContent += firstUra ? '\n…うら かちぬき が あらわれた！' : '\nうら かちぬき が まってるぞ…！'; goUra = true; }
@@ -1622,14 +1632,14 @@ document.addEventListener('visibilitychange', () => {
 onTap($('nkgo'), nkSubmit);
 $('nkin').addEventListener('keydown', e => { if (e.key === 'Enter') nkSubmit(); });
 // ---------- うら 5 人抜き: 王冠・でんどういり・エンディング ----------
-let endT0 = 0, confetti = [];
+let endT0 = 0, confetti = [], endingKind = null, fireworks = [];   // endingKind: 'kami' で かみの エンディング
 function onUraClear() {
   TR('uraclear', { me: plainCode(myRobot) });
   const code = plainCode(myRobot), tag = codeTag(code), list = crownedList(), fresh = !list.includes(tag);
   if (fresh) { list.push(tag); lsSet('crowned', JSON.stringify(list)); }
   myRobot.crown = true; lsSet('robot', RB.encodeDesign(myRobot)); S.crownA = true;
   if (fresh) { hallAdd('hall', { c: code, d: (new Date().getMonth() + 1) + '/' + new Date().getDate() }); }
-  endingTerrain = null; endingPending = true;
+  endingTerrain = null; endingKind = null; endingPending = true;
 }
 let endingPending = false;
 let endingTerrain = null;   // ちけいの うらで エンディング: その 地形（水平は null）
@@ -1664,7 +1674,18 @@ function onMinnaClear() {
   if (fresh) hallAdd('legendhall', { c: code, d: day });
   myRobot.legend = true; S.legendA = true;
   TR('minnaclear', { me: code });
-  $('cert').hidden = false; certFor = { c: code, d: day };
+  $('cert').hidden = false; $('cert').textContent = 'でんせつ しょうめいしょ'; certFor = { c: code, d: day };
+}
+// かみを たおした: てんしの わ・かみごえ でんどういり・しょうめいしょ・盛大な エンディング（2026-10-02、オーナー）
+function onKamiClear() {
+  const code = plainCode(myRobot), tag = codeTag(code), list = kamiList(), fresh = !list.includes(tag);
+  if (fresh) { list.push(tag); lsSet('kamigoe', JSON.stringify(list)); }
+  const t = new Date(), day = t.getFullYear() + '/' + (t.getMonth() + 1) + '/' + t.getDate();
+  if (fresh) hallAdd('kamihall', { c: code, d: day });
+  myRobot.halo = true; S.haloA = true;
+  TR('kamiclear', { me: code, fresh });
+  $('cert').hidden = false; $('cert').textContent = 'かみごえ しょうめいしょ'; certFor = { c: code, d: day, kami: true };
+  endingTerrain = null; endingKind = 'kami'; endingPending = true;
 }
 // でんせつ しょうめいしょ（画像）: モンスターの 絵と 日付。X などに 投稿できる
 let certFor = null;
@@ -1687,6 +1708,33 @@ function makeCert(code, day) {
   g.fillText('みんなの さいきょう ぐんだん を', 540, 1060); g.fillText('たおした！', 540, 1130);
   g.fillStyle = '#b2dfdb'; g.font = '700 38px sans-serif'; g.fillText(day + '　かいて！モンスターバトル', 540, 1220);
   return c;
+}
+function makeKamiCert(code, day) {
+  const d = RB.decodeDesign(code); if (!d) return null;
+  withCrown(d); d.halo = true;
+  const c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
+  const g = c.getContext('2d');
+  const bg = g.createRadialGradient(540, 620, 60, 540, 620, 900); bg.addColorStop(0, '#fffdf3'); bg.addColorStop(0.45, '#ffe9a8'); bg.addColorStop(1, '#b8860b');
+  g.fillStyle = bg; g.fillRect(0, 0, 1080, 1350);
+  g.save(); g.translate(540, 620); g.globalAlpha = 0.18; g.fillStyle = '#ffffff';   // ひかりの すじ
+  for (let i = 0; i < 24; i++) { g.rotate(Math.PI / 12); g.beginPath(); g.moveTo(0, 0); g.lineTo(-60, -1100); g.lineTo(60, -1100); g.closePath(); g.fill(); }
+  g.restore();
+  g.strokeStyle = '#7a5300'; g.lineWidth = 18; g.strokeRect(36, 36, 1008, 1278); g.strokeStyle = '#ffffff'; g.lineWidth = 6; g.strokeRect(70, 70, 940, 1210);
+  g.textAlign = 'center'; g.lineJoin = 'round';
+  const big = (t, y, px) => { g.font = '900 ' + px + 'px sans-serif'; g.lineWidth = px * 0.16; g.strokeStyle = '#5a3d00'; g.strokeText(t, 540, y); g.fillStyle = '#ffffff'; g.fillText(t, 540, y); };
+  big('かみごえ', 220, 120); big('しょうめいしょ', 315, 64);
+  const m = document.createElement('canvas'); m.width = 720; m.height = 600;
+  drawPreview(m, d, ME.color);
+  g.save(); g.shadowColor = '#ffffff'; g.shadowBlur = 60; g.drawImage(m, 180, 360); g.restore();
+  g.fillStyle = '#3d2a00'; g.font = '800 50px sans-serif';
+  g.fillText('さくしゃが つくった かみ 5 たいを', 540, 1060); g.fillText('ぜんぶ たおした！', 540, 1130);
+  g.fillStyle = '#5a3d00'; g.font = '700 38px sans-serif'; g.fillText(day + '　かいて！モンスターバトル', 540, 1220);
+  return c;
+}
+function showKamiCert(code, day) {
+  const c = makeKamiCert(code, day); if (!c) return;
+  TR('cert', { me: code, k: 'kami' });
+  openCertBox(c, 'かみごえ しょうめいしょ（ながおしで ほぞん）', 'kamigoe.png', 'さくしゃが つくった かみ 5 たいを たおして「かみごえ」に なった！（かいて！モンスターバトル）' + String.fromCharCode(10) + SITE_URL);
 }
 function showCert(code, day) {
   const c = makeCert(code, day); if (!c) return;
@@ -1751,7 +1799,7 @@ function showRankCard(me) {
   const text = 'ランクせんで ' + me.pos + ' い（' + me.count + ' たい ちゅう）！「' + me.name + '」と たたかってみて！（かいて！モンスターバトル）' + String.fromCharCode(10) + url;
   openCertBox(c, 'じゅんい カード（ながおしで ほぞん）', 'rank.png', text, true);
 }
-onTap($('cert'), () => { if (certFor) showCert(certFor.c, certFor.d); });
+onTap($('cert'), () => { if (certFor) (certFor.kami ? showKamiCert : showCert)(certFor.c, certFor.d); });
 onTap($('certclose'), () => { $('certbox').hidden = true; });
 function renderLegend() {
   let lh = []; try { lh = JSON.parse(lsGet('legendhall') || '[]'); } catch (e) {}
@@ -1765,7 +1813,20 @@ function renderLegend() {
     el.addEventListener('click', () => showCert(h.c, h.d));
   }
 }
+function renderKamiHall() {
+  let kh = []; try { kh = JSON.parse(lsGet('kamihall') || '[]'); } catch (e) {}
+  $('kamibox').hidden = !kh.length;
+  const list = $('kamilist'); list.innerHTML = '';
+  for (const x of kh.slice(-12)) {
+    const d = RB.decodeDesign(x.c); if (!d) continue; withCrown(d); d.halo = true;
+    const el = document.createElement('div'); el.className = 'hall';
+    el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + x.d + '</span>';
+    list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color);
+    el.addEventListener('click', () => showKamiCert(x.c, x.d));
+  }
+}
 function renderHall() {
+  renderKamiHall();
   renderLegend();
   renderTerrainHall();
   let hall = []; try { hall = JSON.parse(lsGet('hall') || '[]'); } catch (e) {}
@@ -1792,10 +1853,11 @@ function renderTerrainHall() {
   }
   box.hidden = !box.children.length;
 }
-function startEnding() { endingPending = false; mode = 'ending'; show('none'); $('quit').hidden = true; $('fast').hidden = true; endT0 = performance.now(); confetti = []; }
+function startEnding() { fireworks = []; endingPending = false; mode = 'ending'; show('none'); $('quit').hidden = true; $('fast').hidden = true; endT0 = performance.now(); confetti = []; }
 let endingPreview = false;   // ?endingpreview の 見本（王冠・でんどういりの 記録は 付けない）
 function finishEnding() {
-  if (endingPreview) { endingPreview = false; myRobot.crown = isCrowned(myRobot); showTitle(); return; }
+  const wasKami = endingKind === 'kami'; endingKind = null;
+  if (endingPreview) { endingPreview = false; myRobot.crown = isCrowned(myRobot); if (wasKami) myRobot.halo = kamiList().includes(codeTag(plainCode(myRobot))); showTitle(); return; }
   mode = 'result'; show('result');
 }
 window.endingAt = sec => { endT0 = performance.now() - sec * 1000; };   // 開発用: エンディングの その秒を 見る
@@ -1810,6 +1872,7 @@ function lowY(d) {
 }
 // エンディング: 倒した 10 体が 行進 → 王冠の じぶんの モンスター
 function renderEnding(now) {
+  if (endingKind === 'kami') return renderKamiEnding(now);
   const t = (now - endT0) / 1000;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   const et = endingTerrain;   // ちけいの ときは その 地形の 色と 相手
@@ -1842,6 +1905,51 @@ function renderEnding(now) {
   }
   if (t > 1.2) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = '700 14px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('タップで つぎへ', W / 2, H - 40); ctx.globalAlpha = 1; }
 }
+// かみの エンディング: 夜空に 20 たいの 行進 → ひかりの はしら → てんしの わ の じぶん・はなび
+function renderKamiEnding(now) {
+  const t = (now - endT0) / 1000;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#05040f'); sky.addColorStop(1, '#2b2160'); ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
+  for (let i = 0; i < 60; i++) { const x = (i * 97.3) % W, y = (i * 53.7) % (H * 0.6); ctx.globalAlpha = 0.35 + 0.35 * Math.sin(t * 2 + i); ctx.fillStyle = '#fff'; ctx.fillRect(x, y, 2, 2); }
+  ctx.globalAlpha = 1;
+  const gy = H * 0.68; ctx.fillStyle = '#1b1640'; ctx.fillRect(0, gy, W, H - gy); ctx.fillStyle = '#ffe066'; ctx.fillRect(0, gy, W, 3);
+  const list = RB.CPU.concat(RB.URA, RB.MINNA, RB.KAMI), sp = Math.max(220, W * 0.6), gap = 92, parade = (W + gap * list.length + 120) / sp;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  if (t < parade) {
+    ctx.font = '900 ' + Math.min(26, W * 0.06) + 'px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('たおして きた 20 たい', W / 2, H * 0.18);
+    const tier = ['#ffffff', '#ff8a80', '#80deea', '#ffe066'];
+    list.forEach((c, i) => {
+      const x = W + 60 + gap * i - sp * t; if (x < -80 || x > W + 80) return;
+      const hop = Math.abs(Math.sin(t * 8 + i)) * 6, sc = i >= 15 ? 0.6 : 0.5;
+      if (i >= 15) { ctx.save(); ctx.shadowColor = '#fff'; ctx.shadowBlur = 18; }
+      ctx.save(); ctx.translate(x, gy - hop - lowY(c) * sc); ctx.scale(-sc, sc); drawRobotLocal(ctx, c, c.color, 1, false); ctx.restore();
+      if (i >= 15) ctx.restore();
+      ctx.font = '800 12px sans-serif'; ctx.fillStyle = tier[Math.floor(i / 5)]; ctx.fillText(c.name, x, gy + 22);
+    });
+    return kamiTapHint(t);
+  }
+  const u = t - parade;
+  // ひかりの はしら
+  const pw = Math.min(W * 0.5, 40 + u * 220), pa = Math.min(1, u / 0.8);
+  const lg = ctx.createLinearGradient(W / 2 - pw / 2, 0, W / 2 + pw / 2, 0); lg.addColorStop(0, 'rgba(255,240,180,0)'); lg.addColorStop(0.5, 'rgba(255,250,220,' + (0.75 * pa) + ')'); lg.addColorStop(1, 'rgba(255,240,180,0)');
+  ctx.fillStyle = lg; ctx.fillRect(W / 2 - pw / 2, 0, pw, gy);
+  // はなび
+  if (u > 0.6 && (fireworks.length === 0 || now - fireworks[fireworks.length - 1].t0 > 700)) fireworks.push({ t0: now, x: W * (0.15 + 0.7 * Math.random()), y: H * (0.12 + 0.3 * Math.random()), c: ['#ffd54f', '#ff8a80', '#80deea', '#b388ff', '#ffffff'][fireworks.length % 5] });
+  for (const f of fireworks) { const a = (now - f.t0) / 1000; if (a > 1.6) continue; ctx.globalAlpha = Math.max(0, 1 - a / 1.6); ctx.fillStyle = f.c;
+    for (let k = 0; k < 28; k++) { const ang = k * Math.PI * 2 / 28, r = 140 * (1 - Math.exp(-a * 3)); ctx.beginPath(); ctx.arc(f.x + Math.cos(ang) * r, f.y + Math.sin(ang) * r + 40 * a * a, 2.6, 0, Math.PI * 2); ctx.fill(); } }
+  ctx.globalAlpha = 1;
+  // てんしの わ の じぶん（ゆっくり 浮く）
+  const k = Math.min(1, u / 0.8), sc = Math.min(W / 260, H / 480) * (0.6 + 0.45 * k), fl = Math.sin(u * 2) * 6 - Math.min(1, u / 1.5) * 18;
+  let mx0 = Infinity, mx1 = -Infinity; for (const q of ['body', 'arm', 'leg']) for (const p of myRobot[q]) { mx0 = Math.min(mx0, p[0]); mx1 = Math.max(mx1, p[0]); }
+  ctx.save(); ctx.shadowColor = '#fff6c8'; ctx.shadowBlur = 30; ctx.translate(W / 2 - (mx0 + mx1) / 2 * sc, gy - lowY(myRobot) * sc + fl); ctx.scale(sc, sc); drawRobotLocal(ctx, Object.assign({}, myRobot, { halo: true }), ME.color, 1, false); ctx.restore();
+  ctx.font = '900 ' + Math.min(48, W * 0.12) + 'px sans-serif'; ctx.lineWidth = 9; ctx.strokeStyle = '#3d2a00';
+  ctx.strokeText('かみ を こえた', W / 2, H * 0.13); ctx.fillStyle = '#ffe066'; ctx.fillText('かみ を こえた', W / 2, H * 0.13);
+  ctx.font = '800 ' + Math.min(18, W * 0.045) + 'px sans-serif'; ctx.fillStyle = '#fff';
+  ctx.fillText('きみの モンスターは「かみごえ」に なった！', W / 2, H * 0.21); ctx.fillText('😇 てんしの わ を もらった！', W / 2, H * 0.26);
+  if (u > 2.5) { ctx.globalAlpha = Math.min(1, (u - 2.5) / 1); ctx.font = '700 ' + Math.min(14, W * 0.036) + 'px sans-serif'; ctx.fillStyle = '#ffe9a8'; ctx.fillText('さくしゃ も びっくり。ほんとうに おめでとう！', W / 2, H * 0.31); ctx.globalAlpha = 1; }
+  kamiTapHint(t);
+}
+function kamiTapHint(t) { if (t > 1.2) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = '700 14px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('タップで つぎへ', W / 2, H - 40); ctx.globalAlpha = 1; } }
 onTap($('vs'), startVsMode);
 onTap($('vstitle'), () => { if (S && S.side === 'rank') { if (S.evBattle) showEv(); else if (S.nkBattle) showNakama(); else showRank(); } else exitVs(); });
 onTap($('handoffgo'), () => { vs.step = 2; loadInto(vsLast(2)); showDraw(); });
@@ -2040,7 +2148,8 @@ if (OWNER) {
   if (KZ_OWNER) {
     if (q.get('kzreveal')) { const it = KZ.ITEMS[+q.get('kzreveal')]; showKz(''); const rv = $('kzreveal'); rv.className = 'r' + it.r; rv.hidden = false; $('kzrstars').textContent = '★'.repeat(it.r); $('kzrname').textContent = it.name; $('kzrsub').textContent = '👀 おためし（まだ つけて ないよ）\nNEW！ ' + KZ.SLOT_LABEL[it.slot] + 'の いちらんから つけてね' + (it.desc ? '\n' + it.desc : ''); kzShow = it; kzRevealDraw(); }
   }
-  if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
+  if (q.get('endingpreview') === 'kami') { if (!myRobot) sample(); myRobot = withCrown(myRobot); endingKind = 'kami'; endingPreview = true; startEnding(); }   // オーナーの 確認用: かみの エンディング
+  else if (q.has('endingpreview')) { if (!myRobot) sample(); myRobot = withCrown(myRobot); myRobot.crown = true; endingPreview = true; startEnding(); }   // オーナーの 確認用: エンディングの 見本
   if (q.has('rankdev') && RANK_ON) { if (!myRobot) sample(); showRank(); if (q.get('rankdev') === 'replay') setTimeout(() => { if (rankMe && rankMe.recent[0]) { rankReplay(rankMe, rankMe.recent[0]); } }, 3000); }   // 開発用: ランクせん
   if (q.has('minnainfo')) showMinnaInfo();   // 開発用: しょうかい 画面
   if (q.has('certpreview')) { if (!myRobot) sample(); openCertBox(makeCert(plainCode(myRobot), '2026/9/27')); }   // オーナーの 確認用: でんせつ しょうめいしょ
