@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '164';
+const VERSION = '165';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1954,12 +1954,18 @@ function showMore() { mode = 'more'; show('more'); }
 function fitTmon() {
   if (!navOn() || $('title').hidden) return;
   const c = $('tmon'), card = $('tmycard'), body = card.querySelector('.mc-body');
-  c.style.width = c.style.height = '40px';
+  card.classList.remove('row'); c.style.width = c.style.height = '40px';
   const cs = getComputedStyle(card), padV = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom), padH = parseFloat(cs.paddingLeft) + parseFloat(cs.paddingRight);
-  const sz = Math.floor(Math.max(48, Math.min(card.clientWidth - padH, card.clientHeight - padV - body.offsetHeight - 10, 360)));
+  let sz = Math.floor(Math.max(48, Math.min(card.clientWidth - padH, card.clientHeight - padV - body.offsetHeight - 10, 360)));
+  // 縦の あきが すくない（X の アプリ内 ブラウザ など）ときは 絵を 左・文字を 右に して 高さを ぜんぶ 絵に つかう
+  if (sz < 120) { const h = card.clientHeight - padV; card.classList.add('row'); sz = Math.floor(Math.max(48, Math.min(h, (card.clientWidth - padH) * 0.5, 360))); }
   c.style.width = c.style.height = sz + 'px';
 }
 window.addEventListener('resize', () => setTimeout(fitTmon, 0));
+// 開いた あとで 画面の 高さが かわる（X の アプリ内 ブラウザの バー・文字の 読みこみ）と 小さい まま のこる ので、タイトルの わくの 大きさが かわったら 測りなおす
+if (window.ResizeObserver) { let lastH = 0; new ResizeObserver(es => { const h = Math.round(es[0].contentRect.height); if (Math.abs(h - lastH) > 2) { lastH = h; setTimeout(fitTmon, 0); } }).observe(document.querySelector('#title .panel')); }
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(fitTmon, 0));
+setTimeout(fitTmon, 400); setTimeout(fitTmon, 1500);
 // ホーム画面から 開いた iPhone で ページの 高さが 画面より 短い（下に ページの 外の 帯が できる）か。短い ときは タブの 下の よはくを へらす（style.css の html.sa-short）
 function fixStandalone() {
   const sa = window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);

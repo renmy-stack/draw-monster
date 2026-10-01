@@ -475,7 +475,9 @@ body.nav #title, body.nav #rank, body.nav #ev, body.nav #more { align-items: str
 body.nav #title .panel, body.nav #rank .panel, body.nav #ev .panel, body.nav #more .panel { width: 100%; max-width: 520px; margin: 0 auto; max-height: none; height: 100%; }
 body.nav #title .panel { display: flex; flex-direction: column; }
 body.nav #tmycard { flex: 1 1 auto; min-height: 0; overflow: hidden; flex-direction: column; justify-content: center; text-align: center; gap: 6px; margin-top: 12px; }
-body.nav #tmycard canvas { width: 60px; height: 60px; border-radius: 16px; }   /* 大きさは game.js の fitTmon で 枠の あいている ぶんに あわせる */
+body.nav #tmycard canvas { width: 60px; height: 60px; border-radius: 16px; }
+body.nav #tmycard.row { flex-direction: row; text-align: left; gap: 10px; }   /* 縦が 足りない ときの 横ならび（fitTmon） */
+body.nav #tmycard.row .mc-body { align-items: flex-start; flex: 1 1 0; min-width: 0; }   /* 大きさは game.js の fitTmon で 枠の あいている ぶんに あわせる */
 body.nav #tmycard .mc-body { align-items: center; }
 body.nav #tmycard .mc-h { font-size: 13px; }
 body.nav #adv { margin-top: auto; padding-top: 12px; }
