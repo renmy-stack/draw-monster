@@ -191,11 +191,11 @@ button:disabled { opacity: .45; }
 #hallbox { margin-top: 12px; padding: 8px; border-radius: 12px; border: 2px solid #d4a017; background: #fff8dc; }
 .hall-title { font-weight: 900; font-size: 15px; color: #b8860b; }
 #halllist { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
-#halllist .hall { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 700; color: #7a5c00; }
-#halllist canvas { width: 64px; height: 64px; border-radius: 8px; background: #1f2250; }
+#halllist .hall { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 700; color: #7a5c00; }
+#halllist canvas { width: 96px; height: 96px; border-radius: 8px; background: #1f2250; }
 .thall-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
-.thall-list .hall { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 700; color: #00695c; }
-.thall-list canvas { width: 64px; height: 64px; border-radius: 8px; background: #1f2250; }
+.thall-list .hall { display: flex; flex-direction: column; align-items: center; font-size: 11px; font-weight: 700; color: #00695c; }
+.thall-list canvas { width: 96px; height: 96px; border-radius: 8px; background: #1f2250; }
 #thallbox { margin-top: 0; }
 .thall { margin-top: 12px; padding: 8px; border-radius: 12px; border: 2px solid #26a69a; background: #e0f2f1; }   /* 水平の でんどういりと おなじ わく、色は しるしの みどり */
 .thall-title { color: #00695c; }
@@ -207,7 +207,7 @@ button:disabled { opacity: .45; }
 .legend-title { font-weight: 900; font-size: 15px; color: #00796b; }
 #legendlist { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
 #legendlist .hall { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 700; color: #00695c; cursor: pointer; }
-#legendlist canvas { width: 64px; height: 64px; border-radius: 8px; background: #0f3d3a; }
+#legendlist canvas { width: 96px; height: 96px; border-radius: 8px; background: #0f3d3a; }
 .certbtn { background: #ffd54f; border-color: #b8860b; }
 #certbox { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(4, 22, 26, .85); z-index: 30; }
 #certbox .panel { max-height: 100%; overflow: auto; }
