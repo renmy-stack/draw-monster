@@ -89,6 +89,10 @@ const ITEMS = [
   { id: 78, slot: 'fx', name: 'ドラゴンの つばさ', r: 3, desc: 'せなかに ドラゴンの つばさが はえて はばたく' },
   { id: 79, slot: 'fx', name: 'ブラックホール', r: 3, desc: 'うしろで ブラックホールが うずまく' },
   { id: 80, slot: 'fx', name: 'きんいろの ひかり', r: 3, desc: 'そらから きんいろの ひかりが さしこむ' },
+  // ちけい ぼうけんの ごほうび（ガチャには 出ない。lim ＝ うらを クリアした 地形の 数）
+  { id: 81, slot: 'head', name: 'たんけんぼう', r: 3, lim: 3, desc: 'ちけいの うらを 3 つ クリアで もらえる' },
+  { id: 82, slot: 'head', name: 'ちけいの かんむり', r: 3, lim: 6, desc: 'ちけいの うらを 6 つ クリアで もらえる' },
+  { id: 83, slot: 'head', name: 'せかいの かんむり', r: 3, lim: 9, desc: 'ちけいの うらを 9 つ クリアで もらえる' },
 ];
 const PRICE = 100, DUP_BACK = 30, RATE = [0, 0.6, 0.3, 0.1];
 const WIN = { omote: 10, ura: 30, minna: 60 }, CLEAR = { omote: 50, ura: 150, minna: 300 }, HIST_MAX = 30;
@@ -138,7 +142,7 @@ function pullMulti(st, rand) {
 }
 function roll(st, rand) {
   const u = rand(); const r = u < RATE[3] ? 3 : u < RATE[3] + RATE[2] ? 2 : 1;
-  const pool = ITEMS.filter(it => it && it.r === r), it = pool[Math.floor(rand() * pool.length) % pool.length];
+  const pool = ITEMS.filter(it => it && it.r === r && !it.lim), it = pool[Math.floor(rand() * pool.length) % pool.length];
   const own = st.own(), dup = own.includes(it.id);
   if (dup) st.addCoins(DUP_BACK); else { own.push(it.id); st.setOwn(own); }
   return { item: it, dup };
@@ -227,8 +231,42 @@ function drawHead(g, id, x, y, s) {
     for (let i = 0; i < 5; i++) { const ph = (t * 0.6 + i / 5) % 1, px = x + Math.sin(i * 7.3 + t) * rx * 0.8; g.globalAlpha = (1 - ph) * 0.8; g.fillStyle = '#fff9c4'; g.beginPath(); g.arc(px, hy + ph * s * 0.6, s * 0.03, 0, 7); g.fill(); }
     g.restore();
     top = s * 0.62;
-  } else if (id >= 25) top = headMore(g, id, x, y, s, t);
+  } else if (id >= 81 && id <= 83) top = headTerrain(g, id, x, y, s, t);
+  else if (id >= 25) top = headMore(g, id, x, y, s, t);
   g.restore(); return top;
+}
+// ちけいの ごほうびの ぼうし（81 たんけんぼう・82 ちけいの かんむり・83 せかいの かんむり）
+function headTerrain(g, id, x, y, s, t) {
+  if (id === 81) {   // たんけんぼう: カーキの まるい ぼうし＋つば＋あかい バンド
+    const gr = g.createLinearGradient(x, y - s * 0.6, x, y); gr.addColorStop(0, '#e6d3a3'); gr.addColorStop(1, '#b89b5e');
+    g.fillStyle = '#a8894d'; g.beginPath(); g.ellipse(x, y - s * 0.02, s * 0.62, s * 0.12, 0, 0, 7); g.fill(); g.stroke();
+    g.fillStyle = gr; g.beginPath(); g.moveTo(x - s * 0.42, y - s * 0.04); g.quadraticCurveTo(x - s * 0.44, y - s * 0.62, x, y - s * 0.64); g.quadraticCurveTo(x + s * 0.44, y - s * 0.62, x + s * 0.42, y - s * 0.04); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#c62828'; g.fillRect(x - s * 0.41, y - s * 0.2, s * 0.82, s * 0.1);
+    g.strokeStyle = 'rgba(255,255,255,.5)'; g.lineWidth = Math.max(1, s * 0.04); g.beginPath(); g.moveTo(x - s * 0.22, y - s * 0.5); g.quadraticCurveTo(x - s * 0.1, y - s * 0.58, x + s * 0.06, y - s * 0.57); g.stroke();
+    return s * 0.66;
+  }
+  if (id === 82) {   // ちけいの かんむり: 山の かたちの ぎざぎざ（みどり→きん）と あおい 石
+    const gr = g.createLinearGradient(x, y - s * 0.7, x, y); gr.addColorStop(0, '#ffe082'); gr.addColorStop(1, '#43a047');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(x - s * 0.5, y);
+    const pk = [[-0.36, -0.48], [-0.2, -0.24], [0, -0.7], [0.2, -0.24], [0.36, -0.48]];
+    g.lineTo(x - s * 0.5, y - s * 0.22); for (const [px, py] of pk) g.lineTo(x + px * s, y + py * s); g.lineTo(x + s * 0.5, y - s * 0.22); g.lineTo(x + s * 0.5, y); g.closePath(); g.fill(); g.stroke();
+    g.fillStyle = '#fff'; for (const [px, py] of [pk[0], pk[2], pk[4]]) { g.beginPath(); g.moveTo(x + px * s, y + py * s); g.lineTo(x + px * s - s * 0.07, y + py * s + s * 0.1); g.lineTo(x + px * s + s * 0.07, y + py * s + s * 0.1); g.closePath(); g.fill(); }   // 山の ゆき
+    g.fillStyle = '#29b6f6'; g.beginPath(); g.arc(x, y - s * 0.11, s * 0.08, 0, 7); g.fill(); g.stroke();
+    twinkle(g, x + s * 0.03, y - s * 0.14, s * 0.1, wave(t, 2.6, 1) > 0.8 ? (wave(t, 2.6, 1) - 0.8) * 5 : 0);
+    return s * 0.72;
+  }
+  // 83 せかいの かんむり: きんの わの 上に ちきゅう、まわりを ほしが まわる
+  g.fillStyle = '#ffca28'; g.beginPath(); g.rect(x - s * 0.42, y - s * 0.2, s * 0.84, s * 0.2); g.fill(); g.stroke();
+  g.fillStyle = '#e53935'; for (const k of [-0.25, 0, 0.25]) { g.beginPath(); g.arc(x + k * s, y - s * 0.1, s * 0.045, 0, 7); g.fill(); }
+  const cy = y - s * 0.46, r = s * 0.26;
+  g.fillStyle = '#1e88e5'; g.beginPath(); g.arc(x, cy, r, 0, 7); g.fill();
+  g.save(); g.beginPath(); g.arc(x, cy, r, 0, 7); g.clip(); g.fillStyle = '#66bb6a';
+  const sh = (t * 0.25 % 1) * r * 2;   // 大陸が ゆっくり まわる
+  for (const [ox, oy, w] of [[-0.5, -0.3, 0.55], [0.4, 0.2, 0.5], [1.3, -0.1, 0.6]]) { g.beginPath(); g.ellipse(x - r + ((ox * r + sh) % (r * 2.6)), cy + oy * r, w * r, w * r * 0.6, 0.4, 0, 7); g.fill(); }
+  g.restore(); g.beginPath(); g.arc(x, cy, r, 0, 7); g.stroke();
+  g.strokeStyle = '#fff8e1'; g.lineWidth = Math.max(1, s * 0.035); g.beginPath(); g.ellipse(x, cy, r * 1.5, r * 0.45, -0.3, 0, 7); g.stroke();
+  const a = t * 1.6; star(g, x + Math.cos(a) * r * 1.5, cy + Math.sin(a) * r * 0.45 - Math.cos(a) * r * 0.3 * 0.3, s * 0.07, '#fff59d', INK, 0);
+  return s * 0.76;
 }
 
 // ---------- かお: ex, ey = 目の まんなか（目は ex ± 1.4r）、口は (ex + facing × 0.4r, ey + 2.2r) ----------

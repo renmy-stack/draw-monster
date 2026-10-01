@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '155';
+const VERSION = '156';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -39,9 +39,12 @@ function tagList(k) { try { return JSON.parse(lsGet(k) || '[]').map(c => String(
 function crownedList() { return tagList('crowned'); }
 function isCrowned(d) { return !!d && crownedList().includes(codeTag(plainCode(d))); }
 function legendList() { return tagList('legend'); }
+// ちけいの しるし: 地形の うらを その 形で クリアした（地形ごとに 形の 印の リスト 'tmark.<地形>'）。モンスターには ⭐ の 数だけ 出す
+function tmarkList(k) { return tagList('tmark.' + k); }
+function tmarkCount(d) { if (!d || !window.ARENA) return 0; const tg = codeTag(plainCode(d)); return ARENA.TERRAINS.filter(t => t.key !== 'flat' && tmarkList(t.key).includes(tg)).length; }
 // チャンピオン メダル: ランクせんで 1 位に なった 形 → 日数（{ 形: 日数 }）
 function champMap() { try { return JSON.parse(lsGet('champ') || '{}'); } catch (e) { return {}; } }
-function withCrown(d) { if (d) { const c = plainCode(d); d.crown = d.crown || isCrowned(d); d.legend = d.legend || legendList().includes(codeTag(c)); d.champ = Math.max(d.champ || 0, champMap()[c] || 0); } return d; }
+function withCrown(d) { if (d) { const c = plainCode(d); d.crown = d.crown || isCrowned(d); d.legend = d.legend || legendList().includes(codeTag(c)); d.champ = Math.max(d.champ || 0, champMap()[c] || 0); } d.tstar = tmarkCount(d); return d; }
 const PARTS = { body: 'からだ', arm: 'うで', leg: 'あし' };
 const PART_HINT = {
   body: '<b>からだ</b> を かこむように かいてね',
@@ -182,8 +185,9 @@ function showTitle() {
   { const n = [...document.querySelectorAll('.modes > .mode')].filter(el => !el.hidden).length; document.querySelector('.modes').classList.toggle('odd', n % 2 === 1); }
   // コレクション（でんせつ・でんどういり）
   const nl = hallCount('legendhall'), nh = hallCount('hall');
-  $('collection').hidden = !nl && !nh;
-  $('collsum').textContent = 'コレクション　' + (nl ? '⭐ でんせつ ' + nl + '　' : '') + (nh ? '👑 でんどういり ' + nh : '');
+  const nt = window.ARENA ? ARENA.TERRAINS.reduce((n, t) => n + (t.key === 'flat' ? 0 : hallCount('hall.' + t.key)), 0) : 0;   // ちけいの でんどういり
+  $('collection').hidden = !nl && !nh && !nt;
+  $('collsum').textContent = 'コレクション　' + (nl ? '⭐ でんせつ ' + nl + '　' : '') + (nh ? '👑 でんどういり ' + nh + '　' : '') + (nt ? '🏔 ちけい ' + nt : '');
   drawTitleBg();
   setTimeout(fitTmon, 0);
 }
@@ -346,6 +350,7 @@ function drawRobotLocal(g, d, color, alpha, open) {
     if (d.crown) drawCrown(g, c.x, c.y - 1 - hh, c.s);
     if (d.legend) drawStar(g, c.x, c.y - 1 - hh - (d.crown ? c.s * 0.8 : 0) - c.s * 0.45, c.s * 0.45);
   }
+  if (d.tstar && d.body && d.body.length > 2) { const c = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); drawTStar(g, c.x + c.s * 1.15, c.y - 1 - c.s * 0.35, c.s * 0.42, d.tstar); }
   if (d.champ && d.body && d.body.length > 2) { const m = medalSpot(d.body.map(p => ({ x: p[0], y: p[1] })), 1, true); drawMedal(g, m.x, m.y, m.r); }
   if (d.ribbon && d.body && d.body.length > 2) { const m = medalSpot(d.body.map(p => ({ x: p[0], y: p[1] })), 1, true); drawRibbon(g, m.x - (d.champ ? m.r * 2.4 : 0), m.y - m.r * 0.6, m.r * 0.8, d.ribbon); }
   g.globalAlpha = 1;
@@ -368,6 +373,13 @@ function drawMedal(g, x, y, r) {
   g.fillStyle = '#e0a000'; g.beginPath();
   for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.24 : r * 0.55; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); }
   g.closePath(); g.fill();
+}
+// ちけいの しるし: みどりの 星に 数（うらを クリアした 地形の 数。何こ ふえても 大きさは おなじ）
+function drawTStar(g, x, y, r, n) {
+  g.save(); g.lineJoin = 'round'; g.lineWidth = Math.max(1.2, r * 0.16); g.strokeStyle = '#0b3d36'; g.fillStyle = '#26a69a';
+  g.beginPath(); for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.5 : r; g.lineTo(x + Math.cos(a) * rr, y + Math.sin(a) * rr); } g.closePath(); g.fill(); g.stroke();
+  g.fillStyle = '#fff'; g.font = '900 ' + Math.round(r * 0.95) + 'px sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(Math.min(n, 99)), x, y + r * 0.08);
+  g.restore();
 }
 // イベントの リボン（銀の ちょうむすび。メダルより 小さく じみ）: x, y が むすびめ。2 かい いじょう とったら むすびめに 数
 function drawRibbon(g, x, y, r, n) {
@@ -553,7 +565,7 @@ function startBattle(friend) {
   const ar = friend ? null : terrInfo();
   if (ar && RB.create(myRobot, CPUS()[stage], ar.arena).A.tall) { showDraw(); setHint('てんじょうに つかえて はいれない！ せを ひくく かきなおしてね（てんせんより したに）'); TR('arenatall', { stage }); return; }
   opp = friend ? { name: FRIEND.name, color: FRIEND.color, d: friendRobot } : { name: CPUS()[stage].name, color: CPUS()[stage].color, d: CPUS()[stage] };
-  S = RB.create(myRobot, opp.d, ar && ar.arena); S.stageInfo = ar; S.terrain = ar ? terrain : null; S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend; S.legendB = !!opp.d.legend; S.champA = myRobot.champ || 0; S.champB = opp.d.champ || 0;
+  S = RB.create(myRobot, opp.d, ar && ar.arena); S.stageInfo = ar; S.terrain = ar ? terrain : null; S.tstarA = friend ? 0 : tmarkCount(myRobot); S.stage = stage; S.side = friend ? 'friend' : side; S.crownA = !!myRobot.crown; S.crownB = !!opp.d.crown; S.legendA = !!myRobot.legend; S.legendB = !!opp.d.legend; S.champA = myRobot.champ || 0; S.champB = opp.d.champ || 0;
   S.d = designRef(myRobot);
   S.kzA = withKz(myRobot).kz || null; S.kzB = opp.d.kz || null;
   acc = 0; last = performance.now(); stop = 0; shake = 0; parts = []; pops = []; hurt = { A: 0, B: 0 }; endAt = 0; cam = null;
@@ -726,6 +738,8 @@ function drawRobotWorld(b, color, flash, crown) {
   const legend = (b === S.A && S.legendA) || (b === S.B && S.legendB), hat = kz ? kz[0] : 0;
   if (crown || legend || hat) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); const hh = hat ? KZ.drawHead(ctx, hat, 0, -1, cs.hs) : 0; if (crown) drawCrown(ctx, 0, -1 - hh, cs.s); if (legend) drawStar(ctx, 0, -1 - hh - (crown ? cs.s * 0.8 : 0) - cs.s * 0.45, cs.s * 0.45); ctx.restore(); }
   if (kz && kz[3] && (mode === 'battle' || mode === 'pause')) kzFx(kz[3], tf, w, ex, ey, legA, legB);
+  const tst = b === S.A ? S.tstarA : 0;
+  if (tst) { const cs = crownSpot(b.bodyPts), c = tf(cs.x, cs.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawTStar(ctx, b.facing * cs.s * 1.15, -1 - cs.s * 0.35, cs.s * 0.42, tst); ctx.restore(); }
   const champ = b === S.A ? S.champA : S.champB;
   if (champ) { const ms = medalSpot(b.bodyPts, b.facing, false), c = tf(ms.x, ms.y); ctx.save(); ctx.translate(c[0], c[1]); ctx.rotate(b.th); drawMedal(ctx, 0, 0, ms.r); ctx.restore(); }
   limb(ctx, legA, '#455a64', 1);
@@ -813,6 +827,7 @@ function showResult() {
           TR('terrainclear', { t: terrain, s: side, me: plainCode(myRobot) });
           if (side === 'omote' && ti.cpu.ura) { $('rsub').textContent += '\n…' + ti.name + ' の うら が あらわれた！'; goUra = true; }
           if (side === 'ura' && ti.cpu.minna) { $('rsub').textContent += '\n…' + ti.name + ' の みんな が あらわれた！'; goMinna = true; }
+          if (side === 'ura') onTerrainUraClear(ti);
         }
         if (side === 'omote' && ARENA_ON) { const i = TERRAINS.findIndex(t => t.key === terrain), nx = TERRAINS[i + 1]; if (nx && nx.cpu.omote) $('rsub').textContent += '\n🏔 つぎの ちけい「' + nx.name + '」が ひらいた！'; }
         if (side === 'minna' && !ti) { onMinnaClear(); $('rsub').textContent += '\nみんなの さいきょう ぐんだん を\nたおした！！！\nでんせつ の モンスター に なった！'; }
@@ -1567,13 +1582,26 @@ function onUraClear() {
   if (fresh) { list.push(tag); lsSet('crowned', JSON.stringify(list)); }
   myRobot.crown = true; lsSet('robot', RB.encodeDesign(myRobot)); S.crownA = true;
   if (fresh) { hallAdd('hall', { c: code, d: (new Date().getMonth() + 1) + '/' + new Date().getDate() }); }
-  endingPending = true;
+  endingTerrain = null; endingPending = true;
 }
 let endingPending = false;
+let endingTerrain = null;   // ちけいの うらで エンディング: その 地形（水平は null）
+// ちけいの うら クリア: しるし（形ごと）・地形の でんどういり・うらを クリアした 地形の 数で 限定かざり・エンディング（水平の 王冠と おなじ あつかい）
+function onTerrainUraClear(ti) {
+  const code = plainCode(myRobot), tg = codeTag(code), L = tmarkList(terrain), fresh = !L.includes(tg);
+  if (fresh) { L.push(tg); lsSet('tmark.' + terrain, JSON.stringify(L)); hallAdd('hall.' + terrain, { c: code, d: (new Date().getMonth() + 1) + '/' + new Date().getDate() }); }
+  myRobot.tstar = tmarkCount(myRobot); S.tstarA = myRobot.tstar;
+  $('rsub').textContent += '\n⭐ ' + ti.name + ' の しるし' + (fresh ? 'を もらった！' : '（もう もってる）') + '（この モンスター ' + myRobot.tstar + ' こ）';
+  const nT = ARENA.TERRAINS.filter(t => t.key !== 'flat' && lsGet(tpre(t.key) + 'ura.cleared') === '1').length, own = kzs.own();
+  for (const it of KZ.ITEMS) if (it && it.lim && nT >= it.lim && !own.includes(it.id)) { own.push(it.id); kzs.setOwn(own); $('rsub').textContent += '\n🎁 うらを ' + it.lim + ' つの ちけいで クリア！ げんてい かざり「' + it.name + '」を もらった！'; TR('kzlimit', { id: it.id }); }
+  TR('terrainmark', { t: terrain, n: myRobot.tstar, all: nT });
+  endingTerrain = ti; endingPending = true;
+}
 // でんどういり・でんせつの 記録に 1 つ 足す（形つきは 最新 HALL_KEEP こ まで、数は 〜.n）
 function hallAdd(k, h) {
   let a = []; try { a = JSON.parse(lsGet(k) || '[]'); } catch (e) {}
-  a.push(h); lsSet(k, JSON.stringify(a.slice(-HALL_KEEP))); lsSet(k + '.n', String(hallCount(k) + 1));
+  const n0 = hallCount(k);   // 足す 前に 数える（前は 足した あとに 数えて +1 して いて 1 こ 多かった）
+  a.push(h); lsSet(k, JSON.stringify(a.slice(-HALL_KEEP))); lsSet(k + '.n', String(n0 + 1));
 }
 function hallCount(k) { let a = []; try { a = JSON.parse(lsGet(k) || '[]'); } catch (e) {} return Math.max(+(lsGet(k + '.n') || 0), a.length); }
 function onMinnaClear() {
@@ -1686,6 +1714,7 @@ function renderLegend() {
 }
 function renderHall() {
   renderLegend();
+  renderTerrainHall();
   let hall = []; try { hall = JSON.parse(lsGet('hall') || '[]'); } catch (e) {}
   $('hallbox').hidden = !hall.length;
   const list = $('halllist'); list.innerHTML = '';
@@ -1695,6 +1724,19 @@ function renderHall() {
     el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + h.d + '</span>';
     list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color);
   }
+}
+// ちけいの でんどういり（地形ごと。うらを クリアした 形と 日にち）
+function renderTerrainHall() {
+  const box = $('thallbox'); if (!box) return; box.innerHTML = '';
+  for (const t of (window.ARENA ? ARENA.TERRAINS : [])) {
+    if (t.key === 'flat') continue;
+    let a = []; try { a = JSON.parse(lsGet('hall.' + t.key) || '[]'); } catch (e) {}
+    if (!a.length) continue;
+    const h = document.createElement('div'); h.className = 'hall-title'; h.textContent = '⭐ ' + t.name + ' でんどういり（' + hallCount('hall.' + t.key) + '）'; box.appendChild(h);
+    const list = document.createElement('div'); list.className = 'thall-list'; box.appendChild(list);
+    for (const x of a.slice(-12)) { const d = RB.decodeDesign(x.c); if (!d) continue; d.tstar = tmarkCount(d); const el = document.createElement('div'); el.className = 'hall'; el.innerHTML = '<canvas width="128" height="128"></canvas><span>' + x.d + '</span>'; list.appendChild(el); drawPreview(el.querySelector('canvas'), d, ME.color); }
+  }
+  box.hidden = !box.children.length;
 }
 function startEnding() { endingPending = false; mode = 'ending'; show('none'); $('quit').hidden = true; $('fast').hidden = true; endT0 = performance.now(); confetti = []; }
 let endingPreview = false;   // ?endingpreview の 見本（王冠・でんどういりの 記録は 付けない）
@@ -1716,11 +1758,12 @@ function lowY(d) {
 function renderEnding(now) {
   const t = (now - endT0) / 1000;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, '#2a1a4f'); sky.addColorStop(1, '#6b3a1f');
+  const et = endingTerrain;   // ちけいの ときは その 地形の 色と 相手
+  const sky = ctx.createLinearGradient(0, 0, 0, H); sky.addColorStop(0, et ? et.sky[0] : '#2a1a4f'); sky.addColorStop(1, et ? et.sky[1] : '#6b3a1f');
   ctx.fillStyle = sky; ctx.fillRect(0, 0, W, H);
   const gy = H * 0.66;
-  ctx.fillStyle = '#4b3f8f'; ctx.fillRect(0, gy, W, H - gy); ctx.fillStyle = '#ffd54f'; ctx.fillRect(0, gy, W, 4);
-  const list = RB.CPU.concat(RB.URA), sp = Math.max(160, W * 0.45), gap = 110, parade = (W + gap * list.length + 120) / sp;
+  ctx.fillStyle = et ? et.ground : '#4b3f8f'; ctx.fillRect(0, gy, W, H - gy); ctx.fillStyle = et ? et.edge : '#ffd54f'; ctx.fillRect(0, gy, W, 4);
+  const list = et ? et.cpu.omote.concat(et.cpu.ura) : RB.CPU.concat(RB.URA), sp = Math.max(160, W * 0.45), gap = 110, parade = (W + gap * list.length + 120) / sp;
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   if (t < parade) {
     ctx.font = '900 ' + Math.min(26, W * 0.06) + 'px sans-serif'; ctx.fillStyle = '#fff';
@@ -1741,7 +1784,7 @@ function renderEnding(now) {
     ctx.font = '900 ' + Math.min(44, W * 0.11) + 'px sans-serif'; ctx.lineWidth = 8; ctx.strokeStyle = '#1b1d3a';
     ctx.strokeText('おめでとう！', W / 2, H * 0.14); ctx.fillStyle = '#ffd54f'; ctx.fillText('おめでとう！', W / 2, H * 0.14);
     ctx.font = '800 ' + Math.min(18, W * 0.045) + 'px sans-serif'; ctx.fillStyle = '#fff';
-    ctx.fillText('うら 5 にんぬき たっせい！', W / 2, H * 0.22); ctx.fillText('おうかんを もらった！', W / 2, H * 0.27);
+    ctx.fillText((et ? et.name + ' の ' : '') + 'うら 5 にんぬき たっせい！', W / 2, H * 0.22); ctx.fillText(et ? '⭐ しるしを もらった！' : 'おうかんを もらった！', W / 2, H * 0.27);
   }
   if (t > 1.2) { ctx.globalAlpha = 0.5 + 0.5 * Math.sin(t * 4); ctx.font = '700 14px sans-serif'; ctx.fillStyle = '#fff'; ctx.fillText('タップで つぎへ', W / 2, H - 40); ctx.globalAlpha = 1; }
 }

@@ -193,6 +193,11 @@ button:disabled { opacity: .45; }
 #halllist { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
 #halllist .hall { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 700; color: #7a5c00; }
 #halllist canvas { width: 64px; height: 64px; border-radius: 8px; background: #1f2250; }
+.thall-list { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 4px; }
+.thall-list .hall { display: flex; flex-direction: column; align-items: center; font-size: 10px; font-weight: 700; color: #00695c; }
+.thall-list canvas { width: 64px; height: 64px; border-radius: 8px; background: #1f2250; }
+#thallbox { margin-top: 8px; }
+#thallbox[hidden] { display: none; }
 
 /* でんせつ（みんなの さいきょう ぐんだん を たおした） */
 #legendbox { margin-top: 12px; padding: 8px; border-radius: 12px; border: 2px solid #26a69a; background: #e0f2f1; }
