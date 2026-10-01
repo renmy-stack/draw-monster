@@ -275,6 +275,8 @@ button:disabled { opacity: .45; }
 .chip.done.c-ura { background: #ffebee; color: #b71c1c; }
 .chip.done.c-minna { background: #e0f2f1; color: #00695c; }
 #trank { font-size: 12px; font-weight: 800; color: #ef6c00; }
+#tmarks { font-size: 12px; font-weight: 800; color: #00897b; }   /* ちけいの しるしを もって いる 地形 */
+#tmarks[hidden] { display: none; }
 .tbtns { margin: 12px 0 8px; }
 .modes { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
 .mode { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 12px; border: 2px solid var(--ink); border-radius: 14px; background: #fff; box-shadow: 0 3px 0 var(--ink); text-align: left; font-size: 14px; position: relative; }

@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '160';
+const VERSION = '161';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -167,6 +167,8 @@ function showTitle() {
   if (myRobot) drawPreview($('tmon'), withRibbon(withKz(withCrown(myRobot))), ME.color);
   else { const g = $('tmon').getContext('2d'); g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, $('tmon').width, $('tmon').height); }
   $('tmycard').querySelector('.mc-h').textContent = myRobot ? 'じぶんの モンスター' : 'まだ モンスターが いないよ';
+  { const tg = myRobot && window.ARENA ? codeTag(plainCode(myRobot)) : null, names = tg ? ARENA.TERRAINS.filter(t => t.key !== 'flat' && tmarkList(t.key).includes(tg)).map(t => t.name) : [];
+    $('tmarks').hidden = !names.length; $('tmarks').textContent = '⭐ ' + names.join('・'); }   // この モンスターが しるしを もって いる 地形
   $('kzrow').hidden = !KZ_ON || !myRobot;
   if (KZ_ON) $('kzcoins').textContent = '🪙 ' + kzs.coins();
   const ob = +(lsGet('best') || 0), ub = +(lsGet('ura.best') || 0), mb = +(lsGet('minna.best') || 0);
