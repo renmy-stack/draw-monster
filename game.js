@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '174';
+const VERSION = '175';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -230,6 +230,44 @@ function showTitle() {
   setTimeout(fitTmon, 0);
 }
 // ぼうけんの 道: 出ている 段は タップで えらべる（えらんだ 段が「たたかう」の 相手）。まだの 段は ？？？
+// ---------- みんなの きろく（毎晩 まとめた ステージごとの 挑んだ・クリア。受付係の GET /stats）----------
+// ひと = 端末、モンスター = 形（同じ 形は 1 体）。まず オーナーの 端末だけ（全員に 出す ときは STATS_SHOW を true に）
+const STATS_SHOW = OWNER;
+let stats = null, statsMode = lsGet('statsmode') === 'm' ? 'm' : 'p';
+try { const v = JSON.parse(lsGet('stats') || 'null'); if (v && v.stages) stats = v; } catch (e) {}
+function loadStats() {
+  if (!STATS_SHOW || (stats && Date.now() - (+lsGet('stats.at') || 0) < 3 * 3600e3)) return;
+  fetch(RANK_API + '/stats').then(r => r.json()).then(v => { if (!v || !v.stages) return; stats = v; lsSet('stats', JSON.stringify(v)); lsSet('stats.at', String(Date.now())); if (mode === 'title') renderRoad(); }).catch(() => {});
+}
+const statOf = (t, s) => stats && stats.stages[t + '|' + s];
+const pctTxt = (a, b) => b ? (a / b * 100 < 10 ? (a / b * 100).toFixed(1) : Math.round(a / b * 100)) + '%' : '−';
+function statLine(t, s) {
+  const o = STATS_SHOW && statOf(t, s); if (!o) return '';
+  const v = o[statsMode]; return '<em class="rd-st">' + (statsMode === 'p' ? '👤 ' : '👾 ') + pctTxt(v[1], v[0]) + '</em>';
+}
+function showStats() {
+  if (!stats) return;
+  TR('stats', { m: statsMode });
+  const box = $('statsbox'), list = $('statslist'), tabs = $('statstabs');
+  const draw = () => {
+    tabs.innerHTML = '';
+    for (const [m, label] of [['p', '👤 ひと'], ['m', '👾 モンスター']]) { const b = document.createElement('button'); b.className = 'st-chip' + (statsMode === m ? ' sel' : ''); b.textContent = label; onTap(b, () => { statsMode = m; lsSet('statsmode', m); draw(); renderRoad(); }); tabs.appendChild(b); }
+    list.innerHTML = '';
+    const ters = [{ key: 'flat', name: '水平' }].concat((typeof TERRAINS !== 'undefined' ? TERRAINS : []).filter(t => t.key !== 'flat'));
+    for (const t of ters) {
+      const rows = ['omote', 'ura', 'minna'].map(s => [s, statOf(t.key, s)]).filter(x => x[1]); if (!rows.length) continue;
+      const sec = document.createElement('div'); sec.className = 'st-sec'; sec.innerHTML = '<div class="st-ter">' + t.name + '</div>'; list.appendChild(sec);
+      for (const [s, o] of rows) {
+        const v = o[statsMode], p = v[0] ? v[1] / v[0] : 0, row = document.createElement('div'); row.className = 'st-row st-' + s;
+        row.innerHTML = '<b>' + SIDE_LABEL[s] + '</b><span class="st-bar"><i style="width:' + Math.max(1.5, p * 100).toFixed(1) + '%"></i></span><span class="st-num"><strong>' + pctTxt(v[1], v[0]) + '</strong><small>' + v[1].toLocaleString() + ' / ' + v[0].toLocaleString() + (statsMode === 'p' ? ' にん' : ' たい') + '</small></span>';
+        sec.appendChild(row);
+      }
+    }
+    const f = d => d ? (+d.slice(5, 7)) + '/' + (+d.slice(8, 10)) : '';
+    $('statsnote').textContent = (statsMode === 'p' ? 'ひと＝ちょうせんした たんまつの かず（' + f(stats.from && stats.from.p) : 'モンスター＝ちょうせんした かたちの かず。おなじ かたちは 1 たい（' + f(stats.from && stats.from.m)) + '〜' + f(stats.to) + '）。クリア＝5 たいめに かった。まいにち よなかに こうしん';
+  };
+  draw(); box.hidden = false;
+}
 function renderRoad() {
   $('trecord').hidden = true; $('start').parentNode.style.display = 'none'; $('adv').hidden = false;
   $('tmchint').textContent = myRobot ? '✏ タップで なおす・えらぶ' : '✏ タップで つくる';
@@ -248,6 +286,13 @@ function renderRoad() {
       tr.appendChild(b);
     });
   }
+  let sm = document.getElementById('stmode');
+  if (STATS_SHOW && stats) {
+    if (!sm) { sm = document.createElement('div'); sm.id = 'stmode'; sm.className = 'stmode'; road.parentNode.insertBefore(sm, road); }
+    sm.innerHTML = '';
+    for (const [m, label] of [['p', '👤 ひと'], ['m', '👾 モンスター']]) { const b = document.createElement('button'); b.className = 'st-chip' + (statsMode === m ? ' sel' : ''); b.textContent = label; onTap(b, () => { statsMode = m; lsSet('statsmode', m); renderRoad(); }); sm.appendChild(b); }
+    const more = document.createElement('button'); more.className = 'st-more'; more.textContent = 'みんなの きろく ›'; onTap(more, () => showStats()); sm.appendChild(more);
+  } else if (sm) sm.remove();
   ['omote', 'ura', 'minna', 'kami'].filter(s => s === 'kami' ? KAMI_SHOW && !terrInfo() : s !== 'minna' || !terrInfo() || terrInfo().cpu.minna).forEach((s, i) => {   // かみは 水平だけ   // みんなが まだ ない 地形は 2 つだけ
     if (i) { const ln = document.createElement('i'); ln.className = 'rd-line' + (open[s] ? ' on' : ''); road.appendChild(ln); }
     const k = n => tpre(terrain) + (s === 'omote' ? '' : s + '.') + n;
@@ -255,7 +300,7 @@ function renderRoad() {
     const b = document.createElement('button');
     b.className = 'rd-node rd-' + s + (open[s] ? '' : ' locked') + (done ? ' done' : '') + (open[s] && side === s ? ' sel' : '');
     const st = +(lsGet(k('stage')) || 0);
-    b.innerHTML = open[s] ? '<b>' + SIDE_LABEL[s] + '</b><small>' + (done ? '✓ クリア' : (st + 1) + ' / 5') + '</small>' : '<b>？？？</b><small>&nbsp;</small>';
+    b.innerHTML = open[s] ? '<b>' + SIDE_LABEL[s] + '</b><small>' + (done ? '✓ クリア' : (st + 1) + ' / 5') + '</small>' + statLine(terrain, s) : '<b>？？？</b><small>&nbsp;</small>';
     b.disabled = !open[s];
     if (open[s]) onTap(b, () => { if (side === s) return; side = s; lsSet('side', s); loadSide(); TR('road', { s }); showTitle(); });
     road.appendChild(b);
@@ -2137,6 +2182,8 @@ for (const b of document.querySelectorAll('#navbar button')) onTap(b, () => {
 });
 resize();
 showTitle();
+loadStats();   // みんなの きろく（オーナーの 端末だけ）
+onTap($('statsclose'), () => { $('statsbox').hidden = true; });
 if (NK_ON && nkPreview) showNakama();   // さそう URL から 来た とき
 if (OWNER) {
   // 開発用（オーナーの 端末だけ）: ?draw で描く画面、?shot=秒&stage=n で その時点のバトル、&result で結果
