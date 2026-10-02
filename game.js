@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '182';
+const VERSION = '183';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -123,7 +123,7 @@ if (ARENA_OWNER && /[?&]arenaall(=|&|$)/.test(location.search)) lsSet('arenaall'
 const ARENA_ON = !!window.ARENA;
 if (ARENA_OWNER && /[?&]arenanew(=|&|$)/.test(location.search)) lsSet('arenanew', '1');
 // オーナーの OK 待ち（wait）と 相手が まだ 仮（kari）の 地形は 出さない。?arenanew の 端末だけ ためせる
-const TERRAINS = ARENA_ON ? ARENA.TERRAINS.filter(t => !(t.wait || t.cpu.kari) || (ARENA_OWNER && lsGet('arenanew') === '1')) : [];
+const TERRAINS = ARENA_ON ? ARENA.TERRAINS.filter(t => ARENA.released(t) || (ARENA_OWNER && lsGet('arenanew') === '1')) : [];
 let terrain = TERRAINS.some(t => t.key === lsGet('terrain')) ? lsGet('terrain') : 'flat';
 function terrInfo() { return terrain === 'flat' ? null : TERRAINS.find(t => t.key === terrain); }   // 水平（いまの ぼうけん）は null
 const tpre = k => (k === 'flat' ? '' : 't.' + k + '.');   // 記録の キーの 頭
