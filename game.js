@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '180';
+const VERSION = '181';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -236,8 +236,11 @@ const STATS_SHOW = true;   // 2026-10-02 全員に 公開（オーナー OK。�
 let stats = null, statsMode = lsGet('statsmode') === 'm' ? 'm' : 'p';
 try { const v = JSON.parse(lsGet('stats') || 'null'); if (v && v.stages) stats = v; } catch (e) {}
 function loadStats() {
-  if (!STATS_SHOW || (stats && Date.now() - (+lsGet('stats.at') || 0) < 30 * 60e3)) return;   // 受付係は 1 時間ごとに 新しく なる
-  fetch(RANK_API + '/stats').then(r => r.json()).then(v => { if (!v || !v.stages) return; stats = v; lsSet('stats', JSON.stringify(v)); lsSet('stats.at', String(Date.now())); if (mode === 'title') renderRoad(); const sb = $('statsbox'); if (sb && !sb.hidden) showStats(true); }).catch(() => {});
+  // 受付係は 1 時間ごとに 新しく なる。読んで 30 分 たつか、中身が 75 分 より 古ければ 読みなおす（2 分に 1 回まで）。Safari の 保存（キャッシュ）を 使わない
+  const now = Date.now(), at = +lsGet('stats.at') || 0;
+  if (!STATS_SHOW || (stats && (now - at < 2 * 60e3 || (now - at < 30 * 60e3 && now - (+stats.updated || 0) < 75 * 60e3)))) return;
+  lsSet('stats.at', String(now));
+  fetch(RANK_API + '/stats?t=' + Math.floor(now / 60e3), { cache: 'no-store' }).then(r => r.json()).then(v => { if (!v || !v.stages) return; stats = v; lsSet('stats', JSON.stringify(v)); lsSet('stats.at', String(Date.now())); if (mode === 'title') renderRoad(); const sb = $('statsbox'); if (sb && !sb.hidden) showStats(true); }).catch(() => {});
 }
 const statOf = (t, s) => stats && stats.stages[t + '|' + s];
 const pctTxt = (a, b) => b ? (a / b * 100 < 10 ? (a / b * 100).toFixed(1) : Math.round(a / b * 100)) + '%' : '−';
@@ -254,7 +257,7 @@ function statOpen(tk, s) {
 function showStats(again) {
   if (!again) loadStats();   // 開きっぱなしの タブ（Safari など）でも 30 分 すぎて いたら 読みなおす → 届いたら 開いた まま かきなおす
   if (!stats) return;
-  if (!again) TR('stats', { m: statsMode });
+  if (!again) TR('stats', { m: statsMode, u: stats.updated || 0 });   // u = 手元の 数字の 時刻（古い まま 変わらない ときの 調べ用）
   const box = $('statsbox'), list = $('statslist'), tabs = $('statstabs');
   const draw = () => {
     tabs.innerHTML = '';
@@ -2128,9 +2131,10 @@ async function checkVersion() {
     const r = await fetch('version.txt?ts=' + Date.now(), { cache: 'no-store' });
     const v = (await r.text()).trim();
     if (v && v !== VERSION && mode !== 'battle') {
+      // 同じ 版への 読みなおしは 1 分に 1 回まで（くり返さない ため）。前は 1 回 きりで、Safari が 古い ページを 出しなおすと 古い まま だった
       let tried = ''; try { tried = sessionStorage.getItem(KEY + 'reloadFor') || ''; } catch (e) {}
-      if (tried === v) return;
-      try { sessionStorage.setItem(KEY + 'reloadFor', v); } catch (e) {}
+      const [tv, tt] = tried.split('|'); if (tv === v && Date.now() - (+tt || 0) < 60e3) return;
+      try { sessionStorage.setItem(KEY + 'reloadFor', v + '|' + Date.now()); } catch (e) {}
       location.reload();
     }
   } catch (e) {}
