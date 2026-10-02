@@ -562,3 +562,4 @@ body.browser #statsbox { padding-bottom: calc(16px + env(safe-area-inset-bottom)
 .st-num { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .st-num strong { font-size: 15px; } .st-num small { font-size: 10.5px; color: #777; }
 .st-note { font-size: 11px; color: #777; margin-top: 10px; line-height: 1.5; }
+.st-lock b, .st-lock .st-num strong { color: #aaa; }

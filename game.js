@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '178';
+const VERSION = '179';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -231,8 +231,8 @@ function showTitle() {
 }
 // ぼうけんの 道: 出ている 段は タップで えらべる（えらんだ 段が「たたかう」の 相手）。まだの 段は ？？？
 // ---------- みんなの きろく（1 時間ごとに まとめた ステージごとの 挑んだ・クリア。受付係の GET /stats）----------
-// ひと = 端末、モンスター = 形（同じ 形は 1 体）。まず オーナーの 端末だけ（全員に 出す ときは STATS_SHOW を true に）
-const STATS_SHOW = OWNER;
+// ひと = 端末、モンスター = 形（同じ 形は 1 体）。開いて いない ステージは「？？？」
+const STATS_SHOW = true;   // 2026-10-02 全員に 公開（オーナー OK。前は オーナーの 端末だけ）
 let stats = null, statsMode = lsGet('statsmode') === 'm' ? 'm' : 'p';
 try { const v = JSON.parse(lsGet('stats') || 'null'); if (v && v.stages) stats = v; } catch (e) {}
 function loadStats() {
@@ -245,6 +245,12 @@ function statLine(t, s) {
   const o = STATS_SHOW && statOf(t, s); if (!o) return '';
   const v = o[statsMode]; return '<em class="rd-st">' + (statsMode === 'p' ? '👤 ' : '👾 ') + pctTxt(v[1], v[0]) + '</em>';
 }
+// その 端末で 開いて いる ステージか（道の ボタンと 同じ。開いて いない ものは「？？？」に して 数字も 出さない）
+function statOpen(tk, s) {
+  if (tk === 'flat') return s === 'omote' ? true : s === 'ura' ? uraOpen : s === 'minna' ? MINNA_OPEN : KAMI_OPEN;
+  const i = TERRAINS.findIndex(t => t.key === tk); if (i < 0 || !terrainOpen(i)) return false;
+  return s === 'omote' || lsGet(tpre(tk) + (s === 'ura' ? '' : 'ura.') + 'cleared') === '1';
+}
 function showStats() {
   if (!stats) return;
   TR('stats', { m: statsMode });
@@ -256,9 +262,11 @@ function showStats() {
     const ters = [{ key: 'flat', name: '水平' }].concat((typeof TERRAINS !== 'undefined' ? TERRAINS : []).filter(t => t.key !== 'flat'));
     for (const t of ters) {
       const rows = ['omote', 'ura', 'minna', 'kami'].map(s => [s, statOf(t.key, s)]).filter(x => x[1]); if (!rows.length) continue;
-      const sec = document.createElement('div'); sec.className = 'st-sec'; sec.innerHTML = '<div class="st-ter">' + t.name + '</div>'; list.appendChild(sec);
+      const ti = TERRAINS.findIndex(x => x.key === t.key), terOpen = t.key === 'flat' || (ti >= 0 && terrainOpen(ti));
+      const sec = document.createElement('div'); sec.className = 'st-sec'; sec.innerHTML = '<div class="st-ter">' + (terOpen ? t.name : '？？？') + '</div>'; list.appendChild(sec);
       for (const [s, o] of rows) {
         const v = o[statsMode], p = v[0] ? v[1] / v[0] : 0, row = document.createElement('div'); row.className = 'st-row st-' + s;
+        if (!statOpen(t.key, s)) { row.classList.add('st-lock'); row.innerHTML = '<b>？？？</b><span class="st-bar"></span><span class="st-num"><strong>？？？</strong><small>&nbsp;</small></span>'; sec.appendChild(row); continue; }
         row.innerHTML = '<b>' + SIDE_LABEL[s] + '</b><span class="st-bar"><i style="width:' + Math.max(1.5, p * 100).toFixed(1) + '%"></i></span><span class="st-num"><strong>' + pctTxt(v[1], v[0]) + '</strong><small>' + v[1].toLocaleString() + ' / ' + v[0].toLocaleString() + (statsMode === 'p' ? ' にん' : ' たい') + '</small></span>';
         sec.appendChild(row);
       }
@@ -2182,7 +2190,7 @@ for (const b of document.querySelectorAll('#navbar button')) onTap(b, () => {
 });
 resize();
 showTitle();
-loadStats();   // みんなの きろく（オーナーの 端末だけ）
+loadStats();   // みんなの きろく
 onTap($('statsclose'), () => { $('statsbox').hidden = true; });
 if (NK_ON && nkPreview) showNakama();   // さそう URL から 来た とき
 if (OWNER) {
