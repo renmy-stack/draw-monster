@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '179';
+const VERSION = '180';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -237,7 +237,7 @@ let stats = null, statsMode = lsGet('statsmode') === 'm' ? 'm' : 'p';
 try { const v = JSON.parse(lsGet('stats') || 'null'); if (v && v.stages) stats = v; } catch (e) {}
 function loadStats() {
   if (!STATS_SHOW || (stats && Date.now() - (+lsGet('stats.at') || 0) < 30 * 60e3)) return;   // 受付係は 1 時間ごとに 新しく なる
-  fetch(RANK_API + '/stats').then(r => r.json()).then(v => { if (!v || !v.stages) return; stats = v; lsSet('stats', JSON.stringify(v)); lsSet('stats.at', String(Date.now())); if (mode === 'title') renderRoad(); }).catch(() => {});
+  fetch(RANK_API + '/stats').then(r => r.json()).then(v => { if (!v || !v.stages) return; stats = v; lsSet('stats', JSON.stringify(v)); lsSet('stats.at', String(Date.now())); if (mode === 'title') renderRoad(); const sb = $('statsbox'); if (sb && !sb.hidden) showStats(true); }).catch(() => {});
 }
 const statOf = (t, s) => stats && stats.stages[t + '|' + s];
 const pctTxt = (a, b) => b ? (a / b * 100 < 10 ? (a / b * 100).toFixed(1) : Math.round(a / b * 100)) + '%' : '−';
@@ -251,9 +251,10 @@ function statOpen(tk, s) {
   const i = TERRAINS.findIndex(t => t.key === tk); if (i < 0 || !terrainOpen(i)) return false;
   return s === 'omote' || lsGet(tpre(tk) + (s === 'ura' ? '' : 'ura.') + 'cleared') === '1';
 }
-function showStats() {
+function showStats(again) {
+  if (!again) loadStats();   // 開きっぱなしの タブ（Safari など）でも 30 分 すぎて いたら 読みなおす → 届いたら 開いた まま かきなおす
   if (!stats) return;
-  TR('stats', { m: statsMode });
+  if (!again) TR('stats', { m: statsMode });
   const box = $('statsbox'), list = $('statslist'), tabs = $('statstabs');
   const draw = () => {
     tabs.innerHTML = '';
@@ -2134,8 +2135,8 @@ async function checkVersion() {
     }
   } catch (e) {}
 }
-document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkVersion(); });
-window.addEventListener('pageshow', e => { if (e.persisted) checkVersion(); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { checkVersion(); loadStats(); } });
+window.addEventListener('pageshow', e => { if (e.persisted) { checkVersion(); loadStats(); } });
 checkVersion();
 
 // ---------- 下の タブ（2026-09-30〜、v122 で 全員に）----------
