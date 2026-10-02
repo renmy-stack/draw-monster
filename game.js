@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '175';
+const VERSION = '176';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -230,13 +230,13 @@ function showTitle() {
   setTimeout(fitTmon, 0);
 }
 // ぼうけんの 道: 出ている 段は タップで えらべる（えらんだ 段が「たたかう」の 相手）。まだの 段は ？？？
-// ---------- みんなの きろく（毎晩 まとめた ステージごとの 挑んだ・クリア。受付係の GET /stats）----------
+// ---------- みんなの きろく（1 時間ごとに まとめた ステージごとの 挑んだ・クリア。受付係の GET /stats）----------
 // ひと = 端末、モンスター = 形（同じ 形は 1 体）。まず オーナーの 端末だけ（全員に 出す ときは STATS_SHOW を true に）
 const STATS_SHOW = OWNER;
 let stats = null, statsMode = lsGet('statsmode') === 'm' ? 'm' : 'p';
 try { const v = JSON.parse(lsGet('stats') || 'null'); if (v && v.stages) stats = v; } catch (e) {}
 function loadStats() {
-  if (!STATS_SHOW || (stats && Date.now() - (+lsGet('stats.at') || 0) < 3 * 3600e3)) return;
+  if (!STATS_SHOW || (stats && Date.now() - (+lsGet('stats.at') || 0) < 30 * 60e3)) return;   // 受付係は 1 時間ごとに 新しく なる
   fetch(RANK_API + '/stats').then(r => r.json()).then(v => { if (!v || !v.stages) return; stats = v; lsSet('stats', JSON.stringify(v)); lsSet('stats.at', String(Date.now())); if (mode === 'title') renderRoad(); }).catch(() => {});
 }
 const statOf = (t, s) => stats && stats.stages[t + '|' + s];
@@ -264,7 +264,7 @@ function showStats() {
       }
     }
     const f = d => d ? (+d.slice(5, 7)) + '/' + (+d.slice(8, 10)) : '';
-    $('statsnote').textContent = (statsMode === 'p' ? 'ひと＝ちょうせんした たんまつの かず（' + f(stats.from && stats.from.p) : 'モンスター＝ちょうせんした かたちの かず。おなじ かたちは 1 たい（' + f(stats.from && stats.from.m)) + '〜' + f(stats.to) + '）。クリア＝5 たいめに かった。まいにち よなかに こうしん';
+    $('statsnote').textContent = (statsMode === 'p' ? 'ひと＝ちょうせんした たんまつの かず（' + f(stats.from && stats.from.p) : 'モンスター＝ちょうせんした かたちの かず。おなじ かたちは 1 たい（' + f(stats.from && stats.from.m)) + '〜' + f(stats.to) + '）。クリア＝5 たいめに かった。1 じかん ごとに こうしん';
   };
   draw(); box.hidden = false;
 }
