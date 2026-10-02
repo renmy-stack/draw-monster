@@ -1,6 +1,6 @@
 // node k_evo.js 種 — かみ の 候補（右がわ）を 進化で 育てる。形は こちらで 作る（evolve.js の 遺伝子）。
 // 相手（左）: みんなを クリアした 実際の 形から 60（種ごとに ちがう 60）。いちばん たくさん 止める 形が 強い
-const fs = require('fs'), { run } = require('../_terrain/tp_par.js'), { G, plain } = require('../_terrain/tp_gen.js');
+const fs = require('fs'), { run } = require('../_terrain/dist_par.js'), { G, plain } = require('../_terrain/tp_gen.js');
 const sd = +process.argv[2] || 1, P = 40, GEN = 30, NC = 60;
 let seed = 1000 + sd * 7919; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
 const S = require('./real_strong.json').strong, mc = S.filter(o => o.t.includes('minnaclear') || o.rm >= 5).map(o => o.c);

@@ -1,6 +1,6 @@
 // node k_champ.js [世代] [種] [つづきの ファイル] [ランキングの 重さ] — 最強の 1 たい（万能）を 作る。強さ = 強い 形の 見本 200 を 何 % 止めるか
 // 軽く: 毎世代 全員を 60 で ためし、上位 10 だけ のこり 140 とも（見本は 作る用の 形だけ、たしかめ用は 最後に 測る）
-const fs = require('fs'), { run } = require('../_terrain/tp_par.js'), G2 = require('./k_gen2.js');
+const fs = require('fs'), { run } = require('../_terrain/dist_par.js'), G2 = require('./k_gen2.js');
 const GEN = +process.argv[2] || 40, sd = +process.argv[3] || 1, P = 40, TOPN = 10, INIT = process.argv[4] || '', RW = +process.argv[5] || 1;
 const B = JSON.parse(fs.readFileSync('base_opt.json', 'utf8'));
 let seed = 31 + sd * 1000; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
@@ -9,7 +9,8 @@ const pick = (a, n) => { const s = a.slice(); for (let i = s.length - 1; i > 0; 
 const ref = real.filter(u => u.rank).map(u => u.c).concat(pick(train, 170).map(u => u.c));
 const quick = ref.slice(0, 15).concat(ref.slice(30, 75));   // ランキング 15 ＋ ほか 45
 const rest = ref.filter(c => !quick.includes(c));
-const stop = v => v !== 'A';
+// KO=1: KO で 倒した ときだけ 止めたと 数える（時間切れ 勝ちは 数えない。v168 の ムゲンが 時間切れ 勝ち 93% で イライラ する ため）
+const KO = process.env.KO === '1', stop = KO ? v => v === 'Bk' : v => v !== 'A';
 const rankC = new Set(real.filter(u => u.rank).map(u => u.c));
 const pts = (v, list) => v.reduce((s, x, j) => s + (stop(x) ? (rankC.has(list[j]) ? RW : 1) : 0), 0);   // ランキング 上位は RW 倍
 // 上位の 形の 特徴に よせた 出発点（作り方 2 の 数字だけ。プレイヤーの 形は 入れない）
@@ -20,7 +21,7 @@ function metaP() {
   p.legLen = 90 + 40 * rnd(); p.legA0 = 3.1 * (rnd() - 0.5) * 2; p.lt = p.lt.map(() => 0.45 + 0.25 * rnd());   // 腰で まるめた 足
   return p;
 }
-let fights = 0; const go = ps => { fights += ps.length; return run(ps); };
+let fights = 0; const go = ps => { fights += ps.length; return run(KO ? ps.map(p => p.concat('r')) : ps); };
 (async () => {
   G2.setSeed(99 + sd); const t0 = Date.now();
   let pop = INIT ? JSON.parse(fs.readFileSync(INIT, 'utf8')).top.map(x => ({ p: x.p, c: x.c })) : B.squad.map(s => ({ p: s.p, c: s.c }));
@@ -49,5 +50,5 @@ let fights = 0; const go = ps => { fights += ps.length; return run(ps); };
   const tt = test.map(u => u.c), r3 = await go(tt.map(c => [c, best.c, 'flat'])), rk = [...rankC], r4 = await go(rk.map(c => [c, best.c, 'flat']));
   console.log('さいきょうの 1 たい: 点', best.n, '・たしかめ用', (r3.filter(stop).length / tt.length * 100).toFixed(1) + '%（' + tt.length + '）', '・ランキング 上位', r4.filter(stop).length + '/30');
   const top5 = [...full.values()].sort((a, b) => b.n - a.n).slice(0, 20);
-  fs.writeFileSync('champ_' + sd + '.json', JSON.stringify({ best, top: top5, ref }));
+  fs.writeFileSync('champ_' + (KO ? 'ko_' : '') + sd + '.json', JSON.stringify({ best, top: top5, ref }));
 })();

@@ -1,6 +1,6 @@
 // node k_squad.js — かみの 5 たいを 1 たいずつ きめる（軽い 計算: 前の 体で 止まらなかった 形とだけ 戦わせる）
 // ものさし C = いまの ランキング 上位 30（ぜったい 止める）＋ みんなを クリアした 実際の 形。かみの 5 たいは こちらで 作った 形だけ
-const fs = require('fs'), { run } = require('../_terrain/tp_par.js'), { G, plain } = require('../_terrain/tp_gen.js'), RB = require('../sim.js');
+const fs = require('fs'), { run } = require('../_terrain/dist_par.js'), { G, plain } = require('../_terrain/tp_gen.js'), RB = require('../sim.js');
 const R = require('./rank_top.json'), S0 = require('./real_strong.json').strong;
 const rank = R.top.map(t => t.c), rankSet = new Set(rank);
 const clear = S0.filter(o => o.t.includes('minnaclear') || o.rm >= 5).map(o => o.c).filter(c => !rankSet.has(c));

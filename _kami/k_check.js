@@ -1,5 +1,5 @@
 // ものさしの 確認: みんなクリアの 形が 今の sim で 本当に みんな 5 たいを ぬけるか
-const { run } = require('../_terrain/tp_par.js'), RB = require('../sim.js');
+const { run } = require('../_terrain/dist_par.js'), RB = require('../sim.js');
 const S = require('./real_strong.json').strong;
 const mc = S.filter(o => o.t.includes('minnaclear') || o.rm >= 5);
 const devs = new Set(); 

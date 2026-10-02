@@ -1,5 +1,5 @@
 // かみの たしかめ（ものさしに 使って いない 形）: ランクせんに 登録された 形 全部・うらクリアの 形・みんな の 5 たい（負けたら 打ち切り）
-const { run } = require('../_terrain/tp_par.js'), RB = require('../sim.js');
+const { run } = require('../_terrain/dist_par.js'), RB = require('../sim.js');
 const J = require('./real_strong.json'), R = require('./rank_top.json');
 const used = new Set(R.top.map(t => t.c).concat(J.strong.filter(o => o.t.includes('minnaclear') || o.rm >= 5).map(o => o.c)));
 const enc = d => RB.encodeDesign({ body: d.body, arm: d.arm, leg: d.leg }), K = RB.KAMI.map(enc);

@@ -1,9 +1,9 @@
 // node k_atk.js [種] [世代] — A3: 攻める がわを 進化させて かみを ぬける 形を さがす（プレイヤーが さがしそうな 形の 先回り）
 // はじめは「かみの 5 たいの うち たくさん 勝てる 実際の 形」を 少しずつ 変えた もの＋作り方 2 の 形。強さ = 5 たいの うち 何体に 勝つか
 // 見つけた ぬける 形は found.json に 足す（あとで ものさし U に 入れる）
-const fs = require('fs'), { run } = require('../_terrain/tp_par.js'), RB = require('../sim.js'), G2 = require('./k_gen2.js');
+const fs = require('fs'), { run } = require('../_terrain/dist_par.js'), RB = require('../sim.js'), G2 = require('./k_gen2.js');
 const sd = +process.argv[2] || 1, GEN = +process.argv[3] || 30, P = 40;
-const st = JSON.parse(fs.readFileSync('base.json', 'utf8')), U = st.U, squad = st.squad.map(s => s.c);
+const st = JSON.parse(fs.readFileSync(process.env.BASE || 'base.json', 'utf8')), U = st.U, squad = st.squad.map(s => s.c);
 let seed = 900 + sd * 37; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
 const gauss = () => Math.sqrt(-2 * Math.log(rnd() + 1e-9)) * Math.cos(2 * Math.PI * rnd());
 const plain = d => RB.encodeDesign({ body: d.body, arm: d.arm, leg: d.leg });
@@ -37,8 +37,8 @@ function jitter(c, s) {
     while (next.length < P) { const c = jitter(near[Math.floor(rnd() * near.length)] || pop[0].c, 1); if (c) next.push({ c }); }
     pop = next;
   }
-  let all = []; try { all = JSON.parse(fs.readFileSync('found.json', 'utf8')); } catch (e) {}
+  let all = []; try { all = JSON.parse(fs.readFileSync(process.env.FOUND || 'found.json', 'utf8')); } catch (e) {}
   all = [...new Set(all.concat([...found.keys()]))];
-  fs.writeFileSync('found.json', JSON.stringify(all));
+  fs.writeFileSync(process.env.FOUND || 'found.json', JSON.stringify(all));
   console.log('種', sd, 'おわり: 新しく 見つけた', found.size, '・ぜんぶで', all.length);
 })();

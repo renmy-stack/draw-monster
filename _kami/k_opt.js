@@ -1,6 +1,6 @@
 // node k_opt.js [回数] — かみの 5 たいを よく する（A2: ぬける 形の 型ごとに 天敵 → A1: 入れかえて 全体が よく なる ときだけ）
 // 状態は base.json（U: 形・ランキングか・たしかめ用か・m=5 たいの どれが 止めるか、squad）。たしかめ用は 作るのに 使わない
-const fs = require('fs'), { run } = require('../_terrain/tp_par.js'), G2 = require('./k_gen2.js'), RB = require('../sim.js');
+const fs = require('fs'), { run } = require('../_terrain/dist_par.js'), G2 = require('./k_gen2.js'), RB = require('../sim.js');
 const ROUNDS = +process.argv[2] || 5, K = 4, P = 16, GEN = 10;
 const st = JSON.parse(fs.readFileSync('base.json', 'utf8')), U = st.U, squad = st.squad;
 let seed = 2027; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };

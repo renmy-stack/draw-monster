@@ -1,4 +1,4 @@
-// 並列: pairs = [[左の形, 右の形, 地形キー]] → 勝者の 配列
+// 並列: pairs = [[左の形, 右の形, 地形キー（, 'r'）]] → 勝者の 配列（4 つめに 'r' が ある 試合は 勝者＋決着: 'Bk'＝B の KO 勝ち・'Bt'＝時間切れ 勝ち）
 const { Worker, isMainThread, parentPort, workerData } = require('worker_threads');
 const SIM = 'C:/Users/umiya/OneDrive/Desktop/Share/claude/03_game-cc-company/draw-monster/sim.js';
 const TER = {
@@ -21,7 +21,7 @@ const TER = {
 };
 if (!isMainThread) {
   const RB = require(SIM); const cache = new Map(); const dec = c => { if (!cache.has(c)) cache.set(c, RB.decodeDesign(c)); return cache.get(c); };
-  parentPort.postMessage(workerData.map(([a, b, t]) => { const A = dec(a), B = dec(b); if (TER[t] && TER[t].ceil && (RB.create(A, B, TER[t]).A.tall)) return 'T'; return RB.fight(A, B, TER[t]).winner || 'D'; }));
+  parentPort.postMessage(workerData.map(([a, b, t, how]) => { const A = dec(a), B = dec(b); if (TER[t] && TER[t].ceil && (RB.create(A, B, TER[t]).A.tall)) return 'T'; const S = RB.fight(A, B, TER[t]); return (S.winner || 'D') + (how === 'r' ? (S.reason === 'time' ? 't' : 'k') : ''); }));
 } else {
   module.exports = { TER, run: async (pairs, W = 15) => {
     const parts = Array.from({ length: W }, () => []), idx = Array.from({ length: W }, () => []);

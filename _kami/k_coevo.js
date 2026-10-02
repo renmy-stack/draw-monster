@@ -1,6 +1,6 @@
 // node k_coevo.js [回数] — いたちごっこ: 攻め（A3、ぬける 形を さがす）→ 守り（A1、1 たいを 作りなおす）を くりかえす
 // 守りの 強さ = その 体が 止める（ぬけて いる 形）− 止めなく なる（その 体だけが 止めて いた 形）。ランキング 上位は 重さ 100
-const fs = require('fs'), { execFileSync } = require('child_process'), { run } = require('../_terrain/tp_par.js'), G2 = require('./k_gen2.js');
+const fs = require('fs'), { execFileSync } = require('child_process'), { run } = require('../_terrain/dist_par.js'), G2 = require('./k_gen2.js');
 const N = +process.argv[2] || 6, P = 16, GEN = 10, CAP = 40;
 let seed = 515; const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
 const stop = v => v !== 'A', W = u => u.rank ? 100 : 1;

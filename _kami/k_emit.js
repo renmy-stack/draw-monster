@@ -1,6 +1,6 @@
 // node k_emit.js squad3.json — かみの 5 たいを sim.js に 書く（よわい 順 → つよい 順）。
 // 強さ = ものさし（ランキング 上位＋みんなクリア）を 1 たいで 何 % 止めるか
-const fs = require('fs'), path = require('path'), { run } = require('../_terrain/tp_par.js'), RB = require('../sim.js');
+const fs = require('fs'), path = require('path'), { run } = require('../_terrain/dist_par.js'), RB = require('../sim.js');
 const IN = process.argv[2] || 'squad3.json', sq = JSON.parse(fs.readFileSync(IN, 'utf8')).squad;
 const R = require('./rank_top.json'), S0 = require('./real_strong.json').strong;
 const C = [...new Set(R.top.map(t => t.c).concat(S0.filter(o => o.t.includes('minnaclear') || o.rm >= 5).map(o => o.c)))];

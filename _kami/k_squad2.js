@@ -1,7 +1,7 @@
 // node k_squad2.js — かみの 5 たいを 1 たいずつ 進化で 作る（作り方 2）。
 // 相手は「前の 体で 止まらなかった 形」だけ（軽い）: ランキング 上位 30（ぜったい）＋ みんなクリアから 60（ためし）
 // 最後に みんなクリア 全部で たしかめる（負けた ところで 打ち切り）
-const fs = require('fs'), { run } = require('../_terrain/tp_par.js'), G2 = require('./k_gen2.js');
+const fs = require('fs'), { run } = require('../_terrain/dist_par.js'), G2 = require('./k_gen2.js');
 const R = require('./rank_top.json'), S0 = require('./real_strong.json').strong;
 const rank = R.top.map(t => t.c), rankSet = new Set(rank);
 const clear = [...new Set(S0.filter(o => o.t.includes('minnaclear') || o.rm >= 5).map(o => o.c))].filter(c => !rankSet.has(c));

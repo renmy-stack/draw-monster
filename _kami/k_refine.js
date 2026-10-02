@@ -1,6 +1,6 @@
 // node k_refine.js [入力] [出力] — かみの 5 たいを 1 たいずつ 作りなおす（ぬける 数が ふえない やり方）
 // k たいめの 相手は「ほかの 4 たいを ぜんぶ ぬける 形」だけ（ランキング 上位は 重さ 100 で ぜったい 止める）
-const fs = require('fs'), { run } = require('../_terrain/tp_par.js'), G2 = require('./k_gen2.js');
+const fs = require('fs'), { run } = require('../_terrain/dist_par.js'), G2 = require('./k_gen2.js');
 const IN = process.argv[2] || 'squad2.json', OUT = process.argv[3] || 'squad3.json';
 const R = require('./rank_top.json'), S0 = require('./real_strong.json').strong;
 const rank = R.top.map(t => t.c), rankSet = new Set(rank);
