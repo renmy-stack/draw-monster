@@ -558,7 +558,7 @@ body.browser #statsbox { padding-bottom: calc(16px + env(safe-area-inset-bottom)
 .st-row b { font-size: 14px; }
 .st-bar { height: 10px; border-radius: 5px; background: #eee; overflow: hidden; }
 .st-bar i { display: block; height: 100%; border-radius: 5px; background: #7e57c2; }
-.st-ura .st-bar i { background: #e53935; } .st-minna .st-bar i { background: #26a69a; }
+.st-ura .st-bar i { background: #e53935; } .st-minna .st-bar i { background: #26a69a; } .st-kami .st-bar i { background: #e0a800; }
 .st-num { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.15; font-variant-numeric: tabular-nums; }
 .st-num strong { font-size: 15px; } .st-num small { font-size: 10.5px; color: #777; }
 .st-note { font-size: 11px; color: #777; margin-top: 10px; line-height: 1.5; }

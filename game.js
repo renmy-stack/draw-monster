@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '177';
+const VERSION = '178';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -107,7 +107,7 @@ let MINNA_OPEN = devFlag('minnatest') || lsGet('ura.cleared') === '1';   // う�
 // かみ（4 つめの 勝ち抜き、2026-10-01〜）: 作者が 作った 意味わからん くらい つよい 5 たい（水平だけ）。みんなを クリアしたら 出る。
 // まだ ?kamitest を 開いた 端末（オーナー）だけ（いつでも あそべる）。全員に 出す ときは KAMI_ON を true に
 if (OWNER && /[?&]kamitest(=|&|$)/.test(location.search)) lsSet('kamitest', '1');
-const KAMI_TEST = devFlag('kamitest'), KAMI_ON = false;
+const KAMI_TEST = devFlag('kamitest'), KAMI_ON = true;   // 2026-10-02 全員に 公開（オーナー OK。前は ?kamitest の 端末だけ）
 const KAMI_SHOW = !!RB.KAMI && (KAMI_ON || KAMI_TEST);   // 道に「かみ」の 段が ある（？？？ も ふくむ）
 let KAMI_OPEN = KAMI_SHOW && (KAMI_TEST || lsGet('minna.cleared') === '1');
 // ちけい ぼうけん（2026-10-01〜）: 地形（arena.js）× おもて・うら。2026-10-01 全員に 公開（水平・がけ・せまい、オーナー OK）
@@ -255,7 +255,7 @@ function showStats() {
     list.innerHTML = '';
     const ters = [{ key: 'flat', name: '水平' }].concat((typeof TERRAINS !== 'undefined' ? TERRAINS : []).filter(t => t.key !== 'flat'));
     for (const t of ters) {
-      const rows = ['omote', 'ura', 'minna'].map(s => [s, statOf(t.key, s)]).filter(x => x[1]); if (!rows.length) continue;
+      const rows = ['omote', 'ura', 'minna', 'kami'].map(s => [s, statOf(t.key, s)]).filter(x => x[1]); if (!rows.length) continue;
       const sec = document.createElement('div'); sec.className = 'st-sec'; sec.innerHTML = '<div class="st-ter">' + t.name + '</div>'; list.appendChild(sec);
       for (const [s, o] of rows) {
         const v = o[statsMode], p = v[0] ? v[1] / v[0] : 0, row = document.createElement('div'); row.className = 'st-row st-' + s;
