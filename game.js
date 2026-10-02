@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '184';
+const VERSION = '185';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -281,9 +281,11 @@ function showStats(again) {
     for (const [m, label] of [['p', '👤 ひと'], ['m', '👾 モンスター']]) { const b = document.createElement('button'); b.className = 'st-chip' + (statsMode === m ? ' sel' : ''); b.textContent = label; onTap(b, () => { statsMode = m; lsSet('statsmode', m); draw(); renderRoad(); }); tabs.appendChild(b); }
     list.innerHTML = '';
     const ters = [{ key: 'flat', name: '水平' }].concat((typeof TERRAINS !== 'undefined' ? TERRAINS : []).filter(t => t.key !== 'flat'));
+    let locked = 0;   // まだ ひらいて いない 地形は 1 つずつ 出さずに 最後に まとめる（9 つに なると ？？？ だらけで 長い、2026-10-02）
     for (const t of ters) {
-      const rows = ['omote', 'ura', 'minna', 'kami'].map(s => [s, statOf(t.key, s)]).filter(x => x[1]); if (!rows.length) continue;
       const ti = TERRAINS.findIndex(x => x.key === t.key), terOpen = t.key === 'flat' || (ti >= 0 && terrainOpen(ti));
+      if (!terOpen) { locked++; continue; }
+      const rows = ['omote', 'ura', 'minna', 'kami'].map(s => [s, statOf(t.key, s)]).filter(x => x[1]); if (!rows.length) continue;
       const sec = document.createElement('div'); sec.className = 'st-sec'; sec.innerHTML = '<div class="st-ter">' + (terOpen ? t.name : '？？？') + '</div>'; list.appendChild(sec);
       for (const [s, o] of rows) {
         const v = o[statsMode], p = v[0] ? v[1] / v[0] : 0, row = document.createElement('div'); row.className = 'st-row st-' + s;
@@ -292,6 +294,7 @@ function showStats(again) {
         sec.appendChild(row);
       }
     }
+    if (locked) { const el = document.createElement('div'); el.className = 'st-locked'; el.innerHTML = window.LANG === 'en' ? '<b>???</b><br>' + locked + ' more terrain' + (locked > 1 ? 's' : '') + ' (clear the front of the one before to open)' : '<b>？？？</b><br>あと ' + locked + ' この ちけい（まえの ちけいの おもてを クリアすると ひらく）'; list.appendChild(el); }
     const f = d => d ? (+d.slice(5, 7)) + '/' + (+d.slice(8, 10)) : '';
     $('statsnote').textContent = (statsMode === 'p' ? 'ひと＝ちょうせんした たんまつの かず（' + f(stats.from && stats.from.p) : 'モンスター＝ちょうせんした かたちの かず。おなじ かたちは 1 たい（' + f(stats.from && stats.from.m)) + '〜' + f(stats.to) + '）。クリア＝5 たいめに かった。1 じかん ごとに こうしん';
   };
@@ -2215,6 +2218,8 @@ resize();
 showTitle();
 loadStats();   // みんなの きろく
 onTap($('statsclose'), () => { $('statsbox').hidden = true; });
+onTap($('statsx'), () => { $('statsbox').hidden = true; });
+$('statsbox').addEventListener('click', e => { if (e.target === $('statsbox')) $('statsbox').hidden = true; });   // 外がわ（くらい ところ）を タップしても とじる
 if (NK_ON && nkPreview) showNakama();   // さそう URL から 来た とき
 if (OWNER) {
   // 開発用（オーナーの 端末だけ）: ?draw で描く画面、?shot=秒&stage=n で その時点のバトル、&result で結果

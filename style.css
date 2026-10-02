@@ -563,3 +563,8 @@ body.browser #statsbox { padding-bottom: calc(16px + env(safe-area-inset-bottom)
 .st-num strong { font-size: 15px; } .st-num small { font-size: 10.5px; color: #777; }
 .st-note { font-size: 11px; color: #777; margin-top: 10px; line-height: 1.5; }
 .st-lock b, .st-lock .st-num strong { color: #aaa; }
+/* 2026-10-02 地形が ふえて 長く なった ので: 上に ✕（スクロールで 数字に かぶらない ように 上に おいた まま）、下の「とじる」は スクロール しても 画面に のこす／まだ ひらいて いない 地形は 1 行に まとめる */
+.st-x { float: right; width: 36px; height: 36px; margin: -6px -6px -30px 0; border-radius: 50%; border: 2px solid var(--ink); background: #fff; color: var(--ink); font-size: 16px; font-weight: 900; line-height: 1; padding: 0; position: relative; z-index: 1; }
+#statsbox .rbtns { position: sticky; bottom: -18px; margin-bottom: -18px; padding: 10px 0 18px; background: var(--paper); box-shadow: 0 -10px 10px -6px var(--paper); }
+.st-locked { margin-top: 12px; padding: 8px 10px; border: 2px dashed #ccc; border-radius: 10px; color: #999; font-size: 12px; text-align: center; line-height: 1.5; }
+.st-locked b { color: #aaa; font-size: 14px; }
