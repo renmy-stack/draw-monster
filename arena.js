@@ -13,7 +13,7 @@ const cpus = (k, kari) => { const o = {}; for (const [t, l] of Object.entries(AC
 const TERRAINS = [
   // 並びが ひらく 順（前の 地形の おもてを クリアすると 次が ひらく）。出す 前の 地形は かならず 出した ものより 後ろに 置く（間に 入れると その先が とじる）
   // wait: オーナーの OK まで 一覧に 出さない。?arenanew の 端末だけ ためせる
-  // from: その日（日本時間）から みんなに 出す。2026-10-02 オーナー「1 日 1 つずつ」→ おやま・こおり・ひくい・みず・だんさ・うごくゆか
+  // from: その日（日本時間・サーバーの 日付）から みんなに 出す。2026-10-02 オーナー「1 日 1 つずつ」→ おやま・こおり・ひくい・みず・だんさ・うごくゆか
   // sim.js の mu・water・belt（こおり・みず・うごくゆか）は 2026-10-01〜
   { key: 'flat', name: '水平', arena: null, cpu: { omote: RB.CPU, ura: RB.URA, minna: RB.MINNA } },
   { key: 'gake', name: 'がけ', hint: 'かべが ない。おちたら まけ', arena: { floor: [[-290, -400], [-260, 0], [260, 0], [290, -400]], hw: 0, fall: 120 },
@@ -34,9 +34,8 @@ const TERRAINS = [
   { key: 'belt', from: '2026-10-08', name: 'うごくゆか', hint: 'ゆかが 右へ 左へ うごく。おちたら まけ', arena: { floor: [[-290, -400], [-260, 0], [260, 0], [290, -400]], hw: 0, fall: 120, belt: 150, beltT: 5 },
     sky: ['#1f1a2e', '#4a3b5c'], ground: '#5d5d5d', edge: '#ffca28', cpu: cpus('belt', true) },
 ];
-// 日本時間の 今日（from と くらべる）
-const today = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
-const released = t => !t.wait && !(t.cpu && t.cpu.kari) && (!t.from || today() >= t.from);
+// day: サーバーの 日付（日本時間 YYYY-MM-DD、game.js が version.txt の 返事から とる）。スマホの 時計は 使わない（日付を 進めると 先に 出て しまう）。わからない 間は from つきは 出さない
+const released = (t, day) => !t.wait && !(t.cpu && t.cpu.kari) && (!t.from || (!!day && day >= t.from));
 root.ARENA = { TERRAINS, released };
 if (typeof module !== 'undefined' && module.exports) module.exports = root.ARENA;
 })(typeof window !== 'undefined' ? window : globalThis);

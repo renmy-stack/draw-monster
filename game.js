@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '183';
+const VERSION = '184';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -123,7 +123,19 @@ if (ARENA_OWNER && /[?&]arenaall(=|&|$)/.test(location.search)) lsSet('arenaall'
 const ARENA_ON = !!window.ARENA;
 if (ARENA_OWNER && /[?&]arenanew(=|&|$)/.test(location.search)) lsSet('arenanew', '1');
 // オーナーの OK 待ち（wait）と 相手が まだ 仮（kari）の 地形は 出さない。?arenanew の 端末だけ ためせる
-const TERRAINS = ARENA_ON ? ARENA.TERRAINS.filter(t => ARENA.released(t) || (ARENA_OWNER && lsGet('arenanew') === '1')) : [];
+// from（出す 日）は サーバーの 日付で きめる（2026-10-02、スマホの 日付を 進めても 先に 出ない ように）
+// サーバーの 日付は version.txt の 返事の Date（checkVersion で 毎回 とる、通信は ふえない）。いちばん 新しい 日を おぼえて おき、開いたら その 日付で すぐ 出す
+// → 待つのは 新しい 地形が 出る 日の はじめの 1 回だけ（返事が きたら 一覧に 足す）。日付は もどらない
+let srvDay = lsGet('srvday') || '';
+const terrainList = () => ARENA_ON ? ARENA.TERRAINS.filter(t => ARENA.released(t, srvDay) || (ARENA_OWNER && lsGet('arenanew') === '1')) : [];
+let TERRAINS = terrainList();
+function noteServerDate(h) {
+  const t = Date.parse(h || ''); if (!t) return;
+  const d = new Date(t + 9 * 3600e3).toISOString().slice(0, 10); if (d <= srvDay) return;
+  srvDay = d; lsSet('srvday', d);
+  const n = TERRAINS.length; TERRAINS = terrainList();
+  if (TERRAINS.length !== n && mode === 'title') renderRoad();
+}
 let terrain = TERRAINS.some(t => t.key === lsGet('terrain')) ? lsGet('terrain') : 'flat';
 function terrInfo() { return terrain === 'flat' ? null : TERRAINS.find(t => t.key === terrain); }   // 水平（いまの ぼうけん）は null
 const tpre = k => (k === 'flat' ? '' : 't.' + k + '.');   // 記録の キーの 頭
@@ -2134,6 +2146,7 @@ window.sim = () => S;
 async function checkVersion() {
   try {
     const r = await fetch('version.txt?ts=' + Date.now(), { cache: 'no-store' });
+    noteServerDate(r.headers.get('date'));
     const v = (await r.text()).trim();
     if (v && v !== VERSION && mode !== 'battle') {
       // 同じ 版への 読みなおしは 1 分に 1 回まで（くり返さない ため）。前は 1 回 きりで、Safari が 古い ページを 出しなおすと 古い まま だった
