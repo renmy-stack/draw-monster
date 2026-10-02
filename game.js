@@ -1,16 +1,21 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '181';
+const VERSION = '182';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
 // Safari が おぼえていた 古い ページ（index.html）と 新しい game.js が まざると、部品（kazari.js など）が なくて 止まる
 // → 1 回だけ、URL に 印を つけて ページごと 読みなおす（2026-09-29 の 解析で 見つかった）
-if (!window.KZ || !window.KZStage || !window.RB || !window.eventThemeOf || !document.getElementById('langbtn') || !document.getElementById('evbtn')) {   // 古い index.html（あたらしい ボタン・event.js が ない）も
+// 部品の 有る無し だけでは、あいだの 版の 古い index.html（kamibox が ない など）を すり抜けて 止まる（10/2 の 解析で 5 台）
+// → index.html が 読みこんだ game.js の ?v= が この VERSION と ちがえば 古い ページ
+const pageV = (/[?&]v=([^&#]+)/.exec((document.currentScript && document.currentScript.getAttribute('src')) || '') || [])[1];
+if ((pageV && pageV !== VERSION) || !window.KZ || !window.KZStage || !window.RB || !window.eventThemeOf || !document.getElementById('langbtn') || !document.getElementById('evbtn')) {   // 古い index.html（あたらしい ボタン・event.js が ない）も
+  // 同じ 版への 読みなおしは 1 分に 1 回まで（前は 1 回 きりで、Safari が また 古い ページを 出すと 止まった まま だった）
   let tried = ''; try { tried = sessionStorage.getItem('mon.fix') || ''; } catch (e) {}
-  if (tried !== VERSION) {
-    try { sessionStorage.setItem('mon.fix', VERSION); } catch (e) {}
-    TR('stalefix', { k: !!window.KZ, s: !!window.KZStage, b: !!document.getElementById('langbtn') });
+  const [tv, tt] = tried.split('|');
+  if (tv !== VERSION || Date.now() - (+tt || 0) > 60e3) {
+    try { sessionStorage.setItem('mon.fix', VERSION + '|' + Date.now()); } catch (e) {}
+    TR('stalefix', { k: !!window.KZ, s: !!window.KZStage, b: !!document.getElementById('langbtn'), pv: pageV || '' });
     location.replace(location.pathname + (location.search ? location.search + '&' : '?') + 'nc=' + Date.now() + location.hash);
     throw new Error('reload for new version');
   }
