@@ -23,11 +23,20 @@ if (!isMainThread) {
   const RB = require(SIM); const cache = new Map(); const dec = c => { if (!cache.has(c)) cache.set(c, RB.decodeDesign(c)); return cache.get(c); };
   parentPort.postMessage(workerData.map(([a, b, t, how]) => { const A = dec(a), B = dec(b); if (TER[t] && TER[t].ceil && (RB.create(A, B, TER[t]).A.tall)) return 'T'; const S = RB.fight(A, B, TER[t]); return (S.winner || 'D') + (how === 'r' ? (S.reason === 'time' ? 't' : 'k') : ''); }));
 } else {
+  // 2026-10-03: 小さい 束に 切って、W 本が 終わった ものから 次を 取る（進み具合を % で 出す ため。結果の 並びは 前と 同じ）
+  const progress = require('./progress.js');
   module.exports = { TER, run: async (pairs, W = 15) => {
-    const parts = Array.from({ length: W }, () => []), idx = Array.from({ length: W }, () => []);
-    pairs.forEach((p, i) => { parts[i % W].push(p); idx[i % W].push(i); });
     const out = new Array(pairs.length);
-    const rs = await Promise.all(parts.map(p => p.length ? new Promise((ok, ng) => { const w = new Worker(__filename, { workerData: p }); w.on('message', ok); w.on('error', ng); }) : []));
-    rs.forEach((r, w) => r.forEach((v, k) => out[idx[w][k]] = v)); return out;
+    if (!pairs.length) return out;
+    // 束は 1 本 あたり 8 こ くらい。1 つおきに まぜて 取る（重い 形が かたよらない ように）
+    const K = Math.max(1, Math.min(Math.ceil(pairs.length / 40), W * 8)), chunks = Array.from({ length: K }, () => []);
+    pairs.forEach((p, i) => chunks[i % K].push(i));
+    progress.begin(pairs.length);
+    try {
+      let next = 0;
+      const lane = async () => { for (let c; (c = chunks[next++]);) { const r = await new Promise((ok, ng) => { const w = new Worker(__filename, { workerData: c.map(i => pairs[i]) }); w.on('message', ok); w.on('error', ng); }); r.forEach((v, k) => out[c[k]] = v); progress.add(c.length); } };
+      await Promise.all(Array.from({ length: Math.min(W, K) }, lane));
+    } finally { progress.end(); }
+    return out;
   } };
 }

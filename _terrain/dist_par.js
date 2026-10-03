@@ -4,7 +4,7 @@
 // 切れたら（Windows Update の 再起動・ネットワーク）その 束は この PC で 計算し、30 秒 たったら つなぎなおす
 'use strict';
 const path = require('path'), fs = require('fs'), crypto = require('crypto'), { spawn, execFileSync } = require('child_process');
-const local = require('./tp_par.js'), TER = local.TER;
+const local = require('./tp_par.js'), TER = local.TER, progress = require('./progress.js');
 const Q = ['-o', 'LogLevel=ERROR'], HOST = 'desk2', RDIR = 'dmdist', MIN = 100, ONLY_R = process.env.REMOTE_ONLY === '1';
 let ch = null, ready = null, buf = '', nid = 0, share = 0.45, dead = process.env.DIST === '0', retryAt = 0;
 const pend = new Map();
@@ -39,7 +39,7 @@ async function run(pairs, W = 15) {
   if (ONLY_R && !dead) { if ((await start()) && ch) { try { const r = await remote(pairs); stats.remote += pairs.length; stats.calls++; return r; } catch (e) {} } return local.run(pairs, W); }
   if (dead || pairs.length < MIN || Date.now() < retryAt) return local.run(pairs, W);
   if (!(await start()) || !ch) return local.run(pairs, W);
-  if (pairs.length >= BIG) return pull(pairs, W);
+  if (pairs.length >= BIG) { progress.begin(pairs.length); try { return await pull(pairs, W); } finally { progress.end(); } }   // 束ごとに % を 出す
   // 1 つおきに 近い 形で まぜて 分ける（重い 形が かたよらない ように）
   const iL = [], iR = []; pairs.forEach((p, i) => (Math.floor((i + 1) * share) > Math.floor(i * share) ? iR : iL).push(i));
   const t0 = Date.now(); let tL = 0, tR = 0;
@@ -56,7 +56,7 @@ const BIG = 6000, CH_L = 1500, CH_R = 800;
 async function pull(pairs, W) {
   const out = new Array(pairs.length), queue = []; let pos = 0;
   const take = n => { if (queue.length) return queue.shift(); if (pos >= pairs.length) return null; const a = pos; pos = Math.min(pairs.length, pos + n); return [a, pos]; };
-  const put = ([a, b], r) => { for (let i = a; i < b; i++) out[i] = r[i - a]; };
+  const put = ([a, b], r) => { for (let i = a; i < b; i++) out[i] = r[i - a]; progress.add(b - a); };
   const localLoop = async () => { for (let c; (c = take(CH_L));) { put(c, await local.run(pairs.slice(c[0], c[1]), W)); stats.local += c[1] - c[0]; } };
   const remoteLoop = async () => { for (let c; ch && (c = take(CH_R));) { try { put(c, await remote(pairs.slice(c[0], c[1]))); stats.remote += c[1] - c[0]; } catch (e) { queue.push(c); return; } } };
   await Promise.all([localLoop(), remoteLoop()]);
