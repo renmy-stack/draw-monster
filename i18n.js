@@ -98,6 +98,8 @@
     "まだ いないよ": "None yet",
     "いま ランクせんに つながらないよ。しばらく してから また きてね": "Can't reach Ranked right now. Please come back later.",
     "📸 じゅんい カードを つくる": "📸 Make a rank card",
+    "📸 じゅんい カード": "📸 Rank card",
+    "✏️ つくる・なおす": "✏️ Make / edit",
     "ひさしぶり！ おやすみ から ふっかつ。だいたい 2〜3 ぷんで ランキングに もどるよ": "Welcome back! You'll be back in the ranking in about 2–3 minutes.",
     "なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ。なまえを かえて とうろくしなおしてね": "This name isn't shown in the ranking. Please re-enter with a different name.",
     "つよい あいてとの たいせん（タップで リプレイ）": "Battles vs strong opponents (tap to replay)",

@@ -620,3 +620,8 @@ body.nav.tidy #kzclose { display: none !important; }
 .kz-fold summary { cursor: pointer; font-weight: 800; color: #777; list-style-position: inside; }
 .kz-fold .kz-foldt { margin-top: 4px; }
 body.nav .adv-h { display: none; }   /* 2026-10-03 オーナー: 下の タブに「ぼうけん」が ある ので 見出しは いらない */
+body.tidy .rk-msg:empty { display: none; }   /* からの おしらせの 高さで すきまが できて いた */
+body.tidy .kz-msg:empty { min-height: 0; }
+body.tidy .rk-btnrow { display: flex; gap: 8px; margin-top: 12px; }
+body.tidy .rk-btnrow button { flex: 1 1 0; min-width: 0; margin: 0; padding: 10px 6px; font-size: 15px; white-space: nowrap; }
+body.tidy .rk-btnrow .rk-card { flex: 1.25 1 0; width: auto; }

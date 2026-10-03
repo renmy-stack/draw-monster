@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '207';
+const VERSION = '208';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1276,7 +1276,7 @@ function rankPollSet() {
   rankPollT = setTimeout(() => { if (mode !== 'rank') return; rankPollN++; loadRank(true).then(() => { if (mode === 'rank') renderRank(); }); }, 30e3);
 }
 function renderRank() {
-  if (TIDY) rankPollSet();
+  if (TIDY) { rankPollSet(); for (const e of $('rankbtnrow').querySelectorAll('.rk-card')) e.remove(); }
   const t = rankTop, me = rankMe;
   $('ranksub').textContent = t ? t.count + ' たい さんか・2〜3 ぷんで こうしん' : rankDown ? 'いま ランクせんに つながらないよ。しばらく してから また きてね' : 'よみこみちゅう…';
   // 先週の チャンピオン
@@ -1309,7 +1309,7 @@ function renderRank() {
     if (me.champ) { const c = document.createElement('div'); c.className = 'rk-champbadge'; c.textContent = '👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく！）' : '！'); info.append(c); }
     head.append(info); box.append(head);
     if (LG_ON && me.lg && !me.hidden) renderLeagueGroup(more, me);
-    if (CARD_ON && (LG_ON ? me.lg && me.lg.z !== 'hold' : me.pos) && !me.hidden) { const cb = document.createElement('button'); cb.className = 'main rk-card'; cb.textContent = '📸 じゅんい カードを つくる'; cb.addEventListener('click', () => showRankCard(me)); more.prepend(cb); }
+    if (CARD_ON && (LG_ON ? me.lg && me.lg.z !== 'hold' : me.pos) && !me.hidden) { const cb = document.createElement('button'); cb.className = 'main rk-card'; cb.textContent = TIDY ? '📸 じゅんい カード' : '📸 じゅんい カードを つくる'; cb.addEventListener('click', () => showRankCard(me)); (TIDY ? $('rankbtnrow') : more).prepend(cb); }
     if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。だいたい 2〜3 ぷんで ランキングに もどるよ'; box.append(b); }
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ。なまえを かえて とうろくしなおしてね'; box.append(h); }
     const rec = me.recent || [];
@@ -2357,6 +2357,9 @@ function tidyLayout() {
   const row = document.createElement('div'); row.className = 'rk-subrow'; $('ranksub').before(row); row.append($('ranksub'), document.querySelector('#rank .rk-guidetop'));
   const th = document.createElement('div'); th.className = 'rk-h rk-toph'; th.textContent = '👑 チャンピオン・いちばん うえの リーグ';
   $('rankdia').before(th); th.after($('rankchamp'), $('rankhistbtn'), $('rankhist'));
+  // 「つくる・なおす」と「じゅんい カード」を 横ならびに（オーナー）
+  const br = document.createElement('div'); br.className = 'rk-btnrow'; br.id = 'rankbtnrow'; const ob = $('rankdraw').parentNode; ob.before(br); br.append($('rankdraw')); ob.remove();
+  $('rankdraw').textContent = '✏️ つくる・なおす';
   // イベント: あなた → ランキング → きのうの いちばん
   const eh = document.createElement('div'); eh.className = 'rk-h ev-h rk-toph'; eh.textContent = '🎀 きのうの いちばん';
   $('evlist').after(eh); eh.after($('evchamp'), $('evhistbtn'), $('evhist'));
