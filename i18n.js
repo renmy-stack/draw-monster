@@ -115,6 +115,7 @@
     "げつようの 0 じに グループを まぜなおす": "Groups are reshuffled every Monday at midnight",
     "グループの くみかえは よる 0 じだけ（とちゅうで きた ひとは あいている グループへ）。げつようの 0 じは ぜんいんを まぜなおす": "Groups only change at midnight (newcomers join a group with room). Everyone is reshuffled on Monday at midnight",
     "7 にち あそばないと おやすみ（ひらくと おなじ リーグに もどる）": "Rest after 7 days away (back to the same league when you open)",
+    "ひとが すくない グループには コンピューターの モンスターも はいるよ（しょうかく・こうかく は しない）": "Groups with few players also get computer monsters (they don't move up or down)",
     "💎 ダイヤ リーグ（タップで れんしゅうじあい）": "💎 Diamond league (tap for a practice match)",
     "💎 ダイヤ リーグを みる（タップで れんしゅうじあい）": "💎 See the Diamond league (tap for a practice match)",
     "▲ じぶんの まわりだけ": "▲ Just around me",

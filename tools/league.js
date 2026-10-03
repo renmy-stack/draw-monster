@@ -12,12 +12,15 @@
 // ・いちばん上が 60 体を こえたら、0 時に 勝率の 上半分が 新しい 上の リーグへ（オーナー 案）。15 体を 切ったら その リーグを とじて 下と あわせる
 // ・はじめて リーグ制に する とき: 今の 全体順位の わりあいで 上位 3% ダイヤ・10% プラチナ・25% ゴールド・50% シルバー・のこり ブロンズ
 // ・CPU（dev が testdev…）は リーグに 入れない
+// ・人が すくない グループ（30 体 未満、いちばん上 以外）には 弱い CPU（tools/fillers.json、id が cpu_..）を 足して 30 体に（2026-10-03 オーナー、ルールに 1 行）
+//   CPU は 相手と 順位表に 出るが 昇格・降格しない。昇格・降格の 枠は 人だけで 数える。どの CPU を 入れるかは グループごとに きまった 順（人が ふえると うしろから ぬける）
 'use strict';
 const LG_N = 50, LG_MAX = 60, LG_MIN = 30, SPLIT = 60, CLOSE = 15, MAXL = 7, TOP0 = 4;
 const UP = [0.25, 0.15, 0.10, 0.07], DOWN = 0.10, INIT = [0.50, 0.25, 0.10, 0.03];   // INIT[k]: これより 上なら リーグ k+1
 const upOf = L => UP[Math.min(L, UP.length - 1)];
 const NAMES = ['ブロンズ', 'シルバー', 'ゴールド', 'プラチナ', 'ダイヤ', 'マスター', 'グランドマスター', 'レジェンド'];
-const isCPU = m => String(m.dev).startsWith('testdev');
+const isCPU = m => String(m.dev).startsWith('testdev') || isFiller(m);
+const isFiller = m => String(m.id).startsWith('cpu_');
 const hashStr = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
 const weekOf = day => { const d = new Date(day + 'T00:00:00Z'), w = (d.getUTCDay() + 6) % 7; return new Date(d - w * 864e5).toISOString().slice(0, 10); };   // その 週の 月曜
 
@@ -41,9 +44,19 @@ function scoreGroup(mem, R, n, can) {
 // グループの 順位と 印。up 昇格・down 降格・hold 試合が 半分 未満で 動かない
 function rankGroup(L, mem, sc, list, top) {
   const s = mem.slice().sort((a, b) => sc.get(b).pct - sc.get(a).pct || sc.get(b).pl - sc.get(a).pl || (list[a].id < list[b].id ? -1 : 1));
-  const k = s.length, up = L < top ? Math.round(k * upOf(L)) : 0;
-  const dn = L === 0 ? 0 : Math.round(k * DOWN);
-  return s.map((i, p) => { const r = sc.get(i); return { i, gp: p + 1, gn: k, z: r.pl < r.tot / 2 ? 'hold' : p < up ? 'up' : p >= k - dn ? 'down' : '' }; });
+  const k = s.length, hum = s.filter(i => !isFiller(list[i])), H = hum.length, up = L < top ? Math.round(H * upOf(L)) : 0;
+  const dn = L === 0 ? 0 : Math.round(H * DOWN), hp = new Map(hum.map((i, q) => [i, q]));   // 枠は 人だけで 数える（CPU は 動かない）
+  return s.map((i, p) => { const r = sc.get(i), q = hp.get(i); return { i, gp: p + 1, gn: k, z: q == null ? '' : r.pl < r.tot / 2 ? 'hold' : q < up ? 'up' : q >= H - dn ? 'down' : '' }; });
+}
+// 人が 30 体 未満の グループに CPU を 足す（fillerIdx: list の 中の CPU の 番号）。グループごとに きまった 順
+function addFillers(groups, top, fillerIdx) {
+  if (!fillerIdx.length) return groups;
+  for (const [key, mem] of groups) {
+    const L = +key.split('_')[0]; if (L === top || mem.length >= LG_MIN) continue;
+    let h = hashStr(key); const order = fillerIdx.slice(); for (let q = order.length - 1; q > 0; q--) { h = (Math.imul(h, 1103515245) + 12345) >>> 0; const r = h % (q + 1); [order[q], order[r]] = [order[r], order[q]]; }
+    mem.push(...order.slice(0, LG_MIN - mem.length));
+  }
+  return groups;
 }
 const groupsOf = (P, list) => { const g = new Map(); for (const [i, p] of P) if (p.g != null) { const key = p.L + '_' + p.g; if (!g.has(key)) g.set(key, []); g.get(key).push(i); } return g; };
 // 全部の グループの 印。key → { L, g, sc, rows }
@@ -57,6 +70,7 @@ function zonesAll(groups, top, R, n, can, list) {
 function plan({ list, n, R, can, pct, meta, today }) {
   const week = weekOf(today), log = [];
   let top = meta && meta.top != null ? meta.top : TOP0;
+  const fillerIdx = list.map((m, i) => isFiller(m) ? i : -1).filter(i => i >= 0);
   // P: モンスターの 番号 → { L, g, dev, L0, g0 }（L0・g0 は データベースに 今 ある 値）
   const P = new Map();
   list.forEach((m, i) => { if (!isCPU(m)) P.set(i, { dev: m.dev, L: m.league == null ? null : +m.league, g: m.grp == null ? null : +m.grp, L0: m.league == null ? null : +m.league, g0: m.grp == null ? null : +m.grp }); });
@@ -75,7 +89,8 @@ function plan({ list, n, R, can, pct, meta, today }) {
     if (meta.day !== today) {
       // 0 時: きのうの グループの 成績で 昇格・降格（いまの グループで 数える）
       let up = 0, dn = 0;
-      for (const v of zonesAll(groupsOf(P, list), top, R, n, can, list).values()) for (const r of v.rows) {
+      for (const v of zonesAll(addFillers(groupsOf(P, list), top, fillerIdx), top, R, n, can, list).values()) for (const r of v.rows) {
+        if (!P.has(r.i)) continue;   // CPU は 動かない
         const p = P.get(r.i);
         if (r.z === 'up') { p.L++; p.g = null; up++; } else if (r.z === 'down') { p.L--; p.g = null; dn++; }
       }
@@ -108,7 +123,7 @@ function plan({ list, n, R, can, pct, meta, today }) {
         P.get(i).g = best; cnt.set(best, cnt.get(best) + 1);
       }
     }
-    return { P, groups: groupsOf(P, list), init, week, top, log };
+    return { P, groups: addFillers(groupsOf(P, list), top, fillerIdx), init, week, top, log };
   }
   // 0 時: グループに 入れる: いちばん上は 1 グループ。ほかは リーグに 何グループ いるかを きめ（だいたい 50 体・60 を こえない 数）、
   // 入って いない 人は いちばん 少ない グループへ。グループの 数が かわった・30〜60 を はみだした・差が 5 より 大きい ときだけ 大きい グループから 小さい グループへ うつす
@@ -133,7 +148,7 @@ function plan({ list, n, R, can, pct, meta, today }) {
     }
     for (const [g, m] of mem) for (const i of m) P.get(i).g = g;
   }
-  return { P, groups: groupsOf(P, list), init, week, top, log };
+  return { P, groups: addFillers(groupsOf(P, list), top, fillerIdx), init, week, top, log };
 }
 
 // 2) まだの 対戦（グループの 中、左右 2 戦）。試合が 少ない 人から
@@ -157,7 +172,7 @@ function finish(pl, { list, n, R, can, prevH, today, now }) {
       if (x === 1) beat.push([b, 'A']); else if (x === 2) lost.push([b, 'A']); if (y === 2) beat.push([b, 'B']); else if (y === 1) lost.push([b, 'B']); }
       const pick = (arr, res) => arr.sort((p, q) => sc.get(q[0]).pct - sc.get(p[0]).pct).slice(0, 3).map(([b, side]) => [list[b].id, list[b].name, res, side]);
       return pick(beat, 'W').concat(pick(lost, 'L')); };
-    const tab = rows.map(r => { const s = sc.get(r.i); entry.set(r.i, { L, g, gp: r.gp, gn: r.gn, pct: Math.round(s.pct * 1000) / 10, pl: s.pl, tot: s.tot, z: r.z, top: L === top, un, dn, rec: recOf(r.i) }); return [r.gp, list[r.i].id, list[r.i].name, Math.round(s.pct * 1000) / 10, r.z, list[r.i].code, list[r.i].kz || null]; });   // 6・7 番目: 形・かざり（グループ表の 絵）
+    const tab = rows.map(r => { const s = sc.get(r.i); if (!isFiller(list[r.i])) entry.set(r.i, { L, g, gp: r.gp, gn: r.gn, pct: Math.round(s.pct * 1000) / 10, pl: s.pl, tot: s.tot, z: r.z, top: L === top, un, dn, rec: recOf(r.i) }); return [r.gp, list[r.i].id, list[r.i].name, Math.round(s.pct * 1000) / 10, r.z, list[r.i].code, list[r.i].kz || null]; });   // 6・7 番目: 形・かざり（グループ表の 絵）
     const h = hashStr(JSON.stringify(tab)); H[key] = h; if ((prevH || {})[key] !== h) lgroups[key] = tab;
   }
   for (const key of Object.keys(prevH || {})) if (!(key in H)) lgroups[key] = null;   // なくなった グループ

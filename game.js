@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '198';
+const VERSION = '199';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1241,19 +1241,20 @@ function renderLeagueGroup(box, me) {
   const rows = me.lgroup || [], lg = me.lg; if (!rows.length) return;
   const h = document.createElement('div'); h.className = 'rk-h'; h.textContent = 'グループの じゅんい（タップで れんしゅうじあい）'; box.append(h);
   const mi = Math.max(0, rows.findIndex(r => r[1] === me.id)), lo = lgAll ? 0 : Math.max(0, Math.min(mi - 3, rows.length - 7)), hi = lgAll ? rows.length : Math.min(rows.length, lo + 7);
-  const up = lg.un || 0, dn = lg.dn || 0;   // サーバーが きめた 昇格・降格の 数
+  // 線と 色は サーバーの 印（z）で: 昇格の 線は さいごの up の 下、降格の 線は はじめの down の 上（CPU が まざって いても ずれない）
+  let lastUp = -1, firstDn = -1; rows.forEach((r, k) => { if (r[4] === 'up') lastUp = k; if (r[4] === 'down' && firstDn < 0) firstDn = k; });
   const wrap = document.createElement('div'); wrap.className = 'lg-tab';
   rows.forEach(([gp, id, name, pct, z, code, kz], k) => {
     if (k < lo || k >= hi) return;
-    if (dn && k === rows.length - dn && k > lo) { const ln = document.createElement('div'); ln.className = 'lg-line down'; ln.textContent = '⬇ ここから こうかく（0 じに ' + LGR[lg.L - 1].name + ' へ）'; wrap.append(ln); }
+    if (k === firstDn && k > lo) { const ln = document.createElement('div'); ln.className = 'lg-line down'; ln.textContent = '⬇ ここから こうかく（0 じに ' + LGR[lg.L - 1].name + ' へ）'; wrap.append(ln); }
     const mine = id === me.id, row = document.createElement('button');
-    row.className = 'lg-row' + (k < up ? ' up' : '') + (dn && k >= rows.length - dn ? ' down' : '') + (mine ? ' mine' : '') + (z === 'hold' ? ' hold' : '');
+    row.className = 'lg-row' + (z === 'up' ? ' up' : '') + (z === 'down' ? ' down' : '') + (mine ? ' mine' : '') + (z === 'hold' ? ' hold' : '');
     row.innerHTML = '<span class="lg-p">' + gp + '</span><span class="lg-n"></span><span class="lg-w">' + (z === 'hold' ? 'けいさんちゅう' : pct + '%') + '</span>';
     if (code) { const pv = miniPreview(code, mine ? ME.color : RANK_COLOR, 88, kz); pv.className = 'lg-pic'; row.insertBefore(pv, row.children[1]); } else { const sp = document.createElement('span'); sp.className = 'lg-pic'; row.insertBefore(sp, row.children[1]); }
     row.querySelector('.lg-n').textContent = name + (mine ? '（あなた）' : '');
     if (!mine) row.addEventListener('click', () => code ? rankPractice({ code, name, kz }) : monGet(id).then(m => { if (m && m.code) rankPractice({ code: m.code, name, kz: m.kz }); }));
     wrap.append(row);
-    if (up && k === up - 1 && k < hi - 1) { const ln = document.createElement('div'); ln.className = 'lg-line up'; ln.textContent = '⬆ ここまで しょうかく（0 じに ' + LGR[lg.L + 1].name + ' へ）'; wrap.append(ln); }
+    if (k === lastUp && k < hi - 1) { const ln = document.createElement('div'); ln.className = 'lg-line up'; ln.textContent = '⬆ ここまで しょうかく（0 じに ' + LGR[lg.L + 1].name + ' へ）'; wrap.append(ln); }
   });
   box.append(wrap);
   if (rows.length > 7) { const b = document.createElement('button'); b.className = 'lg-more'; b.textContent = lgAll ? '▲ じぶんの まわりだけ' : '▼ ぜんぶ みる（' + rows.length + ' たい）'; b.addEventListener('click', () => { lgAll = !lgAll; renderRank(); }); box.append(b); }

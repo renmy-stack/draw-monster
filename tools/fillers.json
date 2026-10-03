@@ -1,0 +1,242 @@
+[
+ {
+  "id": "cpu_00",
+  "name": "もちまる",
+  "code": "C6tEplGSWXpaY1ZXSlY9ZDN6LJIupjcGgICKgJR_nn-ofrJ-CoCAgoqDlISehKiEs4S9g8eB0X_b",
+  "s": 20
+ },
+ {
+  "id": "cpu_01",
+  "name": "ガブガブ",
+  "code": "D45jjmyNeIV4fnh4eHJycmdyXnFTeE5_ToVOjU6OWgSAgId4j3CWaA2AgIKKg5OFnYamiLCJuorDi82L14zhjOqN9A",
+  "s": 20
+ },
+ {
+  "id": "cpu_02",
+  "name": "ぽんた",
+  "code": "ENKrzLG6tZ-4gLlhuEa1NLEuqzSmRqJhn4Cen5-6osymCYCAgouQjo6cnJ-arZy-nM-c1AiAgHyFd4R0f3h5fXiBe4GA",
+  "s": 40
+ },
+ {
+  "id": "cpu_03",
+  "name": "つよし",
+  "code": "D5OVlKaQtoa4frx0vG2vbZxsjWt6dXF-cYdwknGVhAuAgIh6j3OXbZ5mpmCuWbVTvUzERsw_C4CAhImIkoybkKSUrZm1nb6iw6fDrMM",
+  "s": 20
+ },
+ {
+  "id": "cpu_04",
+  "name": "みかん",
+  "code": "EJOZkqqVyojGgMp4yGzHa61smW2GamR3ZYBoiG2TapaDBYCAfpWaeY6fqoIHgIB9iXiSdJtvpGmsY7Q",
+  "s": 30
+ },
+ {
+  "id": "cpu_05",
+  "name": "くろすけ",
+  "code": "CphUl2KHZXlmbGBsVG1IeUOHQZRHCoCAh4ePjZaUnpuloa2otK-8tcO8C4CAf4p_k3-dgKaBr4O5hcKIy4vUjt0",
+  "s": 20
+ },
+ {
+  "id": "cpu_06",
+  "name": "ドラゴン",
+  "code": "DqtXpGmigoqDdoJifVRtXVdZRGQ0eDOIMqEtpEYGgICEkJh9lpmqhaihDICAg4mGk4qcjqWTrZi1nr2kxavMstO52Q",
+  "s": 30
+ },
+ {
+  "id": "cpu_07",
+  "name": "ぴょんきち",
+  "code": "Cq6GrJ6SsG6wV5xMhlNublySXatvBICAiIOPhpeJCYCAgoqElIadiKeJsYq7i8WMzw",
+  "s": 20
+ },
+ {
+  "id": "cpu_08",
+  "name": "ゴロー",
+  "code": "CpJ8j6CGtHuuc5xwfHJcekOGQ41eC4CAioCTgJ2BpoGwgbqBw4LNgtaC3IIKgICAioCUf55-p3uxeLp0w3DMa8w",
+  "s": 40
+ },
+ {
+  "id": "cpu_09",
+  "name": "てつ",
+  "code": "DYpWil2HZIFkfGN2YnZZdlJ2SnxIgUiHSIpPDYCAiXuSdptwpGutZrZhv1zIVtFR2kzjR-RCDYCAfop8lHqeeah5snm8ecd60XzbfuWA74P4",
+  "s": 30
+ },
+ {
+  "id": "cpu_10",
+  "name": "うさぎ",
+  "code": "EM1CzVXNcaBxgHFgcTNxM1UzQjMvMxRgFIAUoBTNFM0vCYCAhomRjZeWoIyhlpeqjaCXlg6AgHuIdZBvl2mfYqZcrVW0TrpGwD7GN8wu0SbW",
+  "s": 20
+ },
+ {
+  "id": "cpu_11",
+  "name": "タコ丸",
+  "code": "Ep-dmKSTq42whbZ7s3KybatnpWKdZZVrj3GHfImFhY-IkpCdlQyAgImFkoubkKOVrJq1oL6lx6rPsM-1z7oLgICAioGUg56FqIeyiryNxpHJmsmfyQ",
+  "s": 40
+ },
+ {
+  "id": "cpu_12",
+  "name": "ぷるぷる",
+  "code": "EJdblWWQbYlzgHV3c3Bta2VpW2tRcEl3Q4BBiUOQSZVRBYCAloB3Zp9uf1QNgICDioaTi5yQpZWtnLWivKrDssq6z8PUzNg",
+  "s": 30
+ },
+ {
+  "id": "cpu_13",
+  "name": "ニャン太",
+  "code": "Dowvi0iIXYVrgHB7a3hddUh0L3UXeAWABYUFixcIgICFipSFlZSkjqaetJi5oweAgISIiZCOmJOgmaefrg",
+  "s": 40
+ },
+ {
+  "id": "cpu_14",
+  "name": "ばくだん",
+  "code": "DotTil2IZoRrfGt4ZnZddVN2SXhBfDuEO4hBikkIgICKjYRtj3uKbZdpoYOUiAmAgISIiJGLmo2jjqyPto6_jck",
+  "s": 40
+ },
+ {
+  "id": "cpu_15",
+  "name": "ロボ",
+  "code": "DaxTpl-bbIZxcWxcZ1BaUUxeQHA5hTibO6pFBYCAlH96Z51tglUMgICAioCTgJ1_p36xfbp7xHnNd9d14HLq",
+  "s": 30
+ },
+ {
+  "id": "cpu_16",
+  "name": "くまさん",
+  "code": "CpiMlKKIsHmvbaFpjGx1eWuHapJ4DYCAh4ePj5aWnp2lpa2stLO7usPCysnS0NbYCYCAgYqBlIKegaeBsYC7f8V9zw",
+  "s": 40
+ },
+ {
+  "id": "cpu_17",
+  "name": "さかな",
+  "code": "EMRtxInEsZyxgLFksTyxPIk8bTxRPCpkKoAqnCrEKsRRBICAcJKciXikB4CAeYdxjGiRX5VVl0uZ",
+  "s": 30
+ },
+ {
+  "id": "cpu_18",
+  "name": "ゆうしゃ",
+  "code": "EKKVoJ-VpI2qgK1zqmmlaZxllWaObYlzgICDi4OYhZyNCICAiXuTd5xypm2vabhkwl8KgICDiYeSi5uPpJOsmLWdvaLFp80",
+  "s": 40
+ },
+ {
+  "id": "cpu_19",
+  "name": "ハチ",
+  "code": "DaOMqZuXo4WndKFcoluSW4ZZdHJzhHSYdKCAB4CAiXyRd5pzo2-sarRmCoCAfIp5lHaedKhysnC8bsZt0W3Y",
+  "s": 40
+ },
+ {
+  "id": "cpu_20",
+  "name": "ぺんぎん",
+  "code": "DZyPnJqTpIOkdaRkomSUZIpkfHV5g3mTeZyECoCAin2Ue554qHWyc7xwxm3Qa9JlCoCAg4qGlIqejaiRspW8mcWdz6LZ",
+  "s": 30
+ },
+ {
+  "id": "cpu_21",
+  "name": "ぎざぎざ",
+  "code": "DZGHkKGKtIK5erp0qXCTcHt0ZnpYglGJXY9vBYCAk4eEZaN6lFgLgICCioSTh52JpoywjrmRwpbFnMWjxQ",
+  "s": 30
+ },
+ {
+  "id": "cpu_22",
+  "name": "おばけ",
+  "code": "EJqEl4uOjYePfZJ2jXCLa4llhmiCa3p2e355h3mReZl8CICAioGTgp2EpoWwhrmHw4kIgIB-in2VfZ9-qoC0g76HyA",
+  "s": 40
+ },
+ {
+  "id": "cpu_23",
+  "name": "カニ",
+  "code": "DZJllHWOg4OGd4ZufW1sal1tTHlIgkeMSpRWB4CAiX2Tepx4pnWvcrlvDYCAfIp4k3OcbqVorWK1W71UxEzLRNI82DTd",
+  "s": 40
+ },
+ {
+  "id": "cpu_24",
+  "name": "しろまる",
+  "code": "EOK24sHi0KnQgNBX0B7QHsEeth6rHptXm4CbqZvim-KrBoCAc5KMin2ljJyMrw2AgIeHjo6WlZ6bpqCvpbiqwa7Kr9Sv3q_nrw",
+  "s": 40
+ },
+ {
+  "id": "cpu_25",
+  "name": "あかべえ",
+  "code": "E59Sn2GbcJB2h3l-e3N7aXZhal9aYUpmPmsxciR9IogkkyiXOJxEDYCAiXySeZt1pHGtbrZqv2bIY9Bf0FjQUNBJDICAhImIk4ucj6WTrpe3nMCgyqTTqdyt5Q",
+  "s": 20
+ },
+ {
+  "id": "cpu_26",
+  "name": "つの丸",
+  "code": "Cppvln6Ih3iHan1lb2pfeFaJVZVgC4CAiIaQjZeTn5qnoK-nt62_tMa6zsEEgIB8iHiRc5g",
+  "s": 40
+ },
+ {
+  "id": "cpu_27",
+  "name": "ちびすけ",
+  "code": "DolmiHyJpIOke513jndydll1NnsyfyqDL4kqi0kGgICGeItwkWiXYJxYBYCAe4p2k2-caKQ",
+  "s": 20
+ },
+ {
+  "id": "cpu_28",
+  "name": "ゴン",
+  "code": "C4uRip-FqH6pd6h2mHaLdnl_fIV5ioMEgICFd4ptj2QKgICCioOUg56DqIKzgb1_x3zQedY",
+  "s": 20
+ },
+ {
+  "id": "cpu_29",
+  "name": "マル",
+  "code": "EMRRv2Owcpp8gIBmfFByQWM8UUFAUDFmJ4AjmiewMb9ACICAiYqVeJ6Mqnqqjqp8qo8OgIB7iHaRcpptommrZbRhvV7GWs9X2VTiUutP9Q",
+  "s": 30
+ },
+ {
+  "id": "cpu_30",
+  "name": "ぴかり",
+  "code": "EJlzmX2ZioqKgIp2imeKZ31nc2dpZ1t2W4BbiluZW5lpB4CAeY2RkH-hl6SGtJ63CYCAg4qGk4mdjKeOsJG6k8SWzg",
+  "s": 40
+ },
+ {
+  "id": "cpu_31",
+  "name": "とげとげ",
+  "code": "D4ySjauMyoTJf8l5yXO6c55zhnRqeVt_WYRbi1qNeA2AgIp-k3ydeaZ3sHW6c8NwzW7XbOBq4WXhXgSAgHyKeZR2nw",
+  "s": 40
+ },
+ {
+  "id": "cpu_32",
+  "name": "ごま",
+  "code": "DaNronWYgISAdH1ge1xwYGdgW3NXhFmXWJ5iBoCAh4eOjpSVm5yiowqAgICLf5V-oHyqe7R4v3bJc9Nw3Q",
+  "s": 20
+ },
+ {
+  "id": "cpu_33",
+  "name": "もぐ",
+  "code": "EK0wrTetQJNAgEBtQFNAUzdTMFMqUyFtIYAhkyGtIa0qBYCAeZGZh4WipJcMgICGiIuQkpeYnp-lp6uusba2vrvHwM_F",
+  "s": 20
+ },
+ {
+  "id": "cpu_34",
+  "name": "ヒーロー",
+  "code": "EJCmj7yLzobagN562nXOcbxwpnGRdX96c4BuhnOLf4-RBYCAj4SGa5x4m2oFgICGiIuRjpqQoQ",
+  "s": 30
+ },
+ {
+  "id": "cpu_35",
+  "name": "かめきち",
+  "code": "EKtfqGmvfJR9gHhsfVd4UmtQX1JTVURvRoBBk0KtQ61TEICAiIaPjZeTn5mnoK6mtqy-ssG5wb_BxcHMwdLB2MHfC4CAg4mGk4mcjKaPr5O4lsKZy5zUoN0",
+  "s": 30
+ },
+ {
+  "id": "cpu_36",
+  "name": "ふわり",
+  "code": "DqleqmSgaoprd2pgalZkV15VWF9SdlGKUaFSqVgMgICHh46OlZScm6OiqqmxsLi2v73FxMXLDICAgoqElIWehqiGsoe9h8eG0YbbheWE7w",
+  "s": 20
+ },
+ {
+  "id": "cpu_37",
+  "name": "がおー",
+  "code": "Da2SqZ6ap4arcKldo1KYU4xegnB6hXmafaiGD4CAhHeIbYxkkFqUUZhHnD6gNaQrqCKsGLAPtAa4AAuAgIKKg5SEn4SphLSDvoHIf9J51XHV",
+  "s": 30
+ },
+ {
+  "id": "cpu_38",
+  "name": "ドン",
+  "code": "EqRuoYOlo5SqhqV6pm2pXKJdhF5uYVtfPmwyei-GM5M2oT-hWQeAgI5_hmqccJRbqmGhTAmAgH2Ke5R5nnipeLN4vXnIetI",
+  "s": 40
+ },
+ {
+  "id": "cpu_39",
+  "name": "すいか",
+  "code": "EpN5k4WTlIuag5p9mnWabZVthW15bW1tXnVZfVmDWYtZk16TbQ6AgIiFkYqZj6GUqpmynrqiwqfLrNOx27bbu9vACYCAfIl4knSacKNsrGi0Y71fxQ",
+  "s": 40
+ }
+]

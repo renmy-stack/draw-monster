@@ -46,6 +46,8 @@ async function main() {
   }
   const now = act.now, season = act.season, today = seasonOf(now);
   const list = raw.filter(m => RB.decodeDesign(m.code));
+  // 人が すくない グループに 入る 弱い CPU（tools/fillers.json、2026-10-03）。dev は みんな 'filler'（CPU どうしは 戦わない）
+  if (LEAGUE_LIVE) for (const f of require('./fillers.json')) list.push({ id: f.id, dev: 'filler', code: f.code, name: f.name, kz: null, league: null, grp: null, filler: true });
   const n = list.length, idx = new Map(list.map((m, i) => [m.id, i])), byId = new Map(list.map(m => [m.id, m]));
   const R = new Uint8Array(n * n), CODE = { A: 1, B: 2, D: 3 };
   const can = (i, j) => i !== j && list[i].dev !== list[j].dev;   // 同じ 端末どうしは 戦わない
@@ -161,7 +163,7 @@ async function main() {
   const top = { t: now, n, reps: reps.length, top: ranked.slice(0, TOP_N).map(i => { const e = entry(i); return { id: list[i].id, name: list[i].name, pos: e.pos, pct: e.pct, pl: e.pl, tot: e.tot }; }) };
   if (LEAGUE_LIVE && lgOut.meta) top.top = [...lgOut.entry].filter(([, e]) => e.top).sort((x, y) => x[1].gp - y[1].gp).slice(0, TOP_N).map(([i, e]) => ({ id: list[i].id, name: list[i].name, pos: e.gp, pct: e.pct, pl: e.pl, tot: e.tot, L: e.L }));   // いちばん上の リーグの 順位（L: リーグ）
   const buckets = {};
-  for (let i = 0; i < n; i++) { const b = bucketOf(list[i].id); (buckets[b] = buckets[b] || { m: {} }).m[list[i].id] = lgOut.entry.has(i) ? Object.assign(entry(i), { lg: lgOut.entry.get(i) }, LEAGUE_LIVE ? { rec: lgOut.entry.get(i).rec } : {}) : entry(i); }
+  for (let i = 0; i < n; i++) { if (list[i].filler) continue; const b = bucketOf(list[i].id); (buckets[b] = buckets[b] || { m: {} }).m[list[i].id] = lgOut.entry.has(i) ? Object.assign(entry(i), { lg: lgOut.entry.get(i) }, LEAGUE_LIVE ? { rec: lgOut.entry.get(i).rec } : {}) : entry(i); }
   const changed = {};
   for (let b = 0; b < 64; b++) { const v = buckets[b] || { m: {} }, h = hashStr(JSON.stringify(v)); if (bh[b] !== h) { changed[b] = v; bh[b] = h; } }
 
