@@ -112,7 +112,7 @@ function finish(pl, { list, n, R, can, prevH, today, now }) {
       if (x === 1) beat.push([b, 'A']); else if (x === 2) lost.push([b, 'A']); if (y === 2) beat.push([b, 'B']); else if (y === 1) lost.push([b, 'B']); }
       const pick = (arr, res) => arr.sort((p, q) => sc.get(q[0]).pct - sc.get(p[0]).pct).slice(0, 3).map(([b, side]) => [list[b].id, list[b].name, res, side]);
       return pick(beat, 'W').concat(pick(lost, 'L')); };
-    const tab = rows.map(r => { const s = sc.get(r.i); entry.set(r.i, { L, g, gp: r.gp, gn: r.gn, pct: Math.round(s.pct * 1000) / 10, pl: s.pl, tot: s.tot, z: r.z, rec: recOf(r.i) }); return [r.gp, list[r.i].id, list[r.i].name, Math.round(s.pct * 1000) / 10, r.z]; });
+    const tab = rows.map(r => { const s = sc.get(r.i); entry.set(r.i, { L, g, gp: r.gp, gn: r.gn, pct: Math.round(s.pct * 1000) / 10, pl: s.pl, tot: s.tot, z: r.z, rec: recOf(r.i) }); return [r.gp, list[r.i].id, list[r.i].name, Math.round(s.pct * 1000) / 10, r.z, list[r.i].code, list[r.i].kz || null]; });   // 6・7 番目: 形・かざり（グループ表の 絵）
     const h = hashStr(JSON.stringify(tab)); H[key] = h; if ((prevH || {})[key] !== h) lgroups[key] = tab;
   }
   for (const key of Object.keys(prevH || {})) if (!(key in H)) lgroups[key] = null;   // なくなった グループ
