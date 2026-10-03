@@ -112,6 +112,7 @@
     "いちばん うえの リーグが 60 たいを こえたら、うえ はんぶんで あたらしい リーグ（マスター → グランドマスター → レジェンド）": "When the top league passes 60, its top half opens a new league (Master → Grandmaster → Legend)",
     "よる 0 じに いちばん うえの リーグの 1 いが チャンピオン": "At midnight the #1 of the top league becomes champion",
     "📖 くわしい あそびかた ›": "📖 Full guide ›",
+    "📖 ランクせんの あそびかた ›": "📖 How Ranked works ›",
     "よる 0 じに グループの うえの ほうが しょうかく・したの ほうが こうかく（ブロンズ → シルバー → ゴールド → プラチナ → ダイヤ）": "At midnight the top of each group moves up and the bottom moves down (Bronze → Silver → Gold → Platinum → Diamond)",
     "リーグは あなたの もの。とうろくしなおしても そのまま。はじめは ブロンズ": "Your league stays with you when you re-enter. Everyone starts in Bronze",
     "よる 0 じに ダイヤの 1 いが チャンピオン": "At midnight the #1 in Diamond becomes champion",

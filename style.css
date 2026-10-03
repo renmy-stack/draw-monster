@@ -605,3 +605,4 @@ body.browser #statsbox { padding-bottom: calc(16px + env(safe-area-inset-bottom)
 .rk-dia { margin-top: 6px; } .rk-dia > summary { cursor: pointer; list-style: none; } .rk-dia > summary::-webkit-details-marker { display: none; } .rk-dia > summary::before { content: '▶ '; } .rk-dia[open] > summary::before { content: '▼ '; }
 .lg-pic { width: 44px; height: 44px; border-radius: 8px; background: #241f45; display: block; }
 .rk-guide { display: inline-block; margin: 6px 0 2px; font-weight: 900; font-size: 13px; color: #6a4fb3; }
+.rk-guidetop { display: block; text-align: center; margin: 2px 0 6px; }
