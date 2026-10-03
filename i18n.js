@@ -105,7 +105,7 @@
     "けいさんちゅう（20 ぷんくらい）": "Calculating (about 20 min)",
     "ルール": "Rules",
     "みんなの モンスターと たたかった しょうりつで じゅんいが きまる": "Rank = win rate vs everyone's monsters",
-    "おなじ リーグの 50 たいの グループで じどうで そうあたり。しょうりつで じゅんいが きまる": "Auto round-robin in a group of 50 in your league. Win rate decides your place",
+    "おなじ リーグの だいたい 50 たい（30〜60 たい）の グループで じどうで そうあたり。しょうりつで じゅんいが きまる（ダイヤは ぜんいんで 1 グループ）": "Auto round-robin in a group of about 50 (30–60) in your league. Win rate decides your place (Diamond is one group)",
     "よる 0 じに グループの うえの ほうが しょうかく・したの ほうが こうかく（ブロンズ → シルバー → ゴールド → プラチナ → ダイヤ）": "At midnight the top of each group moves up and the bottom moves down (Bronze → Silver → Gold → Platinum → Diamond)",
     "リーグは あなたの もの。とうろくしなおしても そのまま。はじめは ブロンズ": "Your league stays with you when you re-enter. Everyone starts in Bronze",
     "よる 0 じに ダイヤの 1 いが チャンピオン": "At midnight the #1 in Diamond becomes champion",

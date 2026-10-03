@@ -1,14 +1,15 @@
 // ランクせん リーグ制（2026-10-03〜、オーナーと 決めた しくみ）。rank_batch.js が 使う
 // ・リーグは プレイヤー（端末）に つく。描きなおしても リーグは そのまま。はじめての 人は ブロンズ
 //   0 ブロンズ・1 シルバー・2 ゴールド・3 プラチナ・4 ダイヤ
-// ・リーグを 50 体ずつの グループに 分けて、グループの 中で 総当たり（左右 2 戦）。ダイヤは グループ 1 つ
+// ・リーグを だいたい 50 体（30〜60）の グループに 分けて、グループの 中で 総当たり（左右 2 戦）。ダイヤは グループ 1 つ
+//   60 を こえた グループは 分ける・30 を 切った グループは ほかに 空きが あれば まとめる（2026-10-03 オーナー 案 A: ルールの「50 たい」と 実際が ずれて いた）
 // ・毎日 0 時（日本時間）の はじめの 計算で: グループの 上位 UP[L] を 昇格・下位 20% を 降格（ブロンズは 降格 なし・ダイヤは 昇格 なし）
 //   上の リーグほど 昇格を 少なく（全部 同じ だと 何日かで 全リーグ 同じ 人数に なる）。試合が 半分も 終わって いない 人は 動かない
 //   動いた 人だけ 行き先の グループへ（毎日 全員を まぜると 0 時すぎに 約 10 万戦）。月曜 0 時は 全員を まぜなおす（グループの 運・ねらい撃ちを へらす）
 // ・はじめて リーグ制に する とき: 今の 全体順位の わりあいで 上位 3% ダイヤ・10% プラチナ・25% ゴールド・50% シルバー・のこり ブロンズ
 // ・CPU（dev が testdev…）は リーグに 入れない
 'use strict';
-const LG_N = 50, LG_MAX = 60, LG_MIN = 10, UP = [0.20, 0.15, 0.10, 0.08, 0], DOWN = 0.20, INIT = [0.50, 0.25, 0.10, 0.03];   // INIT[k]: これより 上なら リーグ k+1
+const LG_N = 50, LG_MAX = 60, LG_MIN = 30, UP = [0.20, 0.15, 0.10, 0.08, 0], DOWN = 0.20, INIT = [0.50, 0.25, 0.10, 0.03];   // INIT[k]: これより 上なら リーグ k+1
 const NAMES = ['ブロンズ', 'シルバー', 'ゴールド', 'プラチナ', 'ダイヤ'];
 const isCPU = m => String(m.dev).startsWith('testdev');
 const hashStr = s => { let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
@@ -68,26 +69,26 @@ function plan({ list, n, R, can, pct, meta, today }) {
       if (meta.week !== week) { for (const p of P.values()) p.g = null; log.push('月曜: 全員を まぜなおし'); }
     }
   }
-  // グループに 入れる: 入って いない 人を、その リーグの いちばん 少ない グループへ（60 体まで。いっぱいなら 新しい グループ）。ダイヤは いつも 0
+  // グループに 入れる（2026-10-03 案 A）: リーグに 何グループ いるかを きめ（だいたい 50 体・60 を こえない 数）、
+  // 入って いない 人は いちばん 少ない グループへ。30〜60 体を はみだした ときだけ 大きい グループから 小さい グループへ 何人か うつす（新しい 対戦を へらす）。ダイヤは いつも 0
   for (let L = 0; L < 5; L++) {
     const inL = [...P.entries()].filter(([, p]) => p.L === L);
     if (L === 4) { for (const [, p] of inL) p.g = 0; continue; }
-    const cnt = new Map(); for (const [, p] of inL) if (p.g != null) cnt.set(p.g, (cnt.get(p.g) || 0) + 1);
-    // 小さく なりすぎた グループ（10 体 未満）は ほかの グループへ（リーグに グループが 2 つ 以上 ある とき）
-    if (cnt.size > 1) for (const [g, c] of [...cnt]) if (c < LG_MIN) { for (const [, p] of inL) if (p.g === g) p.g = null; cnt.delete(g); }
+    if (!inL.length) continue;
+    const T = inL.length, k = Math.max(1, Math.round(T / LG_N), Math.ceil(T / LG_MAX)), mem = new Map();
+    for (const [i, p] of inL) if (p.g != null) { if (!mem.has(p.g)) mem.set(p.g, []); mem.get(p.g).push(i); }
     const free = shuffle(inL.filter(([, p]) => p.g == null).map(([i]) => i));
-    if (!cnt.size) {
-      // まだ グループが ない（はじめて・月曜）: ちょうど よい 数に 分ける
-      const k = Math.max(1, Math.round(free.length / LG_N));
-      free.forEach((i, q) => { P.get(i).g = q % k; });
-      continue;
+    let nextId = mem.size ? Math.max(...mem.keys()) + 1 : 0;
+    const smallest = () => [...mem].sort((x, y) => x[1].length - y[1].length || x[0] - y[0])[0], largest = () => [...mem].sort((x, y) => y[1].length - x[1].length || x[0] - y[0])[0];
+    while (mem.size > k) { const [g, m] = smallest(); mem.delete(g); free.push(...m); }   // 人が へった: 小さい グループを ほかへ
+    while (mem.size < k) mem.set(nextId++, []);                                          // 人が ふえた: 新しい グループ（下で 大きい グループから 分ける）
+    for (const i of free) smallest()[1].push(i);
+    for (let t = 0; t < T; t++) {
+      const [, big] = largest(), [, sm] = smallest();
+      if (big.length - sm.length <= 1 || (sm.length >= LG_MIN && big.length <= LG_MAX)) break;
+      sm.push(big.splice(Math.floor(rnd() * big.length), 1)[0]);
     }
-    let nextId = Math.max(...cnt.keys()) + 1;
-    for (const i of free) {
-      let best = null; for (const [g, c] of cnt) if (c < LG_MAX && (best == null || c < cnt.get(best))) best = g;
-      if (best == null) { best = nextId++; cnt.set(best, 0); }
-      P.get(i).g = best; cnt.set(best, cnt.get(best) + 1);
-    }
+    for (const [g, m] of mem) for (const i of m) P.get(i).g = g;
   }
   return { P, groups: groupsOf(P, list), init, week, log };
 }
