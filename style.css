@@ -568,3 +568,16 @@ body.browser #statsbox { padding-bottom: calc(16px + env(safe-area-inset-bottom)
 #statsbox .rbtns { position: sticky; bottom: -18px; margin-bottom: -18px; padding: 10px 0 18px; background: var(--paper); box-shadow: 0 -10px 10px -6px var(--paper); }
 .st-locked { margin-top: 12px; padding: 8px 10px; border: 2px dashed #ccc; border-radius: 10px; color: #999; font-size: 12px; text-align: center; line-height: 1.5; }
 .st-locked b { color: #aaa; font-size: 14px; }
+
+/* おうえん（2026-10-03〜）: そのほか の いちばん 上 */
+.supbox { display: flex; gap: 12px; align-items: center; padding: 12px; margin-bottom: 12px; border: 3px solid #ffb300; border-radius: 14px; background: linear-gradient(180deg, #fff8e1, #ffecb3); text-align: left; }
+.supbox canvas { width: 96px; height: 96px; flex: none; border-radius: 10px; background: #2a2550; }
+.sup-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; flex: 1; }
+.sup-t { font-weight: 900; font-size: 16px; }
+.sup-d { font-size: 12px; line-height: 1.5; color: #5d4a00; }
+.sup-go { display: block; text-align: center; padding: 8px 10px; border-radius: 10px; border: 3px solid var(--ink); background: #ffca28; color: var(--ink); font-weight: 900; text-decoration: none; box-shadow: 0 3px 0 var(--ink); }
+.sup-go.off { background: #eee; color: #999; border-color: #bbb; box-shadow: none; pointer-events: none; }
+.sup-code { display: flex; gap: 6px; }
+.sup-code input { flex: 1; min-width: 0; font-size: 16px; padding: 6px 8px; border: 2px solid var(--ink); border-radius: 8px; font-family: ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; }
+.sup-code button { font-size: 14px; padding: 6px 12px; }
+.sup-msg { font-size: 12px; font-weight: 700; color: #8d5a00; min-height: 1em; }

@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '186';
+const VERSION = '187';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -613,7 +613,7 @@ function drawPreview(c, d, color, anim) {
   const hat = d.kz && d.kz[0];
   if ((d.crown || d.legend || d.halo || hat) && d.body && d.body.length > 2) { const cs = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); y0 = Math.min(y0, cs.y - (d.crown ? cs.s * 0.8 : 0) - (d.legend ? cs.s * 0.95 : 0) - (d.halo ? cs.s * 0.75 : 0) - (hat ? cs.hs * 1.05 : 0)); }
   const fx = anim && d.kz && d.kz[3] && d.body && d.body.length > 2 ? d.kz[3] : 0;
-  if (fx) { const big = [24, 73, 75, 76, 78, 79, 80].includes(fx) ? 60 : 30; y0 -= 55; x0 -= big; x1 += big; y1 += 10; }   // えふぇくとの ぶん 広く（つばさ・ブラックホール などは もっと）
+  if (fx) { const big = [24, 73, 75, 76, 78, 79, 80, 84].includes(fx) ? 60 : 30; y0 -= 55; x0 -= big; x1 += big; y1 += 10; }   // えふぇくとの ぶん 広く（つばさ・ブラックホール などは もっと）
   const s = Math.min(c.width / (x1 - x0 + 40), c.height / (y1 - y0 + 40));
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
   g.setTransform(s, 0, 0, s, c.width / 2 - (x0 + x1) / 2 * s, c.height / 2 - (y0 + y1) / 2 * s);
@@ -1005,7 +1005,7 @@ onTap($('start'), showDraw);
 onTap($('tmycard'), showDraw);
 onTap($('minnaabout'), showMinnaInfo);
 // ---------- かざり（ガチャ・かざる）----------
-const kzShown = it => it && (!it.lim || ARENA_ON || kzs.own().includes(it.id));   // ちけいの 限定かざりは ちけいが 出ている 端末だけ（もって いれば 出す）
+const kzShown = it => it && (!it.sup || kzs.own().includes(it.id)) && (!it.lim || ARENA_ON || kzs.own().includes(it.id));   // おうえんの お礼（sup）は もって いる 人だけ   // ちけいの 限定かざりは ちけいが 出ている 端末だけ（もって いれば 出す）
 function kzSorted(slot) { return KZ.ITEMS.filter(it => kzShown(it) && it.slot === slot).sort((a, b) => a.r - b.r || a.id - b.id); }
 const kzOpen = new Set((() => { try { return JSON.parse(lsGet('kz.open') || '[]'); } catch (e) { return []; } })());
 // NEW: 手に 入れて から まだ 一覧で タップして いない かざり（ガチャで 自動で ついた ぶんも まだ NEW）。はじめは 持っている ものを ぜんぶ 見た ことに
@@ -2182,7 +2182,50 @@ function navSync(id) {
   nb.querySelector('[data-tab=kz]').classList.toggle('dot', KZ_ON && kzs.coins() >= KZ.PRICE);
   nb.querySelector('[data-tab=ev]').hidden = !EV_ON;
 }
-function showMore() { mode = 'more'; show('more'); }
+function showMore() { mode = 'more'; show('more'); renderSupport(); }
+// ---------- おうえん（2026-10-03〜、OFUSE）: おうえん して くれた 人に お礼の かざり「きんの はね」の コードを おくる。コードは 1 回きり（受付係 POST /code）----------
+// 金がくは いくらでも（オーナー）。見た目だけで 強さは かわらない。まずは ?supporttest の 端末だけ
+if (OWNER && /[?&]supporttest(=|&|$)/.test(location.search)) lsSet('supporttest', '1');
+const SUP_ON = devFlag('supporttest');
+const SUPPORT_URL = '';   // OFUSE の ページ（オーナーの 登録 待ち）
+const SUP_ITEM = 84;
+function renderSupport() {
+  if (!SUP_ON) return;
+  let box = $('supbox');
+  if (!box) {
+    box = document.createElement('div'); box.id = 'supbox'; box.className = 'supbox';
+    box.innerHTML = '<canvas id="supprev" width="240" height="240"></canvas><div class="sup-body"><div class="sup-t">🪽 おうえんする</div>'
+      + '<div class="sup-d">ゲームを おうえん して くれた 人に、お礼の かざり「きんの はね」の コードを おくります。金がくは いくらでも OK。見た目だけで、強さは かわりません。</div>'
+      + '<a id="supgo" class="sup-go" target="_blank" rel="noopener">OFUSE で おうえんする</a>'
+      + '<div class="sup-code"><input id="supcode" placeholder="コード" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="supok" class="sub">つかう</button></div>'
+      + '<div id="supmsg" class="sup-msg"></div></div>';
+    $('morelist').prepend(box);
+    onTap($('supok'), redeemSupport);
+    $('supcode').addEventListener('keydown', e => { if (e.key === 'Enter') redeemSupport(); });
+    $('supgo').addEventListener('click', () => TR('supgo', null));
+  }
+  const go = $('supgo');
+  if (SUPPORT_URL) { go.href = SUPPORT_URL; go.classList.remove('off'); go.textContent = 'OFUSE で おうえんする'; } else { go.removeAttribute('href'); go.classList.add('off'); go.textContent = 'じゅんび ちゅう'; }
+  const has = kzs.own().includes(SUP_ITEM);
+  if (has && !$('supmsg').textContent) $('supmsg').textContent = '✨ きんの はね を もって います。おうえん ありがとう！';
+  // じぶんの モンスターに きんの はね を つけた 絵（もって いない 人にも 見本で）
+  const base = myRobot || RB.CPU[2];
+  const d = Object.assign({}, base, { kz: [0, 0, 0, SUP_ITEM], crown: false, legend: false, halo: false, champ: 0 });
+  drawPreview($('supprev'), d, ME.color, true);
+}
+async function redeemSupport() {
+  const code = ($('supcode').value || '').toUpperCase().replace(/[^0-9A-Z]/g, ''), msg = $('supmsg');
+  if (code.length < 8) { msg.textContent = 'コードを ぜんぶ 入れてね'; return; }
+  msg.textContent = 'たしかめて います…';
+  try {
+    const r = await (await fetch(RANK_API + '/code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code }) })).json();
+    if (!r || !r.item) { msg.textContent = (r && r.error) || 'その コードは つかえないよ'; TR('supcode', { ok: 0 }); return; }
+    const own = kzs.own(); if (!own.includes(r.item)) { own.push(r.item); kzs.setOwn(own); }
+    const it = KZ.ITEMS[r.item]; if (it) { const e = kzs.eq(); e[KZ.SLOTS.indexOf(it.slot)] = r.item; kzs.setEq(e); }   // すぐ つける
+    $('supcode').value = ''; msg.textContent = '🪽 きんの はね を もらった！ もう せなかに ついて います。おうえん ありがとう！';
+    TR('supcode', { ok: 1, item: r.item }); renderSupport();
+  } catch (e) { msg.textContent = 'つながらなかったよ。すこし まってから もういちど'; }
+}
 // トップの モンスターの 絵を 枠の あいている 高さ・はばに あわせる（Safari は vh が バーの ぶん ずれるので 測る）。いちど 小さく して 枠の 大きさを 測る
 function fitTmon() {
   if (!navOn() || $('title').hidden) return;

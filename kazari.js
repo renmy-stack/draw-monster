@@ -93,6 +93,8 @@ const ITEMS = [
   { id: 81, slot: 'head', name: 'たんけんぼう', r: 3, lim: 3, desc: 'ちけいの うらを 3 つ クリアで もらえる（水平も 1 つ）' },
   { id: 82, slot: 'head', name: 'ちけいの かんむり', r: 3, lim: 6, desc: 'ちけいの うらを 6 つ クリアで もらえる（水平も 1 つ）' },
   { id: 83, slot: 'head', name: 'せかいの かんむり', r: 3, lim: 9, desc: 'ちけいの うらを 9 つ クリアで もらえる（水平も 1 つ）' },
+  // おうえん（OFUSE）の お礼（2026-10-03）。ガチャには 出ない・もって いない 人には 見せない。コードを 入れると もらえる（game.js）
+  { id: 84, slot: 'fx', name: 'きんの はね', r: 3, sup: true, desc: 'おうえん して くれた 人だけの きんの はね。せなかで はばたく' },
 ];
 const PRICE = 100, DUP_BACK = 30, RATE = [0, 0.6, 0.3, 0.1];
 const WIN = { omote: 10, ura: 30, minna: 60, kami: 120 }, CLEAR = { omote: 50, ura: 150, minna: 300, kami: 600 }, HIST_MAX = 30;   // かみ（v173）: ここに なくて コイン 0・毎回「かちすぎ」と 出て いた
@@ -142,7 +144,7 @@ function pullMulti(st, rand) {
 }
 function roll(st, rand) {
   const u = rand(); const r = u < RATE[3] ? 3 : u < RATE[3] + RATE[2] ? 2 : 1;
-  const pool = ITEMS.filter(it => it && it.r === r && !it.lim), it = pool[Math.floor(rand() * pool.length) % pool.length];
+  const pool = ITEMS.filter(it => it && it.r === r && !it.lim && !it.sup), it = pool[Math.floor(rand() * pool.length) % pool.length];
   const own = st.own(), dup = own.includes(it.id);
   if (dup) st.addCoins(DUP_BACK); else { own.push(it.id); st.setOwn(own); }
   return { item: it, dup };
@@ -771,6 +773,32 @@ function fxBackMore(g, id, info, t, w, h, cx, cy) {
       g.restore();
     }
     if (R() < 0.2) info.spawn(cx + (R() - 0.5) * w * 2.4, y0 + R() * h * 0.5, { vx: (R() - 0.5) * 40, vy: -50 - R() * 50, g: -0.06, c: R() < 0.5 ? '#ff6d00' : '#ffab40', life: 40, k: 'ember' });
+  } else if (id === 84) {   // きんの はね（おうえんの お礼）: 羽根を かさねた 金の はね・ゆっくり はばたく・光と 羽根が 舞う
+    const ay = y0 + h * 0.32, span = Math.max(h * 1.0, w * 0.85), flap = Math.sin(t * 3.2);
+    g.save(); g.globalCompositeOperation = 'lighter';
+    const gl = g.createRadialGradient(cx, ay, span * 0.2, cx, ay, span * 1.5); gl.addColorStop(0, 'rgba(255,224,130,' + (0.28 + 0.12 * wave(t, 2, 0)).toFixed(2) + ')'); gl.addColorStop(1, 'rgba(255,193,7,0)');
+    g.fillStyle = gl; g.beginPath(); g.ellipse(cx, ay, span * 1.6, span * 1.1, 0, 0, 7); g.fill(); g.restore();
+    for (const s of [-1, 1]) {
+      const ax = s < 0 ? x0 + w * 0.28 : x1 - w * 0.28;
+      g.save(); g.translate(ax, ay); g.scale(s, 1); g.rotate(-0.05 + flap * 0.22);
+      // 外がわ から 内がわへ 3 段の 羽根（長い → みじかい）
+      const rows = [[7, 1.0, 0.15, ['#e65100', '#ffa000', '#ffd54f']], [6, 0.72, 0.13, ['#ef6c00', '#ffb300', '#ffe082']], [5, 0.45, 0.11, ['#f57c00', '#ffca28', '#fff3c4']]];
+      for (const [n, len, wd, cols] of rows) for (let i = n - 1; i >= 0; i--) {
+        const a = -1.15 + i * (1.55 / (n - 1)) + flap * 0.05 * (i / n), L = span * len * (0.82 + 0.18 * Math.sin(i * 1.7 + 1));
+        g.save(); g.rotate(a);
+        g.beginPath(); g.ellipse(L * 0.5, 0, L * 0.5, span * wd, 0, 0, 7);
+        g.fillStyle = lin(g, 0, 0, L, 0, cols); g.fill();
+        g.strokeStyle = 'rgba(110,60,0,.85)'; g.lineWidth = 1.8; g.stroke();
+        g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 1; g.beginPath(); g.moveTo(L * 0.08, 0); g.lineTo(L * 0.9, 0); g.stroke();
+        g.restore();
+      }
+      // ふちの きらめき
+      g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(255,255,255,' + (0.5 + 0.4 * wave(t, 5, s)).toFixed(2) + ')';
+      const ta = -1.15 + flap * 0.05, tx = Math.cos(ta) * span * 0.95, ty = Math.sin(ta) * span * 0.95; g.beginPath(); g.arc(tx, ty, 2.6, 0, 7); g.fill(); g.restore();
+      g.restore();
+    }
+    if (R() < 0.12) info.spawn(cx + (R() - 0.5) * w * 2.6, y0 + R() * h * 0.4, { vx: (R() - 0.5) * 30, vy: 15 + R() * 20, g: 0.01, c: R() < 0.5 ? '#ffe082' : '#fff8e1', life: 90, k: 'feather', rot: R() * 6, spin: (R() - 0.5) * 0.15 });
+    if (R() < 0.15) info.spawn(cx + (R() - 0.5) * w * 2.2, y0 + R() * h * 0.6, { vx: (R() - 0.5) * 30, vy: -30 - R() * 30, g: -0.03, c: '#ffd54f', life: 40, k: 'ember' });
   } else if (id === 79) {   // ブラックホール（★★★）: うずまく ひかりの わ・すいこまれる つぶ
     const Rr = Math.max(w, h) * 0.9;
     g.save(); g.globalCompositeOperation = 'lighter';
@@ -819,6 +847,12 @@ function drawPart(g, p) {
     return true;
   }
   if (p.k === 'drop') { g.save(); g.globalAlpha = a; g.fillStyle = p.c; g.beginPath(); g.arc(p.x, p.y, 3.5, 0, 7); g.fill(); g.beginPath(); g.moveTo(p.x - 3.4, p.y - 1); g.lineTo(p.x, p.y - 8); g.lineTo(p.x + 3.4, p.y - 1); g.fill(); g.fillStyle = 'rgba(255,255,255,.8)'; g.beginPath(); g.arc(p.x - 1.2, p.y - 0.5, 1, 0, 7); g.fill(); g.restore(); return true; }
+  if (p.k === 'feather') {   // きんの はね の 舞う 羽根
+    p.rot = (p.rot || 0) + (p.spin || 0);
+    g.save(); g.globalAlpha = a; g.translate(p.x, p.y); g.rotate(p.rot + Math.sin(p.life * 0.15) * 0.5);
+    g.fillStyle = p.c; g.beginPath(); g.ellipse(0, 0, 7, 2.6, 0, 0, 7); g.fill(); g.strokeStyle = 'rgba(141,90,0,.5)'; g.lineWidth = 1; g.beginPath(); g.moveTo(-7, 0); g.lineTo(7, 0); g.stroke(); g.restore();
+    return true;
+  }
   if (p.k === 'ember' || p.k === 'wisp') {
     const r = (p.k === 'wisp' ? 5 : 3.2) * Math.min(1, p.life / 25);
     g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = a;
