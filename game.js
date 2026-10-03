@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '209';
+const VERSION = '210';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -2376,6 +2376,11 @@ for (const b of document.querySelectorAll('#navbar button')) onTap(b, () => {
 });
 resize();
 showTitle();
+// ランクせんの あそびかた（rank-guide.html）から もどって きたら ランクせんを 開く（#rank。2026-10-03 オーナー）
+if (location.hash === '#rank') { history.replaceState(null, '', location.pathname + location.search); showRank(); }
+// あそびかたへ いく ときは いまの ページを #rank に して おく（ブラウザの もどるで ページが 読みなおされても ランクせんに）
+window.addEventListener('pageshow', e => { if (location.hash === '#rank') { history.replaceState(null, '', location.pathname + location.search); if (e.persisted && mode !== 'rank') showRank(); } });   // ブラウザの もどるで ページが そのまま もどった とき（#rank は けして おく）
+for (const a of document.querySelectorAll('.rk-guide')) a.addEventListener('click', () => { try { history.replaceState(null, '', location.pathname + location.search + '#rank'); } catch (e) {} });
 loadStats();   // みんなの きろく
 onTap($('statsclose'), () => { $('statsbox').hidden = true; });
 onTap($('statsx'), () => { $('statsbox').hidden = true; });
