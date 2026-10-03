@@ -159,7 +159,7 @@ async function main() {
     return { pos: s.pos || null, pct: Math.round(pctOf(s) * 1000) / 10, pl: playedOf(s), tot: s.tot, w: s.w, l: s.l, d: s.d, rec: pickx(s.beat, 'W').concat(pickx(s.lost, 'L')), nb };
   };
   const top = { t: now, n, reps: reps.length, top: ranked.slice(0, TOP_N).map(i => { const e = entry(i); return { id: list[i].id, name: list[i].name, pos: e.pos, pct: e.pct, pl: e.pl, tot: e.tot }; }) };
-  if (LEAGUE_LIVE && lgOut.meta) top.top = [...lgOut.entry].filter(([, e]) => e.L === 4).sort((x, y) => x[1].gp - y[1].gp).slice(0, TOP_N).map(([i, e]) => ({ id: list[i].id, name: list[i].name, pos: e.gp, pct: e.pct, pl: e.pl, tot: e.tot }));   // ダイヤ リーグの 順位
+  if (LEAGUE_LIVE && lgOut.meta) top.top = [...lgOut.entry].filter(([, e]) => e.top).sort((x, y) => x[1].gp - y[1].gp).slice(0, TOP_N).map(([i, e]) => ({ id: list[i].id, name: list[i].name, pos: e.gp, pct: e.pct, pl: e.pl, tot: e.tot, L: e.L }));   // いちばん上の リーグの 順位（L: リーグ）
   const buckets = {};
   for (let i = 0; i < n; i++) { const b = bucketOf(list[i].id); (buckets[b] = buckets[b] || { m: {} }).m[list[i].id] = lgOut.entry.has(i) ? Object.assign(entry(i), { lg: lgOut.entry.get(i) }, LEAGUE_LIVE ? { rec: lgOut.entry.get(i).rec } : {}) : entry(i); }
   const changed = {};
