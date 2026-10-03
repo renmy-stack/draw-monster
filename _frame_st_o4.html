@@ -1,0 +1,10 @@
+<!DOCTYPE html><html><body style="margin:0"><iframe id="f" style="width:320px;height:700px;border:0;display:block"></iframe><script>
+const f=document.getElementById('f');f.src='index.html?gachatest&nocount';
+f.onload=()=>{const w=f.contentWindow;setTimeout(()=>{
+const it=(r,n)=>({item:{r,name:n},dup:false});
+const rs=1?[it(1,'a'),it(2,'b'),it(1,'c'),it(3,'d'),it(1,'e'),it(2,'f'),it(1,'g'),it(1,'h'),it(2,'i'),it(1,'j'),it(1,'k')]:[it(3,'x')];
+const R=w.Math.random;let k=0;w.Math.random=()=>(k++<11?0.3:R());
+w.KZStage.play({rs,multi:1===1,onDone(){}});
+setInterval(()=>w.KZStage.frame(),16);
+setTimeout(()=>{w.KZStage.tap();},3500);
+},300);};</script></body></html>

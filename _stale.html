@@ -6,15 +6,13 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#15173a">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=204">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=94">
 <link rel="manifest" href="manifest.json">
 <meta name="apple-mobile-web-app-title" content="モンスターバトル">
 <meta property="og:title" content="かいて！モンスターバトル">
 <meta property="og:description" content="からだ・うで・あし を かいて モンスターを つくろう！モンスターが あるいて パンチで たたかうよ。ともだちに モンスターを おくって しょうぶ！">
-<meta property="og:image" content="https://renmygames.com/draw-monster/icon-512.png">
-<meta name="twitter:card" content="summary">
 <title>かいて！モンスターバトル</title>
-<link rel="stylesheet" href="style.css?v=204">
+<link rel="stylesheet" href="style.css?v=94">
 <script src="/t.js?v=5"></script>
 </head>
 <body>
@@ -32,7 +30,7 @@
     </div>
     <button id="tmycard" class="mycard" hidden aria-label="じぶんの モンスターを えらぶ・なおす">
       <canvas id="tmon" width="200" height="200"></canvas>
-      <span class="mc-body"><span class="mc-h">じぶんの モンスター</span><span id="trank" hidden></span><span id="tmarks" hidden></span><span id="tmchint" class="mc-hint">タップで えらぶ・なおす</span></span>
+      <span class="mc-body"><span class="mc-h">じぶんの モンスター</span><span id="trank" hidden></span><span id="tmchint" class="mc-hint">タップで えらぶ・なおす</span></span>
     </button>
     <div id="kzrow" hidden><span id="kzcoins">🪙 0</span><button id="kzopen" class="sub">🎁 ガチャ・かざる</button></div>
     <div id="trecord" class="trecord" hidden><span class="tr-h">この スマホの きろく</span><span id="tprog"></span></div>
@@ -47,16 +45,11 @@
     <div class="modes">
       <button id="minnabtn" class="mode m-minna" hidden><b>みんなの さいきょう ぐんだん</b><small id="minnacap">うらを クリアした みんなの 5 たい</small></button>
       <button id="rankbtn" class="mode m-rank" hidden><b>ランクせん</b><small id="rankcap">みんなの モンスターと じどうで たいせん</small></button>
-      <button id="evbtn" class="mode m-ev" hidden><b>きょうの イベント<br>ランクせん</b><small id="evcap">1 にちで きまる ランクせん</small></button>
       <button id="vs" class="mode m-vs"><b>ふたりで たたかう</b><small>1 だいで 2 にんで しょうぶ</small></button>
     </div>
     <button id="minnaabout" class="linkbtn" hidden>どんな 5 たい？</button>
     <details id="collection" class="fold" hidden>
       <summary id="collsum">コレクション</summary>
-      <div id="kamibox" hidden>
-        <div class="kami-title">😇 かみごえ（タップで しょうめいしょ）</div>
-        <div id="kamilist"></div>
-      </div>
       <div id="legendbox" hidden>
         <div class="legend-title">⭐ でんせつ（タップで しょうめいしょ）</div>
         <div id="legendlist"></div>
@@ -65,10 +58,7 @@
         <div class="hall-title">👑 でんどういり</div>
         <div id="halllist"></div>
       </div>
-      <div id="thallbox" hidden></div>
     </details>
-    <button id="bkbtn" class="linkbtn" hidden>📦 データの ひきつぎ</button>
-    <button id="langbtn" class="linkbtn" hidden></button>
     <details class="fold howto">
       <summary>あそびかた・つよさ</summary>
       <h3>つくりかた</h3>
@@ -97,12 +87,8 @@
   <div class="panel">
     <div class="rk-backbar"><button id="ranktop" class="backbtn" aria-label="タイトルへ もどる">← もどる</button></div>
     <div class="rtitle">モンスター ランクせん</div>
-    <div class="nk-seg" hidden><button class="on">みんな</button><button data-go="nakama">なかま</button></div>
     <div id="ranksub" class="rk-sub"></div>
-    <a class="rk-guide rk-guidetop" href="rank-guide.html">📖 ランクせんの あそびかた ›</a>
     <div id="rankchamp" class="rk-champ" hidden></div>
-    <button id="rankhistbtn" class="ev-histbtn">👑 れきだいの チャンピオン</button>
-    <div id="rankhist" class="hist" hidden></div>
     <div class="rk-h">あなたの モンスター</div>
     <div id="rankme"></div>
     <div id="rankreg">
@@ -113,75 +99,14 @@
       <div id="rankreghint" class="rk-note"></div>
     </div>
     <div id="rankmsg" class="rk-msg"></div>
-    <div class="rbtns small"><button id="rankdraw" class="sub">モンスターを つくる・なおす</button></div>
-    <div id="rankmore"></div>
-    <details id="rankdia" class="rk-dia"><summary class="rk-h">💎 ダイヤ リーグを みる（タップで れんしゅうじあい）</summary>
+    <div class="rk-h">ランキング（タップで れんしゅうじあい）</div>
     <div id="ranklist"></div>
-    </details>
     <div class="rbtns small">
+      <button id="rankdraw" class="sub">モンスターを つくる・なおす</button>
       <button id="rankback" class="sub">タイトルへ</button>
     </div>
   </div>
 </div>
-
-<div id="ev" hidden>
-  <div class="panel">
-    <div class="rk-backbar"><button id="evtop" class="backbtn" aria-label="タイトルへ もどる">← もどる</button></div>
-    <div class="rtitle">きょうの イベント ランクせん</div>
-    <div id="evsub" class="rk-sub"></div>
-    <div class="ev-theme"><canvas id="evthemecv" width="200" height="200"></canvas><div><div id="evday" class="ev-day"></div><div id="evname" class="ev-name"></div><div id="evhint" class="rk-note"></div></div></div>
-    <details class="rk-rules"><summary>ルール</summary><ul><li>きょうの お題の パーツは みんな おなじ かたち（かえられない）</li><li>ほかの 2 つを かいて だすと、みんなと じどうで たたかって じゅんいが きまる</li><li>なんかいでも だしなおせる（さいごに だした 1 たいで きまる）</li><li>よる 0 じに しめきり。1 いに 🎀 リボン</li><li>つぎの 日は べつの お題</li></ul></details>
-    <div id="evchamp" class="rk-champ ev-champ" hidden></div>
-    <button id="evhistbtn" class="ev-histbtn">🎀 れきだいの いちばん</button>
-    <div id="evhist" class="hist" hidden></div>
-    <div class="rk-h ev-h">あなたの イベント モンスター</div>
-    <div id="evme"></div>
-    <div id="evreg">
-      <canvas id="evprev" width="240" height="240"></canvas>
-      <label class="rk-label" for="evnm">なまえ（10 もじまで）</label>
-      <input id="evnm" maxlength="10" autocomplete="off" placeholder="モンスターの なまえ">
-      <div class="rbtns"><button id="evregbtn" class="main ev-main">この モンスターで だす</button></div>
-      <div id="evreghint" class="rk-note"></div>
-    </div>
-    <div class="rbtns"><button id="evdraw" class="main ev-main">イベントの モンスターを かく</button></div>
-    <div id="evmsg" class="rk-msg"></div>
-    <div class="rk-h ev-h">きょうの ランキング（タップで れんしゅうじあい）</div>
-    <div id="evlist"></div>
-    <div class="rbtns small"><button id="evback" class="sub">タイトルへ</button></div>
-  </div>
-</div>
-
-<div id="nakama" hidden>
-  <div class="panel">
-    <div class="rtitle">モンスター ランクせん</div>
-    <div class="nk-seg"><button data-go="rank">みんな</button><button class="on">なかま</button></div>
-    <div class="rk-sub">なかまで そうあたりして じゅんいを くらべよう（ランクせんに とうろくした モンスターで たたかう）</div>
-    <div id="nkpreview" class="nk-box" hidden></div>
-    <div id="nkgroups" class="nk-groups"></div>
-    <div id="nkform" class="nk-box" hidden>
-      <label class="rk-label" for="nkin" id="nklabel"></label>
-      <input id="nkin" maxlength="10" autocomplete="off">
-      <div class="rbtns"><button id="nkgo" class="main"></button></div>
-    </div>
-    <div id="nkmsg" class="rk-msg"></div>
-    <div id="nkboard"></div>
-  </div>
-</div>
-
-<div id="more" hidden>
-  <div class="panel">
-    <div class="rtitle">そのほか</div>
-    <div id="morelist"></div>
-  </div>
-</div>
-
-<nav id="navbar" hidden>
-  <button data-tab="home"><i>⚔️</i><span>ぼうけん</span></button>
-  <button data-tab="rank"><i>🏆</i><span>ランクせん</span></button>
-  <button data-tab="ev"><i>🎀</i><span>イベント</span></button>
-  <button data-tab="kz"><i>🎁</i><span>ガチャ</span></button>
-  <button data-tab="more"><i>☰</i><span>そのほか</span></button>
-</nav>
 
 <div id="draw" hidden>
   <div class="tabs">
@@ -248,22 +173,6 @@
   </div>
 </div>
 
-<div id="bkbox" hidden>
-  <div class="panel">
-    <div class="rtitle">データの ひきつぎ</div>
-    <div class="note">きしゅへんこう や べつの ブラウザ（X の なか → Safari など）に、コイン・かざり・ほぞん・きろく・ランクせん を うつせるよ</div>
-    <div class="bk-h">この スマホの データを あずける</div>
-    <div id="bkcode" class="bk-code" hidden></div>
-    <div id="bkuntil" class="bk-until"></div>
-    <div class="rbtns"><button id="bksave" class="main">データを あずける</button></div>
-    <div class="bk-h">べつの スマホの データを うけとる</div>
-    <input id="bkin" class="bk-in" maxlength="9" placeholder="K7M2-QX9P" autocapitalize="characters" autocomplete="off" spellcheck="false">
-    <div class="rbtns"><button id="bkload" class="sub">うけとる</button></div>
-    <div id="bkmsg" class="bk-msg"></div>
-    <div class="rbtns small"><button id="bkclose" class="sub">とじる</button></div>
-  </div>
-</div>
-
 <div id="minnainfo" hidden>
   <div class="panel">
     <div class="minna-title">みんなの<br>さいきょう ぐんだん</div>
@@ -309,20 +218,10 @@
   <div id="kzflash" hidden></div>
 </div>
 
-<div id="statsbox" hidden>
-  <div class="panel">
-    <button id="statsx" class="st-x" aria-label="とじる">✕</button>
-    <div class="st-title">みんなの きろく</div>
-    <div class="st-tabs" id="statstabs"></div>
-    <div id="statslist"></div>
-    <div class="st-note" id="statsnote"></div>
-    <div class="rbtns small"><button id="statsclose" class="sub">とじる</button></div>
-  </div>
-</div>
 <div id="certbox" hidden>
   <div class="panel">
-    <div class="cert-note" id="certnote">でんせつ しょうめいしょ（ながおしで ほぞん）</div>
-    <img id="certimg" alt="">
+    <div class="cert-note">でんせつ しょうめいしょ（ながおしで ほぞん）</div>
+    <img id="certimg" alt="でんせつ しょうめいしょ">
     <div class="rbtns"><button id="certshare" class="main" hidden>シェア（X など）</button></div>
     <div class="rbtns small"><button id="certclose" class="sub">とじる</button></div>
   </div>
@@ -340,13 +239,7 @@
   </div>
 </div>
 
-<script src="sim.js?v=204"></script>
-<script src="event.js?v=204"></script>
-<script src="arena_cpu.js?v=204"></script>
-<script src="arena.js?v=204"></script>
-<script src="kazari.js?v=204"></script>
-<script src="kzstage.js?v=204"></script>
-<script src="i18n.js?v=204"></script>
-<script src="game.js?v=204"></script>
+<script src="sim.js?v=94"></script>
+<script src="game.js?v=94"></script>
 </body>
 </html>

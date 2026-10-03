@@ -482,7 +482,7 @@ body.nav #title .modes, body.nav #kzrow, body.nav #ranktop, body.nav #evtop, bod
 body.nav #title, body.nav #rank, body.nav #ev, body.nav #more { align-items: stretch; padding-top: 10px; padding-left: 10px; padding-right: 10px; }
 body.nav #title .panel, body.nav #rank .panel, body.nav #ev .panel, body.nav #more .panel { width: 100%; max-width: 520px; margin: 0 auto; max-height: none; height: 100%; }
 body.nav #title .panel { display: flex; flex-direction: column; }
-body.nav #tmycard { flex: 1 1 auto; min-height: 0; overflow: hidden; flex-direction: column; justify-content: center; text-align: center; gap: 6px; margin-top: 12px; }
+body.nav #tmycard { flex: 1 1 auto; min-height: 96px; overflow: hidden; flex-direction: column; justify-content: center; text-align: center; gap: 6px; margin-top: 12px; }   /* X の アプリ内 ブラウザなど 縦が みじかい ときも つぶさず、わくを スクロール */
 body.nav #tmycard canvas { width: 60px; height: 60px; border-radius: 16px; }
 body.nav #tmycard.row { flex-direction: row; text-align: left; gap: 10px; }   /* 縦が 足りない ときの 横ならび（fitTmon） */
 body.nav #tmycard.row .mc-body { align-items: flex-start; flex: 1 1 0; min-width: 0; }   /* 大きさは game.js の fitTmon で 枠の あいている ぶんに あわせる */
@@ -492,6 +492,7 @@ body.nav #adv { margin-top: auto; padding-top: 12px; }
 
 body.nav #tmycard.empty canvas { background: #1f2250 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='64' font-size='46' text-anchor='middle' fill='%237c83ff'%3E✏%3C/text%3E%3C/svg%3E") center / 55% no-repeat; }
 body.nav #title .logo { font-size: min(34px, 9vw); }
+@media (max-height: 640px) { body.nav #title .logo { font-size: min(24px, 6.5vw); } }   /* 縦が みじかい（X の アプリ内 ブラウザ）ときは 題を 小さく して たたかうを 画面に のこす */
 body.nav #title .lead { display: none; }
 body.nav .advrow { display: flex; gap: 8px; align-items: stretch; margin: 10px 0 6px; }
 body.nav .advrow .advgo { flex: 2.4 1 0; min-width: 0; margin: 0; padding: 8px 6px; font-size: 22px; }

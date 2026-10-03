@@ -1,0 +1,15 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="margin:0"><iframe id="f" style="width:390px;height:844px;border:0;display:block"></iframe><script>
+const f=document.getElementById('f');
+f.onload=()=>{};
+// 受付係の 返事を 差しかえて（本物に 書かない）ランキングの 見た目だけ 確かめる
+const C='EMxdxnS2h52TgJhjk0qHOnQ0XTpHSjNjJ4AinSe2M8ZHBYCAh5OYcpyXonYRgIB6fHh1eW59Z4NjimGRYphmnGyec516mYGThYyHhIZ-gg';
+f.src='index.html?nocount&use='+C;
+f.addEventListener('load',()=>{const w=f.contentWindow;const posts=[];
+ w.fetch=async(u,o)=>{u=String(u);if(o&&o.method==='POST'){posts.push(u+' '+o.body);return {json:async()=>({ok:true,kz:JSON.parse(o.body).kz})};}
+  if(u.includes('/top'))return {json:async()=>({season:'2026-09-29',count:3,top:[{id:'a1',name:'ドラゴン',pct:90,code:C,kz:'36,50,64,78'},{id:'a2',name:'ねこ',pct:70,code:C,kz:'25,39,14,67'},{id:'me1',name:'じぶん',pct:50,code:C,kz:null}],champion:null})};
+  if(u.includes('/me'))return {json:async()=>({me:{id:'me1',name:'ぽこちん',code:C,kz:null,hidden:1,pos:3,count:3,pct:50,w:1,l:1,d:0,total:2,pl:2,recent:[]}})};
+  return {json:async()=>({})};};
+ w.localStorage.setItem('drawrobot.kz.eq','[6,12,17,24]');
+ setTimeout(()=>{w.eval("showRank()");setTimeout(()=>{const o=document.createElement('pre');o.id='o';o.textContent='posts='+posts.join(';');document.body.appendChild(o);},800);},600);
+},{once:true});
+</script></body></html>

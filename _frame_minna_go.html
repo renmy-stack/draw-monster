@@ -1,0 +1,5 @@
+<!DOCTYPE html><html><body style="margin:0;background:#888"><div id="log" style="position:absolute;z-index:9;background:#ff0;font:12px monospace"></div><iframe id="f" style="width:390px;height:844px;border:0;display:block;transform:scale(.66);transform-origin:0 0"></iframe>
+<script>const A='EMxdxnS2h52TgJhjk0qHOnQ0XTpHSjNjJ4AinSe2M8ZHBYCAh5OYcpyXonYRgIB6fHh1eW59Z4NjimGRYphmnGyec516mYGThYyHhIZ-gg';const log=m=>document.getElementById('log').textContent+=m+' | ';
+document.getElementById('f').src='index.html?use='+A+'&ura&stage=4&shot=90&result';
+setTimeout(()=>{const w=document.getElementById('f').contentWindow,d=w.document;try{w.finishEnding()}catch(e){}
+ d.getElementById('next').click();setTimeout(()=>{log('紹介 '+(d.getElementById('minnainfo').hidden?'閉':'開')+' mode='+w.eval('mode'));d.getElementById('minnaclose').click();setTimeout(()=>log('閉じた後 mode='+w.eval('mode')+' side='+w.eval('S&&S.side')),500)},500)},9000);</script></body></html>
