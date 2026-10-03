@@ -113,6 +113,7 @@
     "リーグは あなたの もの。とうろくしなおしても そのまま。はじめは ブロンズ": "Your league stays with you when you re-enter. Everyone starts in Bronze",
     "よる 0 じに ダイヤの 1 いが チャンピオン": "At midnight the #1 in Diamond becomes champion",
     "げつようの 0 じに グループを まぜなおす": "Groups are reshuffled every Monday at midnight",
+    "グループの くみかえは よる 0 じだけ（とちゅうで きた ひとは あいている グループへ）。げつようの 0 じは ぜんいんを まぜなおす": "Groups only change at midnight (newcomers join a group with room). Everyone is reshuffled on Monday at midnight",
     "7 にち あそばないと おやすみ（ひらくと おなじ リーグに もどる）": "Rest after 7 days away (back to the same league when you open)",
     "💎 ダイヤ リーグ（タップで れんしゅうじあい）": "💎 Diamond league (tap for a practice match)",
     "💎 ダイヤ リーグを みる（タップで れんしゅうじあい）": "💎 See the Diamond league (tap for a practice match)",

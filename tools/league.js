@@ -62,7 +62,7 @@ function plan({ list, n, R, can, pct, meta, today }) {
   list.forEach((m, i) => { if (!isCPU(m)) P.set(i, { dev: m.dev, L: m.league == null ? null : +m.league, g: m.grp == null ? null : +m.grp, L0: m.league == null ? null : +m.league, g0: m.grp == null ? null : +m.grp }); });
   let seed = hashStr(today); const rnd = () => (seed = (Math.imul(seed, 1103515245) + 12345) >>> 0) / 4294967296;
   const shuffle = a => { for (let k = a.length - 1; k > 0; k--) { const r = Math.floor(rnd() * (k + 1)); [a[k], a[r]] = [a[r], a[k]]; } return a; };
-  const init = !meta;
+  const init = !meta, rollover = init || meta.day !== today;   // rollover: 0 時（その日 はじめての 計算）。グループの 組みかえは この ときだけ
   if (init) {
     // はじめて: 今の 全体順位の わりあいで（まだ 順位の ない 人は ブロンズ）
     const ranked = [...P.keys()].filter(i => pct(i) >= 0).sort((a, b) => pct(b) - pct(a)), N = ranked.length;
@@ -94,7 +94,23 @@ function plan({ list, n, R, can, pct, meta, today }) {
       if (meta.week !== week) { for (const p of P.values()) p.g = null; log.push('月曜: 全員を まぜなおし'); }
     }
   }
-  // グループに 入れる: いちばん上は 1 グループ。ほかは リーグに 何グループ いるかを きめ（だいたい 50 体・60 を こえない 数）、
+  // 1 日の とちゅう（2026-10-03 オーナー「グループ移動は 0 時だけ」）: 前から いる 人は 動かさない。新しい 人・お休みから もどった 人だけ 空きの ある いちばん 少ない グループへ（60 体まで）。
+  //   全部 いっぱいなら 新人用の グループを 作る（その日は 小さくても よい。0 時に ならす）
+  if (!rollover) {
+    for (let L = 0; L <= top; L++) {
+      const inL = [...P.entries()].filter(([, p]) => p.L === L);
+      if (L === top) { for (const [, p] of inL) p.g = 0; continue; }
+      const cnt = new Map(); for (const [, p] of inL) if (p.g != null) cnt.set(p.g, (cnt.get(p.g) || 0) + 1);
+      let nextId = cnt.size ? Math.max(...cnt.keys()) + 1 : 0;
+      for (const i of shuffle(inL.filter(([, p]) => p.g == null).map(([i]) => i))) {
+        let best = null; for (const [g, c] of cnt) if (c < LG_MAX && (best == null || c < cnt.get(best))) best = g;
+        if (best == null) { best = nextId++; cnt.set(best, 0); }
+        P.get(i).g = best; cnt.set(best, cnt.get(best) + 1);
+      }
+    }
+    return { P, groups: groupsOf(P, list), init, week, top, log };
+  }
+  // 0 時: グループに 入れる: いちばん上は 1 グループ。ほかは リーグに 何グループ いるかを きめ（だいたい 50 体・60 を こえない 数）、
   // 入って いない 人は いちばん 少ない グループへ。グループの 数が かわった・30〜60 を はみだした・差が 5 より 大きい ときだけ 大きい グループから 小さい グループへ うつす
   for (let L = 0; L <= top; L++) {
     const inL = [...P.entries()].filter(([, p]) => p.L === L);
