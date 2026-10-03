@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '211';
+const VERSION = '212';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1315,7 +1315,7 @@ function renderRank() {
     if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。だいたい 2〜3 ぷんで ランキングに もどるよ'; box.append(b); }
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ。なまえを かえて とうろくしなおしてね'; box.append(h); }
     const rec = me.recent || [];
-    if (rec.length) {
+    if (rec.length && !BOXT) {   // ?boxtest: つよい あいてとの たいせん は 出さない（オーナー「いらない」）
       const lt = document.createElement('div'); lt.className = 'rk-h'; lt.textContent = 'つよい あいてとの たいせん（タップで リプレイ）'; more.append(lt);
       for (const r of rec) {
         const row = document.createElement('button'); row.className = 'rk-row';
