@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '190';
+const VERSION = '191';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -129,12 +129,14 @@ if (ARENA_OWNER && /[?&]arenanew(=|&|$)/.test(location.search)) lsSet('arenanew'
 let srvDay = lsGet('srvday') || '';
 const terrainList = () => ARENA_ON ? ARENA.TERRAINS.filter(t => ARENA.released(t, srvDay) || (ARENA_OWNER && lsGet('arenanew') === '1')) : [];
 let TERRAINS = terrainList();
+// 出て 2 日（出た 日と 次の 日）は NEW。その 地形を 一度 えらんだら 消す（2026-10-03 オーナー OK）
+const terNew = t => !!(t.from && srvDay && srvDay >= t.from && Date.parse(srvDay) - Date.parse(t.from) <= 864e5 && lsGet(tpre(t.key) + 'seen') !== '1');
 function noteServerDate(h) {
   const t = Date.parse(h || ''); if (!t) return;
   const d = new Date(t + 9 * 3600e3).toISOString().slice(0, 10); if (d <= srvDay) return;
   srvDay = d; lsSet('srvday', d);
   const n = TERRAINS.length; TERRAINS = terrainList();
-  if (TERRAINS.length !== n && mode === 'title') renderRoad();
+  if ((TERRAINS.length !== n || TERRAINS.some(terNew)) && mode === 'title') renderRoad();   // 日が かわると NEW も かわる
 }
 let terrain = TERRAINS.some(t => t.key === lsGet('terrain')) ? lsGet('terrain') : 'flat';
 function terrInfo() { return terrain === 'flat' ? null : TERRAINS.find(t => t.key === terrain); }   // 水平（いまの ぼうけん）は null
@@ -315,7 +317,8 @@ function renderRoad() {
       const op = terrainOpen(i), b = document.createElement('button');
       b.className = 'tr-chip' + (terrain === t.key ? ' sel' : '') + (op ? '' : ' locked') + (lsGet(tpre(t.key) + 'cleared') === '1' ? ' done' : '');
       b.textContent = op ? t.name : '？？？'; b.disabled = !op;
-      if (op) onTap(b, () => { if (terrain === t.key) return; terrain = t.key; lsSet('terrain', terrain); side = 'omote'; lsSet('side', side); loadSide(); TR('terrain', { t: terrain }); showTitle(); });
+      if (terNew(t)) { b.classList.add('new'); const nb = document.createElement('i'); nb.className = 'tr-new'; nb.textContent = 'NEW'; b.appendChild(nb); }
+      if (op) onTap(b, () => { lsSet(tpre(t.key) + 'seen', '1'); if (terrain === t.key) return; terrain = t.key; lsSet('terrain', terrain); side = 'omote'; lsSet('side', side); loadSide(); TR('terrain', { t: terrain }); showTitle(); });
       tr.appendChild(b);
     });
   }
