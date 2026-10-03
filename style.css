@@ -619,3 +619,4 @@ body.nav.tidy #kzbox .panel { width: 100%; max-width: 520px; margin: 0 auto; max
 body.nav.tidy #kzclose { display: none !important; }
 .kz-fold summary { cursor: pointer; font-weight: 800; color: #777; list-style-position: inside; }
 .kz-fold .kz-foldt { margin-top: 4px; }
+body.nav .adv-h { display: none; }   /* 2026-10-03 オーナー: 下の タブに「ぼうけん」が ある ので 見出しは いらない */
