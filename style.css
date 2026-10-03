@@ -585,8 +585,17 @@ body.browser #statsbox { padding-bottom: calc(16px + env(safe-area-inset-bottom)
 .sup-msg { font-size: 12px; font-weight: 700; color: #8d5a00; min-height: 1em; }
 
 /* リーグ（2026-10-03〜）: ランクせんの じぶんの モンスターの 名前の 下 */
-.rk-league { display: inline-flex; gap: 6px; align-items: baseline; margin-top: 4px; padding: 3px 10px; border-radius: 999px; border: 2px solid var(--ink); font-size: 13px; }
+.rk-league { display: inline-flex; flex-wrap: wrap; column-gap: 6px; align-items: baseline; margin-top: 4px; padding: 3px 10px; border-radius: 999px; border: 2px solid var(--ink); font-size: 13px; }
 .rk-league b { font-weight: 900; } .rk-league span { font-size: 12px; font-variant-numeric: tabular-nums; }
 .lg-dia { background: linear-gradient(90deg, #e0f7fa, #b2ebf2, #e1bee7); } .lg-plat { background: #e3f2fd; } .lg-gold { background: #fff3c4; } .lg-silver { background: #eceff1; } .lg-bronze { background: #f3e0d2; }
 .rk-lgsub { font-size: 11.5px; color: #555; margin-top: 3px; }
 .rk-up { margin-top: 4px; font-size: 12.5px; font-weight: 900; color: #d84315; }
+
+/* リーグの グループ順位表（2026-10-03〜） */
+.lg-tab { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 10px; }
+.lg-row { display: grid; grid-template-columns: 2.4em minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 10px; border: 0; border-radius: 8px; background: #fff; text-align: left; font-size: 13px; font-weight: 700; color: var(--ink); }
+.lg-row .lg-p { font-variant-numeric: tabular-nums; color: #777; text-align: right; } .lg-row .lg-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .lg-row .lg-w { font-variant-numeric: tabular-nums; font-size: 12px; color: #555; }
+.lg-row.up { background: #e8f5e9; } .lg-row.down { background: #ffebee; } .lg-row.hold .lg-w { color: #999; }
+.lg-row.mine { outline: 3px solid var(--hot); outline-offset: -3px; }
+.lg-line { font-size: 11px; font-weight: 900; text-align: center; padding: 2px 0; } .lg-line.up { color: #2e7d32; border-bottom: 2px dashed #66bb6a; } .lg-line.down { color: #c62828; border-top: 2px dashed #ef5350; }
+.rk-league b, .rk-league span { white-space: nowrap; }
