@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '200';
+const VERSION = '201';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1315,7 +1315,7 @@ function renderRank() {
   const same = me && myRobot && plainCode(myRobot) === me.code;
   $('rankreg').hidden = !myRobot || (same && !(me && me.hidden));   // 非表示に された ときは 同じ モンスターでも 名前を かえて 登録しなおせる
   $('rankregbtn').textContent = me ? 'いまの モンスターで とうろくしなおす' : 'いまの モンスターで とうろく';
-  $('rankreghint').textContent = me && me.hidden ? 'あたらしい なまえで とうろくしなおしてね' : me ? 'とうろくしなおすと みんなと たたかい なおして じゅんいが きまるよ' : '';
+  $('rankreghint').textContent = me && me.hidden ? 'あたらしい なまえで とうろくしなおしてね' : me ? (LG_ON && me.lg ? 'とうろくしなおしても リーグは そのまま（' + LGR[me.lg.L].mark + ' ' + LGR[me.lg.L].name + '）。グループの みんなと たたかいなおすよ' : 'とうろくしなおすと みんなと たたかい なおして じゅんいが きまるよ') : '';
   if (myRobot) drawPreview($('rankprev'), myRobot, ME.color);
   if (!$('rankname').value && me && !me.hidden) $('rankname').value = me.name;
   // ランキング
