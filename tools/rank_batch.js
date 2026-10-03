@@ -180,7 +180,13 @@ async function main() {
   if (lgOut.meta) body.lg_meta = lgOut.meta;
   // RANK_DRY=1 は お試し（書き戻さない・キャッシュも 保存しない）
   if (process.env.RANK_DRY) { console.log('お試し: 代表', reps.length, '上位', top.top.slice(0, 5).map(x => x.pos + ' ' + x.name + ' ' + x.pct + '% ' + x.pl + '/' + x.tot).join(' / '), '固定', (rep.fixed || []).length, '上位代表', (rep.top || []).length); return; }
-  const res = await (await fetch(API + '/admin/board', { method: 'POST', headers: H, body: JSON.stringify(body) })).json();
+  // 受付係が いっしゅん 'busy'（D1 が つかえない）を 返す ことが ある（2026-10-03 23:41 に 1 回）→ 20 びょう まって 3 回まで ためす
+  let res = null;
+  for (let k = 0; k < 3 && !res; k++) {
+    if (k) { console.log('board: busy → まって もう 1 回 (' + (k + 1) + ')'); await new Promise(r => setTimeout(r, 20e3)); }
+    const rr = await fetch(API + '/admin/board', { method: 'POST', headers: H, body: JSON.stringify(body) }), tx = await rr.text();
+    try { res = JSON.parse(tx); } catch (e) { if (k === 2) throw new Error('board 失敗 ' + rr.status + ' ' + tx.slice(0, 80)); }
+  }
   if (!res.ok) throw new Error('board 失敗 ' + JSON.stringify(res));
   // 順位表の ファイル（.board/top.json → rank.yml が board 枝へ）。ゲームは まず これを 読む（受付係への 通信を へらす）。形は GET /top と おなじ
   {
