@@ -17,6 +17,7 @@ const API = process.env.RANK_API || 'https://renmy-rank.renmy-stack.workers.dev'
 const KEY = process.env.RANK_ADMIN;
 const TIME_LIMIT = +(process.env.RANK_TIME || 8 * 60e3), MAX_TODO = 400000, TOP_N = 30, CHAMP_MIN = 20;   // チャンピオンは 20 戦 以上（総当たりが 20 戦 未満 なら 全員と 戦い おわって いれば よい）
 const REP_MAX = +(process.env.RANK_REP || 500), REP_TOP = Math.round(REP_MAX / 5);
+const LEAGUE_LIVE = process.env.RANK_LEAGUE !== '0';   // 2026-10-03〜 リーグ制が 本番（RANK_LEAGUE=0 で 前の 全体順位に もどす）
 const CACHE = path.join(__dirname, '..', '.rankcache', 'pairs.json');
 
 const seasonOf = t => new Date(t + 9 * 3600e3).toISOString().slice(0, 10);
@@ -112,7 +113,7 @@ async function main() {
   const isRep = new Uint8Array(n); for (const r of reps) isRep[r] = 1;
 
   // リーグ制（2026-10-03〜、tools/league.js）: リーグと グループを きめて（0 時の 昇格・降格・月曜の まぜなおし も ここ）、グループ内の 対戦を さきに 計算する
-  // 試す あいだは 今の 全体順位と ならべて 計算する（ゲームは まだ 全体順位を 見せる。リーグは ?leaguetest の 端末だけ）
+  // LEAGUE_LIVE（2026-10-03 全員に）: 全体の 代表戦は もう 計算しない（キャッシュに ある ぶんだけ）。上位の 表と チャンピオンは ダイヤ リーグ。対戦の 例は グループの 中から
   const LG = require('./league.js'), stPre = statsOf(reps);
   const lgPlan = LG.plan({ list, n, R, can, pct: i => playedOf(stPre[i]) ? pctOf(stPre[i]) : -1, meta: act.lg_meta, today });
   if (lgPlan) for (const s of lgPlan.log) console.log('リーグ: ' + s); else console.log('リーグ: 計算ずみが 少ないので この 回は リーグ分けを しない');
@@ -120,7 +121,7 @@ async function main() {
   // 2) まだの 組み合わせ（代表との 左右 2 戦）を、計算ずみが 少ない モンスターから
   const done = new Array(n).fill(0);
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (R[i * n + j]) { done[i]++; done[j]++; }
-  const order = list.map((m, i) => i).sort((a, b) => done[a] - done[b]);
+  const order = LEAGUE_LIVE ? [] : list.map((m, i) => i).sort((a, b) => done[a] - done[b]);
   const todo = [], want = new Set();
   if (lgPlan) for (const [i, j] of LG.todo(lgPlan, R, n, can)) { const k = i * n + j; if (!want.has(k)) { want.add(k); todo.push([i, j, list[i].code, list[j].code]); } }   // リーグの グループ内を さきに
   const lgTodo = todo.length;
@@ -158,8 +159,9 @@ async function main() {
     return { pos: s.pos || null, pct: Math.round(pctOf(s) * 1000) / 10, pl: playedOf(s), tot: s.tot, w: s.w, l: s.l, d: s.d, rec: pickx(s.beat, 'W').concat(pickx(s.lost, 'L')), nb };
   };
   const top = { t: now, n, reps: reps.length, top: ranked.slice(0, TOP_N).map(i => { const e = entry(i); return { id: list[i].id, name: list[i].name, pos: e.pos, pct: e.pct, pl: e.pl, tot: e.tot }; }) };
+  if (LEAGUE_LIVE && lgOut.meta) top.top = [...lgOut.entry].filter(([, e]) => e.L === 4).sort((x, y) => x[1].gp - y[1].gp).slice(0, TOP_N).map(([i, e]) => ({ id: list[i].id, name: list[i].name, pos: e.gp, pct: e.pct, pl: e.pl, tot: e.tot }));   // ダイヤ リーグの 順位
   const buckets = {};
-  for (let i = 0; i < n; i++) { const b = bucketOf(list[i].id); (buckets[b] = buckets[b] || { m: {} }).m[list[i].id] = lgOut.entry.has(i) ? Object.assign(entry(i), { lg: lgOut.entry.get(i) }) : entry(i); }
+  for (let i = 0; i < n; i++) { const b = bucketOf(list[i].id); (buckets[b] = buckets[b] || { m: {} }).m[list[i].id] = lgOut.entry.has(i) ? Object.assign(entry(i), { lg: lgOut.entry.get(i) }, LEAGUE_LIVE ? { rec: lgOut.entry.get(i).rec } : {}) : entry(i); }
   const changed = {};
   for (let b = 0; b < 64; b++) { const v = buckets[b] || { m: {} }, h = hashStr(JSON.stringify(v)); if (bh[b] !== h) { changed[b] = v; bh[b] = h; } }
 

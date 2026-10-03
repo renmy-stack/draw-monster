@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '193';
+const VERSION = '194';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1212,11 +1212,13 @@ function showRank(msg) {
 // ---------- リーグ と 成長（2026-10-03〜、まずは ?leaguetest の 端末だけ）----------
 // 950 体中 何百位 だと 次の 目標が 見えない → 順位の わりあいで 5 つの リーグに 分け、リーグの 中の 順位と「あと ○ い で 次の リーグ」を 出す
 // 上がった ときは「○ い アップ」「○○ に あがった」「じこベスト」を 出す（端末に 前の 順位を おぼえる）。総当たりの 計算は 今の まま
-if (OWNER && /[?&]leaguetest(=|&|$)/.test(location.search)) lsSet('leaguetest', '1');
-const LG_ON = devFlag('leaguetest');
+const LG_ON = true;   // 2026-10-03 全員に（オーナー OK。前は ?leaguetest の 端末だけ）
 // 0 ブロンズ … 4 ダイヤ（tools/league.js と 同じ）。LG_UP: 0 時に 昇格する わりあい・LG_DOWN: 降格（グループの 下から）
 const LGR = [{ k: 'bronze', name: 'ブロンズ', mark: '🥉' }, { k: 'silver', name: 'シルバー', mark: '🥈' }, { k: 'gold', name: 'ゴールド', mark: '🥇' }, { k: 'plat', name: 'プラチナ', mark: '🔷' }, { k: 'dia', name: 'ダイヤ', mark: '💎' }];
 const LG_UP = [0.20, 0.15, 0.10, 0.08, 0], LG_DOWN = 0.20;
+// リーグの みじかい 一言: 「🥇 ゴールド グループ 3・14 い」
+const lgShort = L => LGR[L.L].mark + ' ' + LGR[L.L].name + (L.L < 4 ? ' グループ ' + (L.g + 1) : '') + '・' + L.gp + ' い';
+const lgZone = L => L.z === 'hold' ? 'けいさんちゅう' : L.z === 'up' ? '⬆ しょうかく ライン' : L.z === 'down' ? '⬇ こうかく ライン' : L.L === 4 && L.gp === 1 ? '💎 1 い' : '';
 // 前と くらべて ほめる ことば（1 日 だけ 出す）。rank.prog = {id, L, g, gp, bestL, msg, at}
 function rankProgress(me) {
   const lg = me && me.lg; if (!lg) return { msg: '', bestL: null };
@@ -1282,7 +1284,7 @@ function renderRank() {
     if (me.champ) { const c = document.createElement('div'); c.className = 'rk-champbadge'; c.textContent = '👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく！）' : '！'); info.append(c); }
     head.append(info); box.append(head);
     if (LG_ON && me.lg && !me.hidden) renderLeagueGroup(box, me);
-    if (CARD_ON && me.pos && !me.hidden) { const cb = document.createElement('button'); cb.className = 'main rk-card'; cb.textContent = '📸 じゅんい カードを つくる'; cb.addEventListener('click', () => showRankCard(me)); box.append(cb); }
+    if (CARD_ON && (LG_ON ? me.lg && me.lg.z !== 'hold' : me.pos) && !me.hidden) { const cb = document.createElement('button'); cb.className = 'main rk-card'; cb.textContent = '📸 じゅんい カードを つくる'; cb.addEventListener('click', () => showRankCard(me)); box.append(cb); }
     if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。だいたい 20 ぷんで ランキングに もどるよ'; box.append(b); }
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ。なまえを かえて とうろくしなおしてね'; box.append(h); }
     const rec = me.recent || [];
@@ -1319,9 +1321,10 @@ function renderRank() {
     row.addEventListener('click', () => rankPractice(m)); list.append(row);
   }
   if (t && !(t.top || []).length) list.textContent = 'まだ だれも とうろく して いないよ';
-  // 30 位より 下の ときは「⋮」の 下に 自分と 前後 2 体（タップで れんしゅうじあい）
+  // 30 位より 下の ときは「⋮」の 下に 自分と 前後 2 体（タップで れんしゅうじあい）。リーグ制では 出さない（自分の グループ表が ある）
   const shown = (t && t.top || []).length;
-  if (me && me.pos && me.pos > shown && me.nb && me.nb.length) {
+  { const h = $('ranklist').previousElementSibling; if (h && h.classList.contains('rk-h')) h.textContent = LG_ON ? '💎 ダイヤ リーグ（タップで れんしゅうじあい）' : 'ランキング（タップで れんしゅうじあい）'; }
+  if (!LG_ON && me && me.pos && me.pos > shown && me.nb && me.nb.length) {
     const gap = document.createElement('div'); gap.className = 'rk-gap'; gap.textContent = '⋮'; list.append(gap);
     for (const x of me.nb) {
       const row = document.createElement('button'); row.className = 'rk-row rk-top' + (x.id === me.id ? ' mine' : '');
@@ -1380,14 +1383,17 @@ async function titleRank() {
   if (lsGet('rank.reg') !== '1') { cap.textContent = 'とうろくして みんなと じどうで たいせん！'; $('rankbtn').classList.add('new'); tr.hidden = true; return; }
   if (!rankMe || Date.now() - rankMeAt > 10 * 60e3) { const c = meCache('rank.mec'); if (c) { rankMe = c.me; rankMeAt = c.t; } else { try { rankMe = meCache('rank.mec', (await (await fetch(RANK_API + '/rank?dev=' + rankDev() + '&notop=1')).json()).me.me); rankMeAt = Date.now(); } catch (e) {} } }   // 10 分 おぼえる（すぎたら 聞きなおす）
   const me = rankMe, cur = myRobot && plainCode(myRobot);
-  if (me && me.pos) {
+  if (LG_ON && me && me.lg) {
+    const L = me.lg, pr = rankProgress(me), z = lgZone(L);
+    cap.textContent = (me.champ ? '👑 チャンピオン' + (me.champ >= 2 ? me.champ + ' にち れんぞく・' : '・') : '') + lgShort(L) + (z ? '（' + z + '）' : '') + (pr.msg ? '　🎉' : '');
+  } else if (me && me.pos && !LG_ON) {
     const prev = +(lsGet('rank.lastpos') || 0);
     cap.textContent = (me.champ ? '👑 チャンピオン' + (me.champ >= 2 ? me.champ + ' にち れんぞく・' : '・') : '') + 'いま ' + me.pos + ' い（' + me.count + ' たい）しょうりつ ' + me.pct + '%' + (prev && me.pos < prev ? '　↑ あがった！' : '');
     lsSet('rank.lastpos', String(me.pos));
   } else cap.textContent = me ? 'とうろく ずみ・けいさんちゅう' : 'とうろくして みんなと じどうで たいせん！';
   $('rankbtn').classList.toggle('new', !me);
   $('tmchint').hidden = !!me;
-  tr.hidden = !me; tr.textContent = me ? 'ランクせん ' + (me.pos ? me.pos + ' い・しょうりつ ' + me.pct + '%' : 'けいさんちゅう') + (cur && cur !== me.code ? '（べつの モンスターで とうろくちゅう）' : '') : '';
+  tr.hidden = !me; tr.textContent = me ? 'ランクせん ' + (LG_ON ? (me.lg ? lgShort(me.lg) : 'けいさんちゅう') : me.pos ? me.pos + ' い・しょうりつ ' + me.pct + '%' : 'けいさんちゅう') + (cur && cur !== me.code ? '（べつの モンスターで とうろくちゅう）' : '') : '';
   setTimeout(fitTmon, 0);   // 一言の 行数で 絵の 大きさが かわる
 }
 onTap($('torank'), () => { TR('torank', null); showRank('いまの モンスターで とうろく できるよ'); });
@@ -1906,12 +1912,13 @@ function makeRankCard(me) {
   const g = c.getContext('2d');
   const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#2b1100'); bg.addColorStop(1, '#6d2a00');
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  const top = me.pos === 1 ? '#ffd54f' : me.pos === 2 ? '#e0e0e0' : me.pos === 3 ? '#ffab76' : '#ffffff';
+  const LGC = { bronze: '#ffab76', silver: '#e0e0e0', gold: '#ffd54f', plat: '#90caf9', dia: '#b2ebf2' };
+  const top = LG_ON && me.lg ? LGC[LGR[me.lg.L].k] : me.pos === 1 ? '#ffd54f' : me.pos === 2 ? '#e0e0e0' : me.pos === 3 ? '#ffab76' : '#ffffff';
   g.strokeStyle = '#ffb74d'; g.lineWidth = 16; g.strokeRect(40, 40, W - 80, H - 80); g.lineWidth = 4; g.strokeRect(70, 70, W - 140, H - 140);
   g.textAlign = 'center';
   g.fillStyle = '#ffcc80'; g.font = '900 60px sans-serif'; g.fillText('モンスター ランクせん', W / 2, 170);
-  // 順位（数字は 大きく、「い」は 小さく）
-  const num = String(me.pos);
+  // 順位（数字は 大きく、「い」は 小さく）。リーグ制は グループの 順位と リーグ名
+  const num = String(LG_ON && me.lg ? me.lg.gp : me.pos);
   g.font = '900 210px sans-serif'; const nw = g.measureText(num).width;
   g.font = '900 100px sans-serif'; const iw = g.measureText(' い').width;
   const x0 = W / 2 - (nw + iw) / 2;
@@ -1919,7 +1926,7 @@ function makeRankCard(me) {
   g.font = '900 210px sans-serif'; g.fillText(num, x0, 385);
   g.font = '900 100px sans-serif'; g.fillText(' い', x0 + nw, 385);
   g.textAlign = 'center'; g.fillStyle = '#ffe0b2'; g.font = '800 46px sans-serif';
-  g.fillText(me.count + ' たい ちゅう', W / 2, 455);
+  g.fillText(LG_ON && me.lg ? LGR[me.lg.L].mark + ' ' + LGR[me.lg.L].name + ' リーグ' + (me.lg.L < 4 ? '・グループ ' + (me.lg.g + 1) : '') + '（' + me.lg.gn + ' たい）' : me.count + ' たい ちゅう', W / 2, 455);
   const m = document.createElement('canvas'); m.width = 900; m.height = 540;
   drawPreview(m, d, ME.color);
   g.save(); g.shadowColor = 'rgba(255, 183, 77, .7)'; g.shadowBlur = 40; g.drawImage(m, 90, 470); g.restore();
@@ -1927,15 +1934,15 @@ function makeRankCard(me) {
   if (me.champ) { g.fillStyle = '#ffd54f'; g.font = '900 50px sans-serif'; g.fillText('👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく）' : ''), W / 2, 1020, W - 200); y = 1100; }
   g.fillStyle = '#ffffff'; g.font = '900 72px sans-serif'; g.fillText(me.name, W / 2, y, W - 200);
   g.fillStyle = '#ffcc80'; g.font = '800 46px sans-serif';
-  g.fillText('しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）', W / 2, y + 75, W - 200);
+  g.fillText(LG_ON && me.lg ? 'グループの しょうりつ ' + me.lg.pct + '%' : 'しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）', W / 2, y + 75, W - 200);
   g.fillStyle = '#ffe0b2'; g.font = '700 36px sans-serif'; g.fillText('かいて！モンスターバトル　renmygames.com', W / 2, 1255);
   return c;
 }
 function showRankCard(me) {
   const c = makeRankCard(me); if (!c) return;
-  TR('rankcard', { pos: me.pos, n: me.count });
+  TR('rankcard', LG_ON && me.lg ? { L: me.lg.L, gp: me.lg.gp, gn: me.lg.gn } : { pos: me.pos, n: me.count });
   const url = SITE_URL + '#r=' + RB.encodeDesign(rankCardDesign(me));
-  const text = 'ランクせんで ' + me.pos + ' い（' + me.count + ' たい ちゅう）！「' + me.name + '」と たたかってみて！（かいて！モンスターバトル）' + String.fromCharCode(10) + url;
+  const text = (LG_ON && me.lg ? 'ランクせん ' + LGR[me.lg.L].mark + ' ' + LGR[me.lg.L].name + ' リーグ' + (me.lg.L < 4 ? 'の グループ ' + (me.lg.g + 1) : '') + 'で ' + me.lg.gp + ' い！' : 'ランクせんで ' + me.pos + ' い（' + me.count + ' たい ちゅう）！') + '「' + me.name + '」と たたかってみて！（かいて！モンスターバトル）' + String.fromCharCode(10) + url;
   openCertBox(c, 'じゅんい カード（ながおしで ほぞん）', 'rank.png', text, true);
 }
 onTap($('cert'), () => { if (certFor) (certFor.kami ? showKamiCert : showCert)(certFor.c, certFor.d); });
