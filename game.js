@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '213';
+const VERSION = '214';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -91,7 +91,7 @@ const devFlag = n => OWNER && lsGet(n) === '1';
 if (OWNER && /[?&]tidytest(=|&|$)/.test(location.search)) lsSet('tidytest', '1');
 const TIDY = true;   // 2026-10-03 全員に（オーナー OK。前は ?tidytest の 端末だけ）
 if (OWNER && /[?&]boxtest(=|&|$)/.test(location.search)) lsSet('boxtest', '1');
-const BOXT = devFlag('boxtest');   // あなたの モンスターなどを 四角で かこむ（まずは ?boxtest の 端末だけ）
+const BOXT = true;   // 2026-10-03 全員に（オーナー OK。前は ?boxtest の 端末だけ）   // あなたの モンスターなどを 四角で かこむ（まずは ?boxtest の 端末だけ）
 // うら の並びを 変えたときは うら の途中経過と「倒したことがある」を 消す
 const URA_VER = '2';
 try { if (lsGet('uraver') !== URA_VER) { localStorage.removeItem(KEY + 'ura.stage'); localStorage.removeItem(KEY + 'ura.beaten'); lsSet('uraver', URA_VER); } } catch (e) {}
