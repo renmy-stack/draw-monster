@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '189';
+const VERSION = '190';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -2186,7 +2186,7 @@ function showMore() { mode = 'more'; show('more'); renderSupport(); }
 // ---------- おうえん（2026-10-03〜、OFUSE）: おうえん して くれた 人に お礼の かざり「きんの はね」の コードを おくる。コードは 1 回きり（受付係 POST /code）----------
 // 金がくは いくらでも（オーナー）。見た目だけで 強さは かわらない。まずは ?supporttest の 端末だけ
 if (OWNER && /[?&]supporttest(=|&|$)/.test(location.search)) lsSet('supporttest', '1');
-const SUP_ON = devFlag('supporttest');
+const SUP_ON = true;   // 2026-10-03 全員に（オーナー OK。前は ?supporttest の 端末だけ）
 const SUPPORT_URL = 'https://ofuse.me/a2b46de1';   // OFUSE の ページ（2026-10-03 オーナー 登録）
 const SUP_ITEM = 84;
 function renderSupport() {
