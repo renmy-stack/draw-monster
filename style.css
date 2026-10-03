@@ -625,3 +625,5 @@ body.tidy .kz-msg:empty { min-height: 0; }
 body.tidy .rk-btnrow { display: flex; gap: 8px; margin-top: 12px; }
 body.tidy .rk-btnrow button { flex: 1 1 0; min-width: 0; margin: 0; padding: 10px 6px; font-size: 15px; white-space: nowrap; }
 body.tidy .rk-btnrow .rk-card { flex: 1.25 1 0; width: auto; }
+body.tidy .rk-btnrow { gap: 6px; }
+body.tidy .rk-btnrow button, body.tidy .rk-btnrow .rk-card { flex: 1 1 0; padding: 10px 4px; font-size: clamp(12px, 3.7vw, 15px); overflow: hidden; text-overflow: ellipsis; }   /* iPhone で「つくる・なおす」が はみ出た → おなじ 幅・文字は 画面に あわせて */
