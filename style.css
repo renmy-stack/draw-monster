@@ -587,7 +587,7 @@ body.browser #statsbox { padding-bottom: calc(16px + env(safe-area-inset-bottom)
 /* リーグ（2026-10-03〜）: ランクせんの じぶんの モンスターの 名前の 下 */
 .rk-league { display: inline-flex; flex-wrap: wrap; column-gap: 6px; align-items: baseline; margin-top: 4px; padding: 3px 10px; border-radius: 999px; border: 2px solid var(--ink); font-size: 13px; }
 .rk-league b { font-weight: 900; } .rk-league span { font-size: 12px; font-variant-numeric: tabular-nums; }
-.lg-dia { background: linear-gradient(90deg, #e0f7fa, #b2ebf2, #e1bee7); } .lg-plat { background: #e3f2fd; } .lg-gold { background: #fff3c4; } .lg-silver { background: #eceff1; } .lg-bronze { background: #f3e0d2; }
+.lg-dia { background: linear-gradient(90deg, #e0f7fa, #b2ebf2, #e1bee7); } .lg-master { background: linear-gradient(90deg, #ede7f6, #d1c4e9); } .lg-gm { background: linear-gradient(90deg, #fff3e0, #ffcc80); } .lg-legend { background: linear-gradient(90deg, #fff8e1, #ffe082, #f8bbd0); } .lg-plat { background: #e3f2fd; } .lg-gold { background: #fff3c4; } .lg-silver { background: #eceff1; } .lg-bronze { background: #f3e0d2; }
 .rk-lgsub { font-size: 11.5px; color: #555; margin-top: 3px; }
 .rk-up { margin-top: 4px; font-size: 12.5px; font-weight: 900; color: #d84315; }
 

@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '196';
+const VERSION = '197';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1213,12 +1213,13 @@ function showRank(msg) {
 // 950 体中 何百位 だと 次の 目標が 見えない → 順位の わりあいで 5 つの リーグに 分け、リーグの 中の 順位と「あと ○ い で 次の リーグ」を 出す
 // 上がった ときは「○ い アップ」「○○ に あがった」「じこベスト」を 出す（端末に 前の 順位を おぼえる）。総当たりの 計算は 今の まま
 const LG_ON = true;   // 2026-10-03 全員に（オーナー OK。前は ?leaguetest の 端末だけ）
-// 0 ブロンズ … 4 ダイヤ（tools/league.js と 同じ）。LG_UP: 0 時に 昇格する わりあい・LG_DOWN: 降格（グループの 下から）
-const LGR = [{ k: 'bronze', name: 'ブロンズ', mark: '🥉' }, { k: 'silver', name: 'シルバー', mark: '🥈' }, { k: 'gold', name: 'ゴールド', mark: '🥇' }, { k: 'plat', name: 'プラチナ', mark: '🔷' }, { k: 'dia', name: 'ダイヤ', mark: '💎' }];
-const LG_UP = [0.20, 0.15, 0.10, 0.08, 0], LG_DOWN = 0.20;
+// 0 ブロンズ … 4 ダイヤ・5 マスター・6 グランドマスター・7 レジェンド（tools/league.js と 同じ。人が ふえたら 上に 足す）
+// 昇格・降格の 数は サーバーが きめる（me.lg.un・dn、グループ表の 印）。me.lg.top: いちばん上の リーグか
+const LGR = [{ k: 'bronze', name: 'ブロンズ', mark: '🥉' }, { k: 'silver', name: 'シルバー', mark: '🥈' }, { k: 'gold', name: 'ゴールド', mark: '🥇' }, { k: 'plat', name: 'プラチナ', mark: '🔷' }, { k: 'dia', name: 'ダイヤ', mark: '💎' },
+  { k: 'master', name: 'マスター', mark: '👑' }, { k: 'gm', name: 'グランドマスター', mark: '🏆' }, { k: 'legend', name: 'レジェンド', mark: '🌟' }];
 // リーグの みじかい 一言: 「🥇 ゴールド グループ 3・14 い」
-const lgShort = L => LGR[L.L].mark + ' ' + LGR[L.L].name + (L.L < 4 ? ' グループ ' + (L.g + 1) : '') + '・' + L.gp + ' い';
-const lgZone = L => L.z === 'hold' ? 'けいさんちゅう' : L.z === 'up' ? '⬆ しょうかく ライン' : L.z === 'down' ? '⬇ こうかく ライン' : L.L === 4 && L.gp === 1 ? '💎 1 い' : '';
+const lgShort = L => LGR[L.L].mark + ' ' + LGR[L.L].name + (!L.top ? ' グループ ' + (L.g + 1) : '') + '・' + L.gp + ' い';
+const lgZone = L => L.z === 'hold' ? 'けいさんちゅう' : L.z === 'up' ? '⬆ しょうかく ライン' : L.z === 'down' ? '⬇ こうかく ライン' : L.top && L.gp === 1 ? LGR[L.L].mark + ' 1 い' : '';
 // 前と くらべて ほめる ことば（1 日 だけ 出す）。rank.prog = {id, L, g, gp, bestL, msg, at}
 function rankProgress(me) {
   const lg = me && me.lg; if (!lg) return { msg: '', bestL: null };
@@ -1240,7 +1241,7 @@ function renderLeagueGroup(box, me) {
   const rows = me.lgroup || [], lg = me.lg; if (!rows.length) return;
   const h = document.createElement('div'); h.className = 'rk-h'; h.textContent = 'グループの じゅんい（タップで れんしゅうじあい）'; box.append(h);
   const mi = Math.max(0, rows.findIndex(r => r[1] === me.id)), lo = lgAll ? 0 : Math.max(0, Math.min(mi - 3, rows.length - 7)), hi = lgAll ? rows.length : Math.min(rows.length, lo + 7);
-  const up = lg.L < 4 ? Math.round(rows.length * LG_UP[lg.L]) : 0, dn = lg.L > 0 ? Math.round(rows.length * LG_DOWN) : 0;
+  const up = lg.un || 0, dn = lg.dn || 0;   // サーバーが きめた 昇格・降格の 数
   const wrap = document.createElement('div'); wrap.className = 'lg-tab';
   rows.forEach(([gp, id, name, pct, z, code, kz], k) => {
     if (k < lo || k >= hi) return;
@@ -1277,12 +1278,12 @@ function renderRank() {
     if (LG_ON && !me.hidden) {
       const lgb = document.createElement('div'), sub = document.createElement('div'); sub.className = 'rk-lgsub';
       if (me.lg) {
-        const L = me.lg, lg = LGR[L.L], pr = rankProgress(me), upN = L.L < 4 ? Math.round(L.gn * LG_UP[L.L]) : 0, safe = L.gn - (L.L > 0 ? Math.round(L.gn * LG_DOWN) : 0);
-        lgb.className = 'rk-league lg-' + lg.k; lgb.innerHTML = '<b>' + lg.mark + ' ' + lg.name + ' リーグ</b> <span>' + (L.L < 4 ? 'グループ ' + (L.g + 1) + '・' : '') + L.gp + ' い / ' + L.gn + ' たい</span>'; st.hidden = true;   // 全体の 順位は リーグでは 見せない
+        const L = me.lg, lg = LGR[L.L], pr = rankProgress(me), upN = L.un || 0, safe = L.gn - (L.dn || 0);
+        lgb.className = 'rk-league lg-' + lg.k; lgb.innerHTML = '<b>' + lg.mark + ' ' + lg.name + ' リーグ</b> <span>' + (!L.top ? 'グループ ' + (L.g + 1) + '・' : '') + L.gp + ' い / ' + L.gn + ' たい</span>'; st.hidden = true;   // 全体の 順位は リーグでは 見せない
         sub.textContent = L.z === 'hold' ? 'けいさんちゅう（' + L.pl + ' / ' + L.tot + ' せん）。はんぶん おわるまで しょうかく・こうかく しないよ'
           : L.z === 'up' ? '⬆ このままなら こんやの 0 じに ' + LGR[L.L + 1].mark + ' ' + LGR[L.L + 1].name + ' へ！（しょうりつ ' + L.pct + '%）'
           : L.z === 'down' ? '⬇ このままだと 0 じに ' + LGR[L.L - 1].name + ' へ… あと ' + (L.gp - safe) + ' い あがれば セーフ'
-          : L.L < 4 ? 'あと ' + (L.gp - upN) + ' い で しょうかく（' + upN + ' い まで）。しょうりつ ' + L.pct + '%' : (L.gp === 1 ? '💎 ダイヤ 1 い！ こんやの 0 じに チャンピオン' : 'ダイヤの ' + L.gp + ' い。1 い を めざそう（しょうりつ ' + L.pct + '%）');
+          : !L.top ? 'あと ' + (L.gp - upN) + ' い で しょうかく（' + upN + ' い まで）。しょうりつ ' + L.pct + '%' : (L.gp === 1 ? lg.mark + ' ' + lg.name + ' 1 い！ こんやの 0 じに チャンピオン' : lg.name + 'の ' + L.gp + ' い。1 い を めざそう（しょうりつ ' + L.pct + '%）');
         info.append(lgb, sub);
         if (pr.msg) { const up = document.createElement('div'); up.className = 'rk-up'; up.textContent = '🎉 ' + pr.msg; info.append(up); }
       } else { lgb.className = 'rk-league'; lgb.textContent = 'リーグ けいさんちゅう'; sub.textContent = 'さいしょの けいさんを まって いるよ（20 ぷんくらい）'; info.append(lgb, sub); }
@@ -1329,7 +1330,7 @@ function renderRank() {
   if (t && !(t.top || []).length) list.textContent = 'まだ だれも とうろく して いないよ';
   // 30 位より 下の ときは「⋮」の 下に 自分と 前後 2 体（タップで れんしゅうじあい）。リーグ制では 出さない（自分の グループ表が ある）
   const shown = (t && t.top || []).length;
-  { const dia = $('rankdia'); dia.hidden = !!(LG_ON && me && me.lg && me.lg.L === 4); dia.querySelector('summary').textContent = LG_ON ? '💎 ダイヤ リーグを みる（タップで れんしゅうじあい）' : 'ランキング（タップで れんしゅうじあい）'; if (!LG_ON) dia.open = true; }
+  { const dia = $('rankdia'), tl = LGR[(t && t.top && t.top[0] && t.top[0].L) || 4] || LGR[4]; dia.hidden = !!(LG_ON && me && me.lg && me.lg.top); dia.querySelector('summary').textContent = LG_ON ? tl.mark + ' ' + tl.name + ' リーグを みる（いちばん うえ・タップで れんしゅうじあい）' : 'ランキング（タップで れんしゅうじあい）'; if (!LG_ON) dia.open = true; }
   if (!LG_ON && me && me.pos && me.pos > shown && me.nb && me.nb.length) {
     const gap = document.createElement('div'); gap.className = 'rk-gap'; gap.textContent = '⋮'; list.append(gap);
     for (const x of me.nb) {
@@ -1918,7 +1919,7 @@ function makeRankCard(me) {
   const g = c.getContext('2d');
   const bg = g.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#2b1100'); bg.addColorStop(1, '#6d2a00');
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  const LGC = { bronze: '#ffab76', silver: '#e0e0e0', gold: '#ffd54f', plat: '#90caf9', dia: '#b2ebf2' };
+  const LGC = { bronze: '#ffab76', silver: '#e0e0e0', gold: '#ffd54f', plat: '#90caf9', dia: '#b2ebf2', master: '#d1c4e9', gm: '#ffcc80', legend: '#ffe082' };
   const top = LG_ON && me.lg ? LGC[LGR[me.lg.L].k] : me.pos === 1 ? '#ffd54f' : me.pos === 2 ? '#e0e0e0' : me.pos === 3 ? '#ffab76' : '#ffffff';
   g.strokeStyle = '#ffb74d'; g.lineWidth = 16; g.strokeRect(40, 40, W - 80, H - 80); g.lineWidth = 4; g.strokeRect(70, 70, W - 140, H - 140);
   g.textAlign = 'center';
@@ -1932,7 +1933,7 @@ function makeRankCard(me) {
   g.font = '900 210px sans-serif'; g.fillText(num, x0, 385);
   g.font = '900 100px sans-serif'; g.fillText(' い', x0 + nw, 385);
   g.textAlign = 'center'; g.fillStyle = '#ffe0b2'; g.font = '800 46px sans-serif';
-  g.fillText(LG_ON && me.lg ? LGR[me.lg.L].mark + ' ' + LGR[me.lg.L].name + ' リーグ' + (me.lg.L < 4 ? '・グループ ' + (me.lg.g + 1) : '') + '（' + me.lg.gn + ' たい）' : me.count + ' たい ちゅう', W / 2, 455);
+  g.fillText(LG_ON && me.lg ? LGR[me.lg.L].mark + ' ' + LGR[me.lg.L].name + ' リーグ' + (!me.lg.top ? '・グループ ' + (me.lg.g + 1) : '') + '（' + me.lg.gn + ' たい）' : me.count + ' たい ちゅう', W / 2, 455);
   const m = document.createElement('canvas'); m.width = 900; m.height = 540;
   drawPreview(m, d, ME.color);
   g.save(); g.shadowColor = 'rgba(255, 183, 77, .7)'; g.shadowBlur = 40; g.drawImage(m, 90, 470); g.restore();
@@ -1948,7 +1949,7 @@ function showRankCard(me) {
   const c = makeRankCard(me); if (!c) return;
   TR('rankcard', LG_ON && me.lg ? { L: me.lg.L, gp: me.lg.gp, gn: me.lg.gn } : { pos: me.pos, n: me.count });
   const url = SITE_URL + '#r=' + RB.encodeDesign(rankCardDesign(me));
-  const text = (LG_ON && me.lg ? 'ランクせん ' + LGR[me.lg.L].mark + ' ' + LGR[me.lg.L].name + ' リーグ' + (me.lg.L < 4 ? 'の グループ ' + (me.lg.g + 1) : '') + 'で ' + me.lg.gp + ' い！' : 'ランクせんで ' + me.pos + ' い（' + me.count + ' たい ちゅう）！') + '「' + me.name + '」と たたかってみて！（かいて！モンスターバトル）' + String.fromCharCode(10) + url;
+  const text = (LG_ON && me.lg ? 'ランクせん ' + LGR[me.lg.L].mark + ' ' + LGR[me.lg.L].name + ' リーグ' + (!me.lg.top ? 'の グループ ' + (me.lg.g + 1) : '') + 'で ' + me.lg.gp + ' い！' : 'ランクせんで ' + me.pos + ' い（' + me.count + ' たい ちゅう）！') + '「' + me.name + '」と たたかってみて！（かいて！モンスターバトル）' + String.fromCharCode(10) + url;
   openCertBox(c, 'じゅんい カード（ながおしで ほぞん）', 'rank.png', text, true);
 }
 onTap($('cert'), () => { if (certFor) (certFor.kami ? showKamiCert : showCert)(certFor.c, certFor.d); });
