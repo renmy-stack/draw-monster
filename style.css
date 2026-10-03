@@ -638,3 +638,6 @@ body.boxt #rankmore > :last-child { margin-bottom: 0; } body.boxt #rankmore:not(
 /* 2026-10-03 オーナー: 横ならびだと iPhone で 文字が 入りきらない → 縦に ならべる */
 body.tidy .rk-btnrow { flex-direction: column; gap: 8px; }
 body.tidy .rk-btnrow button, body.tidy .rk-btnrow .rk-card { flex: none; width: 100%; padding: 10px 8px; font-size: 16px; overflow: visible; }
+/* 2026-10-04 オーナー: 結果の ボタンを おなじ 幅に（縦に ならべて 横いっぱい） */
+#result .rbtns { flex-direction: column; align-items: stretch; gap: 8px; }
+#result .rbtns button { width: 100%; margin: 0; }
