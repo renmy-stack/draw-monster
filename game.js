@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '185';
+const VERSION = '186';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -190,9 +190,10 @@ let friendRobot = null;
 
 // ---------- 画面 ----------
 // 画面の 上の よけるべき 高さ（ホーム画面から 開いた iPhone の 時計・電池）。キャンバスの 上の 表示（HP の バーなど）を この ぶん さげる
-let SAT = 0;
+let SAT = 0, satAt = 0;
 const satProbe = document.createElement('div'); satProbe.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:env(safe-area-inset-top);visibility:hidden;pointer-events:none';
 document.body.appendChild(satProbe);
+document.addEventListener('visibilitychange', () => { satAt = 0; });
 function resize() {
   SAT = satProbe.offsetHeight || 0;
   DPR = Math.min(2, window.devicePixelRatio || 1);
@@ -872,7 +873,10 @@ function drawRobotWorld(b, color, flash, crown) {
   if (kz && kz[3] && (mode === 'battle' || mode === 'pause')) kzFxLayer(b, kz[3], true);   // かざり: 体の まえの えふぇくと
 }
 function drawHud() {
-  const top = 12 + SAT, bw = (W - 110) / 2;   // SAT: ホーム画面から 開いた ときの 時計の ぶん
+  // iPhone は 開いた 直後に 時計の 高さを 0 と 返す ことが あり、resize の ときだけ はかると 0 の まま HP が 時計に かぶる（2026-10-03 オーナーの 画面）
+  // → 戦いの あいだ 1 秒に 1 回 はかりなおす（CSS の ボタンは いつも 今の 高さ なので かぶらない）
+  const nowMs = performance.now(); if (nowMs - satAt > 1000) { satAt = nowMs; SAT = satProbe.offsetHeight || 0; }
+  const top = 12 + SAT, bw = (W - 110) / 2;   // SAT: 時計・電池の ぶん（ホーム画面から 開いた とき・iOS 26 の Safari）
   const bar = (x, hp, max, name, col, right) => {
     ctx.font = '800 14px sans-serif'; ctx.textBaseline = 'alphabetic'; ctx.textAlign = right ? 'right' : 'left'; ctx.fillStyle = '#fff';
     ctx.fillText(name, right ? x + bw : x, top + 16);
