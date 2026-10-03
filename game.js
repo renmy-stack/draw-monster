@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '214';
+const VERSION = '215';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1515,7 +1515,7 @@ function renderEv() {
     st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'けいさんちゅう（2〜3 ぷんくらい）';
     inf.append(nm, st); head.append(inf); box.append(head);
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ'; box.append(h); }
-    for (const r of (me.recent || [])) {
+    for (const r of (BOXT ? [] : me.recent || [])) {   // 2026-10-03 オーナー: イベントも つよい あいてとの かちまけは いらない
       const row = document.createElement('button'); row.className = 'rk-row';
       const chip = document.createElement('span'); chip.className = 'rk-chip ' + r.r; chip.textContent = r.r === 'W' ? 'かち' : r.r === 'L' ? 'まけ' : 'わけ';
       const o = document.createElement('span'); o.className = 'rk-opp'; o.textContent = 'vs ' + r.n;
