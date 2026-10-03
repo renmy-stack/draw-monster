@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '194';
+const VERSION = '195';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1182,7 +1182,7 @@ async function loadRank(force) {
   try {
     const reg = lsGet('rank.reg') === '1', file = await boardFile('top.json', j => j.season === jstDay());
     let t = file, m = null;
-    if (!file || reg) { const r = await fetch(RANK_API + '/rank?dev=' + rankDev() + (file ? '&notop=1' : '')).then(r => r.json()); t = file || r.top; m = r.me; }
+    if (!file || reg) { const r = await fetch(RANK_API + '/rank?dev=' + rankDev() + (file ? '&notop=1' : '') + '&lg=1').then(r => r.json()); t = file || r.top; m = r.me; }
     rankTop = t; rankMe = m ? m.me : null; rankDown = false; rankAt = rankMeAt = Date.now(); meCache('rank.mec', rankMe);
     await rankSyncKz();
     if (rankMe) lsSet('rank.reg', '1');
@@ -1235,22 +1235,27 @@ function rankProgress(me) {
   return { msg: p.msg || '', bestL: p.bestL == null ? lg.L : p.bestL };
 }
 // グループの 順位表（タップで れんしゅうじあい。絵は とらない ＝ 受付係への 通信を へらす。タップした ときだけ 形を もらう）
+let lgAll = false;   // グループ表を ぜんぶ 見せるか（ふだんは 自分の まわり 7 行）
 function renderLeagueGroup(box, me) {
   const rows = me.lgroup || [], lg = me.lg; if (!rows.length) return;
   const h = document.createElement('div'); h.className = 'rk-h'; h.textContent = 'グループの じゅんい（タップで れんしゅうじあい）'; box.append(h);
+  const mi = Math.max(0, rows.findIndex(r => r[1] === me.id)), lo = lgAll ? 0 : Math.max(0, Math.min(mi - 3, rows.length - 7)), hi = lgAll ? rows.length : Math.min(rows.length, lo + 7);
   const up = lg.L < 4 ? Math.round(rows.length * LG_UP[lg.L]) : 0, dn = lg.L > 0 ? Math.round(rows.length * LG_DOWN) : 0;
   const wrap = document.createElement('div'); wrap.className = 'lg-tab';
-  rows.forEach(([gp, id, name, pct, z], k) => {
-    if (dn && k === rows.length - dn) { const ln = document.createElement('div'); ln.className = 'lg-line down'; ln.textContent = '⬇ ここから こうかく（0 じに ' + LGR[lg.L - 1].name + ' へ）'; wrap.append(ln); }
+  rows.forEach(([gp, id, name, pct, z, code, kz], k) => {
+    if (k < lo || k >= hi) return;
+    if (dn && k === rows.length - dn && k > lo) { const ln = document.createElement('div'); ln.className = 'lg-line down'; ln.textContent = '⬇ ここから こうかく（0 じに ' + LGR[lg.L - 1].name + ' へ）'; wrap.append(ln); }
     const mine = id === me.id, row = document.createElement('button');
     row.className = 'lg-row' + (k < up ? ' up' : '') + (dn && k >= rows.length - dn ? ' down' : '') + (mine ? ' mine' : '') + (z === 'hold' ? ' hold' : '');
     row.innerHTML = '<span class="lg-p">' + gp + '</span><span class="lg-n"></span><span class="lg-w">' + (z === 'hold' ? 'けいさんちゅう' : pct + '%') + '</span>';
+    if (code) { const pv = miniPreview(code, mine ? ME.color : RANK_COLOR, 88, kz); pv.className = 'lg-pic'; row.insertBefore(pv, row.children[1]); } else { const sp = document.createElement('span'); sp.className = 'lg-pic'; row.insertBefore(sp, row.children[1]); }
     row.querySelector('.lg-n').textContent = name + (mine ? '（あなた）' : '');
-    if (!mine) row.addEventListener('click', () => monGet(id).then(m => { if (m && m.code) rankPractice({ code: m.code, name, kz: m.kz }); }));
+    if (!mine) row.addEventListener('click', () => code ? rankPractice({ code, name, kz }) : monGet(id).then(m => { if (m && m.code) rankPractice({ code: m.code, name, kz: m.kz }); }));
     wrap.append(row);
-    if (up && k === up - 1) { const ln = document.createElement('div'); ln.className = 'lg-line up'; ln.textContent = '⬆ ここまで しょうかく（0 じに ' + LGR[lg.L + 1].name + ' へ）'; wrap.append(ln); }
+    if (up && k === up - 1 && k < hi - 1) { const ln = document.createElement('div'); ln.className = 'lg-line up'; ln.textContent = '⬆ ここまで しょうかく（0 じに ' + LGR[lg.L + 1].name + ' へ）'; wrap.append(ln); }
   });
   box.append(wrap);
+  if (rows.length > 7) { const b = document.createElement('button'); b.className = 'lg-more'; b.textContent = lgAll ? '▲ じぶんの まわりだけ' : '▼ ぜんぶ みる（' + rows.length + ' たい）'; b.addEventListener('click', () => { lgAll = !lgAll; renderRank(); }); box.append(b); }
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
@@ -1260,6 +1265,7 @@ function renderRank() {
   if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.rating + '%）' + (ch.streak >= 2 ? '　' + ch.streak + ' にち れんぞく！' : ''))); cb.append(s); }
   // 自分の モンスター
   const box = $('rankme'); box.innerHTML = '';
+  const more = $('rankmore'); more.innerHTML = '';   // 順位カード・グループ・リプレイ（登録・つくる の 下）
   if (me) {
     const head = document.createElement('div'); head.className = 'rk-mehead';
     { const md = RB.decodeDesign(me.code); if (md) { md.champ = champMap()[me.code] || 0; md.kz = kzParse(me.kz); const cv = document.createElement('canvas'); cv.width = cv.height = 120; drawPreview(cv, md, ME.color); head.append(cv); } }
@@ -1283,19 +1289,19 @@ function renderRank() {
     }
     if (me.champ) { const c = document.createElement('div'); c.className = 'rk-champbadge'; c.textContent = '👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく！）' : '！'); info.append(c); }
     head.append(info); box.append(head);
-    if (LG_ON && me.lg && !me.hidden) renderLeagueGroup(box, me);
-    if (CARD_ON && (LG_ON ? me.lg && me.lg.z !== 'hold' : me.pos) && !me.hidden) { const cb = document.createElement('button'); cb.className = 'main rk-card'; cb.textContent = '📸 じゅんい カードを つくる'; cb.addEventListener('click', () => showRankCard(me)); box.append(cb); }
+    if (LG_ON && me.lg && !me.hidden) renderLeagueGroup(more, me);
+    if (CARD_ON && (LG_ON ? me.lg && me.lg.z !== 'hold' : me.pos) && !me.hidden) { const cb = document.createElement('button'); cb.className = 'main rk-card'; cb.textContent = '📸 じゅんい カードを つくる'; cb.addEventListener('click', () => showRankCard(me)); more.prepend(cb); }
     if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。だいたい 20 ぷんで ランキングに もどるよ'; box.append(b); }
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ。なまえを かえて とうろくしなおしてね'; box.append(h); }
     const rec = me.recent || [];
     if (rec.length) {
-      const lt = document.createElement('div'); lt.className = 'rk-h'; lt.textContent = 'つよい あいてとの たいせん（タップで リプレイ）'; box.append(lt);
+      const lt = document.createElement('div'); lt.className = 'rk-h'; lt.textContent = 'つよい あいてとの たいせん（タップで リプレイ）'; more.append(lt);
       for (const r of rec) {
         const row = document.createElement('button'); row.className = 'rk-row';
         const chip = document.createElement('span'); chip.className = 'rk-chip ' + r.r; chip.textContent = r.r === 'W' ? 'かち' : r.r === 'L' ? 'まけ' : 'わけ';
         const nmm = document.createElement('span'); nmm.className = 'rk-opp'; nmm.textContent = 'vs ' + r.n;
         const dd = document.createElement('span'); dd.className = 'rk-d'; dd.textContent = r.s === 'A' ? 'ひだり' : 'みぎ';
-        row.append(chip, nmm, dd); row.addEventListener('click', () => rankReplay(me, r)); box.append(row);
+        row.append(chip, nmm, dd); row.addEventListener('click', () => rankReplay(me, r)); more.append(row);
       }
     }
   } else {
@@ -1323,7 +1329,7 @@ function renderRank() {
   if (t && !(t.top || []).length) list.textContent = 'まだ だれも とうろく して いないよ';
   // 30 位より 下の ときは「⋮」の 下に 自分と 前後 2 体（タップで れんしゅうじあい）。リーグ制では 出さない（自分の グループ表が ある）
   const shown = (t && t.top || []).length;
-  { const h = $('ranklist').previousElementSibling; if (h && h.classList.contains('rk-h')) h.textContent = LG_ON ? '💎 ダイヤ リーグ（タップで れんしゅうじあい）' : 'ランキング（タップで れんしゅうじあい）'; }
+  { const dia = $('rankdia'); dia.hidden = !!(LG_ON && me && me.lg && me.lg.L === 4); dia.querySelector('summary').textContent = LG_ON ? '💎 ダイヤ リーグを みる（タップで れんしゅうじあい）' : 'ランキング（タップで れんしゅうじあい）'; if (!LG_ON) dia.open = true; }
   if (!LG_ON && me && me.pos && me.pos > shown && me.nb && me.nb.length) {
     const gap = document.createElement('div'); gap.className = 'rk-gap'; gap.textContent = '⋮'; list.append(gap);
     for (const x of me.nb) {

@@ -593,9 +593,14 @@ body.browser #statsbox { padding-bottom: calc(16px + env(safe-area-inset-bottom)
 
 /* リーグの グループ順位表（2026-10-03〜） */
 .lg-tab { display: flex; flex-direction: column; gap: 2px; margin: 4px 0 10px; }
-.lg-row { display: grid; grid-template-columns: 2.4em minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 10px; border: 0; border-radius: 8px; background: #fff; text-align: left; font-size: 13px; font-weight: 700; color: var(--ink); }
+.lg-row { display: grid; grid-template-columns: 2.4em 44px minmax(0, 1fr) auto; gap: 8px; align-items: center; padding: 5px 10px; border: 0; border-radius: 8px; background: #fff; text-align: left; font-size: 13px; font-weight: 700; color: var(--ink); }
 .lg-row .lg-p { font-variant-numeric: tabular-nums; color: #777; text-align: right; } .lg-row .lg-n { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .lg-row .lg-w { font-variant-numeric: tabular-nums; font-size: 12px; color: #555; }
 .lg-row.up { background: #e8f5e9; } .lg-row.down { background: #ffebee; } .lg-row.hold .lg-w { color: #999; }
 .lg-row.mine { outline: 3px solid var(--hot); outline-offset: -3px; }
 .lg-line { font-size: 11px; font-weight: 900; text-align: center; padding: 2px 0; } .lg-line.up { color: #2e7d32; border-bottom: 2px dashed #66bb6a; } .lg-line.down { color: #c62828; border-top: 2px dashed #ef5350; }
 .rk-league b, .rk-league span { white-space: nowrap; }
+
+/* v195: グループ表の ぜんぶ みる・ダイヤの 表（とじた まま） */
+.lg-more { display: block; width: 100%; margin: -4px 0 10px; padding: 6px; border: 0; background: none; color: #6a4fb3; font-size: 13px; font-weight: 900; }
+.rk-dia { margin-top: 6px; } .rk-dia > summary { cursor: pointer; list-style: none; } .rk-dia > summary::-webkit-details-marker { display: none; } .rk-dia > summary::before { content: '▶ '; } .rk-dia[open] > summary::before { content: '▼ '; }
+.lg-pic { width: 44px; height: 44px; border-radius: 8px; background: #241f45; display: block; }
