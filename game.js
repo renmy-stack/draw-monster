@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '202';
+const VERSION = '203';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1261,7 +1261,7 @@ function renderLeagueGroup(box, me) {
 }
 function renderRank() {
   const t = rankTop, me = rankMe;
-  $('ranksub').textContent = t ? t.count + ' たい さんか・20 ぷんごとに こうしん' : rankDown ? 'いま ランクせんに つながらないよ。しばらく してから また きてね' : 'よみこみちゅう…';
+  $('ranksub').textContent = t ? t.count + ' たい さんか・2〜3 ぷんで こうしん' : rankDown ? 'いま ランクせんに つながらないよ。しばらく してから また きてね' : 'よみこみちゅう…';
   // 先週の チャンピオン
   const ch = t && t.champion, cb = $('rankchamp'); cb.hidden = !ch; cb.innerHTML = '';
   if (ch) { cb.append(miniPreview(ch.code, '#ffb300', 96)); const s = document.createElement('div'); s.innerHTML = '<b>👑 きのうの チャンピオン</b><br>'; s.append(document.createTextNode(ch.name + '（しょうりつ ' + ch.rating + '%）' + (ch.streak >= 2 ? '　' + ch.streak + ' にち れんぞく！' : ''))); cb.append(s); }
@@ -1274,7 +1274,7 @@ function renderRank() {
     const info = document.createElement('div');
     const nm = document.createElement('div'); nm.className = 'rk-name'; nm.textContent = me.name;
     const st = document.createElement('div'); st.className = 'rk-stat';
-    st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'けいさんちゅう（20 ぷんくらい）';
+    st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'けいさんちゅう（2〜3 ぷんくらい）';
     info.append(nm, st);
     if (LG_ON && !me.hidden) {
       const lgb = document.createElement('div'), sub = document.createElement('div'); sub.className = 'rk-lgsub';
@@ -1287,13 +1287,13 @@ function renderRank() {
           : !L.top ? 'あと ' + (L.gp - upN) + ' い で しょうかく（' + upN + ' い まで）。しょうりつ ' + L.pct + '%' : (L.gp === 1 ? lg.mark + ' ' + lg.name + ' 1 い！ こんやの 0 じに チャンピオン' : lg.name + 'の ' + L.gp + ' い。1 い を めざそう（しょうりつ ' + L.pct + '%）');
         info.append(lgb, sub);
         if (pr.msg) { const up = document.createElement('div'); up.className = 'rk-up'; up.textContent = '🎉 ' + pr.msg; info.append(up); }
-      } else { lgb.className = 'rk-league'; lgb.textContent = 'リーグ けいさんちゅう'; sub.textContent = 'さいしょの けいさんを まって いるよ（20 ぷんくらい）'; info.append(lgb, sub); }
+      } else { lgb.className = 'rk-league'; lgb.textContent = 'リーグ けいさんちゅう'; sub.textContent = 'さいしょの けいさんを まって いるよ（2〜3 ぷんくらい）'; info.append(lgb, sub); }
     }
     if (me.champ) { const c = document.createElement('div'); c.className = 'rk-champbadge'; c.textContent = '👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく！）' : '！'); info.append(c); }
     head.append(info); box.append(head);
     if (LG_ON && me.lg && !me.hidden) renderLeagueGroup(more, me);
     if (CARD_ON && (LG_ON ? me.lg && me.lg.z !== 'hold' : me.pos) && !me.hidden) { const cb = document.createElement('button'); cb.className = 'main rk-card'; cb.textContent = '📸 じゅんい カードを つくる'; cb.addEventListener('click', () => showRankCard(me)); more.prepend(cb); }
-    if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。だいたい 20 ぷんで ランキングに もどるよ'; box.append(b); }
+    if (me.back) { const b = document.createElement('div'); b.className = 'rk-note'; b.textContent = 'ひさしぶり！ おやすみ から ふっかつ。だいたい 2〜3 ぷんで ランキングに もどるよ'; box.append(b); }
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ。なまえを かえて とうろくしなおしてね'; box.append(h); }
     const rec = me.recent || [];
     if (rec.length) {
@@ -1492,7 +1492,7 @@ function renderEv() {
     const inf = document.createElement('div');
     const nm = document.createElement('div'); nm.className = 'rk-name'; nm.textContent = me.name;
     const st = document.createElement('div'); st.className = 'rk-stat';
-    st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'けいさんちゅう（20 ぷんくらい）';
+    st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'けいさんちゅう（2〜3 ぷんくらい）';
     inf.append(nm, st); head.append(inf); box.append(head);
     if (me.hidden) { const h = document.createElement('div'); h.className = 'rk-note'; h.textContent = 'なまえが みんなに みせるのに ふさわしくないので、ランキングに だして いないよ'; box.append(h); }
     for (const r of (me.recent || [])) {
@@ -1543,7 +1543,7 @@ async function evRegister() {
   try {
     const r = await (await fetch(RANK_API + '/ev/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code: evPlain(d), name, kz: KZ_ON ? kzStr(kzs.eq()) : '' }) })).json();
     if (r.error) $('evmsg').textContent = r.error;
-    else { TR('evreg', { n: evTheme().n }); await loadEv(true); $('evmsg').textContent = 'だしたよ！ 20 ぷん くらいで じゅんいが でるよ'; }
+    else { TR('evreg', { n: evTheme().n }); await loadEv(true); $('evmsg').textContent = 'だしたよ！ 2〜3 ぷん くらいで じゅんいが でるよ'; }
   } catch (e) { $('evmsg').textContent = 'つながらなかった…もういちど ためしてね'; }
   evBusy = false; if (mode === 'ev') renderEv();
 }

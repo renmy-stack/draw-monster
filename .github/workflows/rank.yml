@@ -1,7 +1,7 @@
 # モンスター ランクせん: まだの 組み合わせを 総当たりで 計算して 勝率・順位を 書き戻す（tools/rank_batch.js）
 # 管理の 合言葉は リポジトリの Secrets の RANK_ADMIN
 name: rank
-# 起動は Cloudflare の 受付係（renmy-rank）から（登録が あれば、15 分に 1 回まで・毎日 0:05）
+# 起動は Cloudflare の 受付係（renmy-rank）から（登録が あれば、2 分に 1 回まで・毎日 0 時すぎ）。同時には 1 つだけ（concurrency: 次は 待つ）
 on:
   workflow_dispatch:
 permissions:
@@ -10,7 +10,7 @@ concurrency: rank
 jobs:
   batch:
     runs-on: ubuntu-latest
-    timeout-minutes: 13   # 計算は ふだん 8 分 ＋ イベント 1.5 分まで（起動は 15 分に 1 回まで なので 次の 回と ぶつからない）
+    timeout-minutes: 13   # 計算は ふだん 8 分 ＋ イベント 1.5 分まで（concurrency で 次の 回は 前が おわるまで 待つ）
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
