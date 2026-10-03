@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '204';
+const VERSION = '205';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -87,6 +87,9 @@ const DEV_H = 'd279613f79af7c5747561599d5b55fc02cdf2f73e24f963f3dd480c555df784e'
 { const m = /[?&]dev=([^&#]+)/.exec(location.search); if (m) { const k = decodeURIComponent(m[1]); if (sha256hex(k) === DEV_H) lsSet('devkey', k); } }
 const OWNER = (() => { const k = lsGet('devkey'); return !!k && sha256hex(k) === DEV_H; })();
 const devFlag = n => OWNER && lsGet(n) === '1';
+// 2026-10-03 画面の 整理（まずは ?tidytest の 端末だけ）: どの タブも「題 → あなた → 本題 → その他」の じゅん、？？？ を へらす、ながい 一覧は みじかく
+if (OWNER && /[?&]tidytest(=|&|$)/.test(location.search)) lsSet('tidytest', '1');
+const TIDY = devFlag('tidytest');
 // うら の並びを 変えたときは うら の途中経過と「倒したことがある」を 消す
 const URA_VER = '2';
 try { if (lsGet('uraver') !== URA_VER) { localStorage.removeItem(KEY + 'ura.stage'); localStorage.removeItem(KEY + 'ura.beaten'); lsSet('uraver', URA_VER); } } catch (e) {}
@@ -313,7 +316,11 @@ function renderRoad() {
   if (ARENA_ON) {
     if (!tr) { tr = document.createElement('div'); tr.id = 'troad'; tr.className = 'troad'; road.parentNode.insertBefore(tr, road); }
     tr.innerHTML = '';
+    const lockedIdx = TERRAINS.map((t, i) => terrainOpen(i) ? -1 : i).filter(i => i >= 0), newLocked = lockedIdx.filter(i => terNew(TERRAINS[i]));
+    const showLocked = new Set(newLocked.length ? newLocked : lockedIdx.slice(0, 1));
+    let hiddenN = 0;
     TERRAINS.forEach((t, i) => {
+      if (TIDY && !terrainOpen(i) && !showLocked.has(i)) { hiddenN++; return; }
       const op = terrainOpen(i), b = document.createElement('button');
       b.className = 'tr-chip' + (terrain === t.key ? ' sel' : '') + (op ? '' : ' locked') + (lsGet(tpre(t.key) + 'cleared') === '1' ? ' done' : '');
       b.textContent = op ? t.name : '？？？'; b.disabled = !op;
@@ -321,6 +328,7 @@ function renderRoad() {
       if (op) onTap(b, () => { lsSet(tpre(t.key) + 'seen', '1'); if (terrain === t.key) return; terrain = t.key; lsSet('terrain', terrain); side = 'omote'; lsSet('side', side); loadSide(); TR('terrain', { t: terrain }); showTitle(); });
       tr.appendChild(b);
     });
+    if (hiddenN) { const m = document.createElement('span'); m.className = 'tr-more'; m.textContent = '＋あと ' + hiddenN; tr.appendChild(m); }
   }
   let sm = document.getElementById('stmode');
   if (STATS_SHOW && stats) {
@@ -1204,7 +1212,7 @@ function miniPreview(code, color, size, kz) {
   const d = RB.decodeDesign(code); if (d) { d.kz = kzParse(kz); drawPreview(c, d, color); } return c;
 }
 function showRank(msg) {
-  mode = 'rank'; show('rank');
+  mode = 'rank'; show('rank'); rankPollN = 0;
   $('rankmsg').textContent = msg || '';
   renderRank();
   loadRank().then(() => { if (mode === 'rank') { renderRank(); if (rankGotMedal) { $('rankmsg').textContent = '🏆 チャンピオン メダルを もらった！（チャンピオン ' + rankGotMedal + ' かいめ）'; rankGotMedal = 0; } } });
@@ -1259,7 +1267,16 @@ function renderLeagueGroup(box, me) {
   box.append(wrap);
   if (rows.length > 7) { const b = document.createElement('button'); b.className = 'lg-more'; b.textContent = lgAll ? '▲ じぶんの まわりだけ' : '▼ ぜんぶ みる（' + rows.length + ' たい）'; b.addEventListener('click', () => { lgAll = !lgAll; renderRank(); }); box.append(b); }
 }
+// けいさんちゅう（とうろく した ばかり・リーグが まだ・はんぶん おわって いない）の 間は ランクせんを 開いて いる ときだけ 30 びょうごとに 読みなおす（1 回 開いて 20 回 まで）
+let rankPollT = 0, rankPollN = 0;
+function rankPollSet() {
+  clearTimeout(rankPollT);
+  const me = rankMe, wait = me && !me.hidden && (!me.pos || (LG_ON && (!me.lg || me.lg.z === 'hold')));
+  if (!wait || mode !== 'rank' || rankPollN >= 20) return;
+  rankPollT = setTimeout(() => { if (mode !== 'rank') return; rankPollN++; loadRank(true).then(() => { if (mode === 'rank') renderRank(); }); }, 30e3);
+}
 function renderRank() {
+  if (TIDY) rankPollSet();
   const t = rankTop, me = rankMe;
   $('ranksub').textContent = t ? t.count + ' たい さんか・2〜3 ぷんで こうしん' : rankDown ? 'いま ランクせんに つながらないよ。しばらく してから また きてね' : 'よみこみちゅう…';
   // 先週の チャンピオン
@@ -1458,6 +1475,7 @@ async function loadEv(force) {
     if (m.won && lsGet('ev.wonseen') !== m.won.day) { evGot = m.won; lsSet('ev.wonseen', m.won.day); TR('evribbon', { n: m.ribbons }); }
   } catch (e) { evTop = null; evDown = true; }
 }
+let evAll = false;   // イベントの ランキングを ぜんぶ 見せるか（整理: ふだんは 10 い まで）
 function showEv(msg) {
   mode = 'ev'; show('ev');
   if (msg != null) $('evmsg').textContent = msg;
@@ -1513,7 +1531,9 @@ function renderEv() {
   $('evdraw').textContent = d ? 'イベントの モンスターを なおす' : 'イベントの モンスターを かく';
   // ランキング
   const list = $('evlist'); list.innerHTML = '';
-  for (const [i, m] of ((top && top.top) || []).entries()) {
+  const tl = (top && top.top) || [], evLim = TIDY && !evAll ? 10 : tl.length;
+  for (const [i, m] of tl.entries()) {
+    if (i >= evLim) { if (!(me && m.id === me.id)) continue; const gp = document.createElement('div'); gp.className = 'rk-gap'; gp.textContent = '⋮'; list.append(gp); }
     const row = document.createElement('button'); row.className = 'rk-row rk-top' + (me && m.id === me.id ? ' mine' : '');
     const p = document.createElement('span'); p.className = 'rk-pos'; p.textContent = i + 1;
     const nm = document.createElement('span'); nm.className = 'rk-opp'; nm.textContent = m.name;
@@ -1521,6 +1541,7 @@ function renderEv() {
     row.append(p, miniPreview(m.code, EV_COLOR, 64, m.kz), nm, sc);
     row.addEventListener('click', () => evPractice(m)); list.append(row);
   }
+  if (TIDY && tl.length > 10) { const b = document.createElement('button'); b.className = 'lg-more'; b.textContent = evAll ? '▲ 10 い まで' : '▼ ぜんぶ みる（' + tl.length + ' い まで）'; b.addEventListener('click', () => { evAll = !evAll; renderEv(); }); list.append(b); }
   if (top && !(top.top || []).length) list.textContent = top.count ? 'まだ たたかう あいてが いないよ（2 たい から じゅんいが でるよ）' : 'まだ だれも だして いないよ。いちばん のりで だそう！';
   if (me && me.pos && me.pos > ((top && top.top) || []).length && me.nb && me.nb.length) {
     const gap = document.createElement('div'); gap.className = 'rk-gap'; gap.textContent = '⋮'; list.append(gap);
@@ -2328,6 +2349,22 @@ if (navOn()) {
   { const row = document.createElement('div'); row.className = 'advrow'; $('adv').append(row); row.append($('advgo'), $('vs')); }   // ふたりで たたかう は「たたかう」の 横（たたかう が 広め。オーナー: そのほか では ない）
   for (const id of ['collection', 'bkbtn', 'langbtn']) ml.append($(id));
   ml.append(document.querySelector('#title .howto'), document.querySelector('#title .tfoot'));
+  if (TIDY) tidyLayout();
+}
+function tidyLayout() {
+  document.body.classList.add('tidy');
+  // ランクせん: 参加数と あそびかたを 1 行に。チャンピオン・れきだいは 下の「いちばん うえ」に まとめる（開いて すぐ じぶんの モンスター）
+  const row = document.createElement('div'); row.className = 'rk-subrow'; $('ranksub').before(row); row.append($('ranksub'), document.querySelector('#rank .rk-guidetop'));
+  const th = document.createElement('div'); th.className = 'rk-h rk-toph'; th.textContent = '👑 チャンピオン・いちばん うえの リーグ';
+  $('rankdia').before(th); th.after($('rankchamp'), $('rankhistbtn'), $('rankhist'));
+  // イベント: あなた → ランキング → きのうの いちばん
+  const eh = document.createElement('div'); eh.className = 'rk-h ev-h rk-toph'; eh.textContent = '🎀 きのうの いちばん';
+  $('evlist').after(eh); eh.after($('evchamp'), $('evhistbtn'), $('evhist'));
+  // ガチャ: 説明は たたむ（「とじる」は style.css で けす）
+  const kn = document.querySelector('#kzbox .kz-note'), kd = document.createElement('details'); kd.className = 'kz-note kz-fold'; kd.innerHTML = '<summary>🪙 コインの もらいかた</summary>';
+  kn.replaceWith(kd); kn.className = 'kz-foldt'; kd.append(kn);
+  // そのほか: あそびかたに ランクせんの ページも
+  const hp = document.createElement('p'); hp.innerHTML = '<a href="rank-guide.html">📖 ランクせんの あそびかた</a>'; document.querySelector('.howto').append(hp);
 }
 for (const b of document.querySelectorAll('#navbar button')) onTap(b, () => {
   const t = b.dataset.tab; TR('nav', { t });
