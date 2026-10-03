@@ -8,3 +8,7 @@ _*.out
 Thumbs.db
 .rankcache/
 .board/
+_frame*.html
+_stale.html
+_*.png
+_terrain/*.json

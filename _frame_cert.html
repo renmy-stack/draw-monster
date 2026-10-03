@@ -1,9 +1,0 @@
-<!DOCTYPE html><html><body style="margin:0;background:#888"><div id="log" style="position:absolute;left:0;top:0;z-index:9;background:#ff0;font:12px monospace;max-width:380px"></div>
-<iframe id="f" style="width:390px;height:844px;border:0;display:block;transform:scale(.66);transform-origin:0 0"></iframe>
-<script>
-const f=document.getElementById('f'), log=m=>document.getElementById('log').textContent+=m+' | ';
-f.src='index.html?nocount&minnatest&use=ENqF05a_pKKugLFerkGkLZYmhS11QWdeXYBaol2_Z9N1BICAgpuUbpShEYCAiH2NgpCJj5GMl4ecgJ94nnKbbZZqj2uHboFzfHp5gno&minna&stage=4&shot=90&result';
-f.onload=()=>{ const w=f.contentWindow; w.addEventListener('error',e=>log('ERR '+e.message+' @'+e.lineno)); w.addEventListener('unhandledrejection',e=>log('REJ '+e.reason));
- setTimeout(()=>{ const b=w.document.getElementById('cert'); log('cert hidden='+b.hidden); try{ b.click(); }catch(e){log('clickerr '+e.message)}
-  setTimeout(()=>log('certbox hidden='+w.document.getElementById('certbox').hidden),1500); },6000); };
-</script></body></html>
