@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15173a">
+<title>ランクせんの あそびかた｜かいて！モンスターバトル</title>
+<meta property="og:title" content="ランクせんの あそびかた｜かいて！モンスターバトル">
+<meta property="og:description" content="リーグ・グループ・しょうかく と こうかく の しくみ">
+<meta property="og:image" content="https://renmygames.com/draw-monster/icon-512.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<script>window.T_VER = 'rank-guide-1';</script>
+<script src="/t.js?v=5"></script>
+<style>
+/* ランクせんの あそびかた（2026-10-03）。ゲームと 同じ 色・字（style.css の --ink・--paper・--hot・--gold） */
+:root { --ink: #1b1d3a; --hot: #ff4d4d; --gold: #ffcc33; --paper: #fff8e8; --night: #15173a; --muted: #5b5d78; --line: #e6dcc4; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--night); color: var(--ink); font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; -webkit-text-size-adjust: 100%; }
+.wrap { max-width: 640px; margin: 0 auto; padding: max(16px, env(safe-area-inset-top)) 16px calc(32px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 14px; }
+main { display: flex; flex-direction: column; gap: 14px; min-width: 0; } .wrap > *, .card { min-width: 0; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.back { color: #fff; text-decoration: none; font-weight: 800; font-size: 14px; padding: 6px 12px; border: 2px solid rgba(255,255,255,.5); border-radius: 999px; }
+.back:focus-visible, .lang:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.lang { background: none; border: 2px solid rgba(255,255,255,.35); color: #fff; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 800; cursor: pointer; }
+h1 { color: #fff; margin: 4px 0 0; font-size: clamp(24px, 6vw, 32px); font-weight: 900; letter-spacing: .02em; text-wrap: balance; }
+.lead { color: #d9daf0; margin: 0; font-size: 14px; line-height: 1.8; }
+.card { background: var(--paper); border: 4px solid var(--ink); border-radius: 18px; padding: 16px 18px; box-shadow: 0 6px 0 rgba(0,0,0,.25); }
+.card h2 { margin: 0 0 8px; font-size: 18px; font-weight: 900; display: flex; align-items: center; gap: 8px; }
+.card h2 .n { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--hot); color: #fff; font-size: 15px; flex: none; }
+.card p, .card li { font-size: 14.5px; line-height: 1.85; margin: 0; }
+.card ul { margin: 6px 0 0; padding-left: 1.2em; display: grid; gap: 4px; }
+.card b { font-weight: 900; }
+.note { color: var(--muted); font-size: 13px !important; }
+/* リーグの はしご */
+.ladder { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.rung { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) auto; align-items: center; gap: 10px; padding: 8px 12px; border: 2px solid var(--ink); border-radius: 12px; font-weight: 900; font-size: 15px; }
+.rung .m { font-size: 20px; text-align: center; }
+.rung .r { font-size: 12px; font-weight: 800; color: var(--muted); text-align: right; line-height: 1.4; font-variant-numeric: tabular-nums; }
+.rung.future { border-style: dashed; opacity: .75; }
+.lg-legend { background: linear-gradient(90deg, #fff8e1, #ffe082, #f8bbd0); } .lg-gm { background: linear-gradient(90deg, #fff3e0, #ffcc80); } .lg-master { background: linear-gradient(90deg, #ede7f6, #d1c4e9); }
+.lg-dia { background: linear-gradient(90deg, #e0f7fa, #b2ebf2, #e1bee7); } .lg-plat { background: #e3f2fd; } .lg-gold { background: #fff3c4; } .lg-silver { background: #eceff1; } .lg-bronze { background: #f3e0d2; }
+/* 表 */
+.tw { overflow-x: auto; margin-top: 8px; }
+table { border-collapse: collapse; width: 100%; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+th, td { border-bottom: 1px solid var(--line); padding: 7px 6px; text-align: center; }
+th:first-child, td:first-child { text-align: left; }
+th { font-size: 12.5px; color: var(--muted); font-weight: 800; }
+.up { color: #2e7d32; font-weight: 900; } .dn { color: #c62828; font-weight: 900; }
+/* グループの 例 */
+.grp { display: grid; gap: 3px; margin-top: 10px; }
+.grow { display: grid; grid-template-columns: 2.2em minmax(0, 1fr) auto; gap: 8px; padding: 5px 10px; border-radius: 8px; background: #fff; font-size: 13.5px; font-weight: 800; }
+.grow .p { color: #888; text-align: right; font-variant-numeric: tabular-nums; } .grow .w { color: #555; font-variant-numeric: tabular-nums; }
+.grow.u { background: #e8f5e9; } .grow.d { background: #ffebee; } .grow.me { outline: 3px solid var(--hot); outline-offset: -3px; }
+.gl { font-size: 11.5px; font-weight: 900; text-align: center; padding: 2px 0; } .gl.u { color: #2e7d32; border-bottom: 2px dashed #66bb6a; } .gl.d { color: #c62828; border-top: 2px dashed #ef5350; }
+.gdots { text-align: center; color: #999; font-weight: 900; line-height: 1; }
+.cta { display: block; text-align: center; background: var(--hot); color: #fff; text-decoration: none; font-weight: 900; font-size: 17px; padding: 14px; border: 4px solid var(--ink); border-radius: 16px; box-shadow: 0 6px 0 var(--ink); }
+.cta:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; }
+[hidden] { display: none !important; }
+@media (prefers-reduced-motion: no-preference) { .rung { transition: transform .15s; } .rung:hover { transform: translateX(3px); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top"><a class="back" href="./" data-ja="← ゲームに もどる" data-en="← Back to the game">← ゲームに もどる</a><button class="lang" id="lang" type="button">English</button></div>
+
+  <!-- ===== 日本語 ===== -->
+  <main id="ja">
+    <h1>ランクせんの あそびかた</h1>
+    <p class="lead">じぶんの モンスターを とうろくすると、おなじ くらいの つよさの みんなの モンスターと じどうで たたかうよ。かって リーグを あがっていこう！</p>
+
+    <section class="card">
+      <h2><span class="n">1</span>リーグ</h2>
+      <p>リーグは 5 だん。はじめは みんな <b>🥉 ブロンズ</b> から。にんずうが ふえると、うえに あたらしい リーグが できるよ。</p>
+      <div class="ladder" aria-label="リーグの じゅんばん（うえが つよい）">
+        <div class="rung lg-legend future"><span class="m">🌟</span>レジェンド<span class="r">にんずうが<br>ふえたら</span></div>
+        <div class="rung lg-gm future"><span class="m">🏆</span>グランドマスター<span class="r">にんずうが<br>ふえたら</span></div>
+        <div class="rung lg-master future"><span class="m">👑</span>マスター<span class="r">にんずうが<br>ふえたら</span></div>
+        <div class="rung lg-dia"><span class="m">💎</span>ダイヤ<span class="r">いまの いちばん うえ</span></div>
+        <div class="rung lg-plat"><span class="m">🔷</span>プラチナ<span class="r"></span></div>
+        <div class="rung lg-gold"><span class="m">🥇</span>ゴールド<span class="r"></span></div>
+        <div class="rung lg-silver"><span class="m">🥈</span>シルバー<span class="r"></span></div>
+        <div class="rung lg-bronze"><span class="m">🥉</span>ブロンズ<span class="r">はじめは ここ</span></div>
+      </div>
+      <p class="note" style="margin-top:8px">リーグは あなたの もの。モンスターを かきなおして とうろくしなおしても、リーグは そのまま だよ。</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">2</span>グループで そうあたり</h2>
+      <p>おなじ リーグの なかで、<b>だいたい 50 たい</b>（30〜60 たい）の グループに わかれて、ぜんいんと <b>ひだり・みぎ 1 かいずつ</b> たたかうよ。かった わりあい（しょうりつ）で じゅんいが きまる。</p>
+      <ul>
+        <li>たたかいは じどう。とうろくして <b>20 ぷん</b> くらいで けっかが でるよ</li>
+        <li>グループの あいてを タップすると <b>れんしゅうじあい</b> が できる（てんすうは かわらない）</li>
+        <li>いちばん うえの リーグは ぜんいんで 1 グループ</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">3</span>よる 0 じに しょうかく・こうかく</h2>
+      <p>まいにち <b>よる 0 じ</b> に、グループの うえの ほうが ひとつ うえの リーグへ、したの ほうが ひとつ したの リーグへ うごくよ。</p>
+      <div class="tw"><table>
+        <tr><th>リーグ</th><th>しょうかく（うえから）</th><th>こうかく（したから）</th></tr>
+        <tr><td>🥉 ブロンズ</td><td class="up">25%</td><td>なし</td></tr>
+        <tr><td>🥈 シルバー</td><td class="up">15%</td><td class="dn">10%</td></tr>
+        <tr><td>🥇 ゴールド</td><td class="up">10%</td><td class="dn">10%</td></tr>
+        <tr><td>🔷 プラチナ から うえ</td><td class="up">7%</td><td class="dn">10%</td></tr>
+        <tr><td>いちばん うえ</td><td>―</td><td class="dn">10%</td></tr>
+      </table></div>
+      <p class="note" style="margin-top:8px">50 たいの グループなら、ゴールドは うえ 5 たいが しょうかく、した 5 たいが こうかく。</p>
+      <div class="grp" aria-label="グループの じゅんいの れい">
+        <div class="grow u"><span class="p">1</span><span>くるくる</span><span class="w">68%</span></div>
+        <div class="gdots">⋮</div>
+        <div class="grow u"><span class="p">5</span><span>つよいぼ</span><span class="w">63%</span></div>
+        <div class="gl u">⬆ ここまで しょうかく（0 じに プラチナへ）</div>
+        <div class="grow me"><span class="p">6</span><span>あなたの モンスター</span><span class="w">61%</span></div>
+        <div class="gdots">⋮</div>
+        <div class="gl d">⬇ ここから こうかく（0 じに シルバーへ）</div>
+        <div class="grow d"><span class="p">46</span><span>ころころ</span><span class="w">31%</span></div>
+      </div>
+      <ul style="margin-top:10px">
+        <li>たたかいが はんぶんも おわって いない ときは、うごかないよ（あんしん）</li>
+        <li>グループの くみかえは <b>よる 0 じ だけ</b>。とちゅうで きた ひとは あいている グループへ</li>
+        <li>げつようびの 0 じは ぜんいんを まぜなおすよ（あいての あたり はずれを へらす）</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">4</span>いちばん うえと チャンピオン</h2>
+      <ul>
+        <li>まいにち よる 0 じに、<b>いちばん うえの リーグの 1 い</b> が チャンピオン 👑</li>
+        <li>いちばん うえの リーグが <b>60 たいを こえたら</b>、しょうりつの うえ はんぶんで あたらしい リーグ（マスター → グランドマスター → レジェンド）が できるよ</li>
+        <li>ランクせんの したの「いちばん うえの リーグを みる」で、さいきょうの モンスターたちと れんしゅうじあい できる</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">5</span>そのほか</h2>
+      <ul>
+        <li>とうろくできるのは 1 だいに 1 たい。とうろくしなおすと まえの モンスターは いんたい</li>
+        <li>ひとが すくない グループには <b>コンピューターの モンスター</b> も はいるよ（しょうかく・こうかく は しない）</li>
+        <li>7 にち あそばないと おやすみ。ひらくと おなじ リーグに もどる</li>
+        <li>なまえには ほんみょうや がっこうの なまえを いれないでね</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">💡</span>つよく なる コツ</h2>
+      <ul>
+        <li>「つよい あいてとの たいせん」の リプレイで、まけた あいてを よく みよう</li>
+        <li>グループの うえの あいてと れんしゅうじあい して、かてる かたちを さがそう</li>
+        <li>かたちを すこし かえるだけで、あいしょうが がらっと かわる ことも</li>
+      </ul>
+    </section>
+
+    <a class="cta" href="./">ランクせんに いく ›</a>
+  </main>
+
+  <!-- ===== English ===== -->
+  <main id="en" hidden>
+    <h1>How Ranked works</h1>
+    <p class="lead">Enter your monster and it battles everyone's monsters of a similar strength automatically. Win and climb the leagues!</p>
+    <section class="card">
+      <h2><span class="n">1</span>Leagues</h2>
+      <p>There are 5 leagues. Everyone starts in <b>🥉 Bronze</b>. New leagues open on top as more people play.</p>
+      <div class="ladder" aria-label="Leagues (top is strongest)">
+        <div class="rung lg-legend future"><span class="m">🌟</span>Legend<span class="r">when more<br>people play</span></div>
+        <div class="rung lg-gm future"><span class="m">🏆</span>Grandmaster<span class="r">when more<br>people play</span></div>
+        <div class="rung lg-master future"><span class="m">👑</span>Master<span class="r">when more<br>people play</span></div>
+        <div class="rung lg-dia"><span class="m">💎</span>Diamond<span class="r">top for now</span></div>
+        <div class="rung lg-plat"><span class="m">🔷</span>Platinum<span class="r"></span></div>
+        <div class="rung lg-gold"><span class="m">🥇</span>Gold<span class="r"></span></div>
+        <div class="rung lg-silver"><span class="m">🥈</span>Silver<span class="r"></span></div>
+        <div class="rung lg-bronze"><span class="m">🥉</span>Bronze<span class="r">start here</span></div>
+      </div>
+      <p class="note" style="margin-top:8px">Your league stays with you. Redraw and re-enter, and you keep your league.</p>
+    </section>
+    <section class="card">
+      <h2><span class="n">2</span>Round-robin in your group</h2>
+      <p>Each league is split into groups of <b>about 50</b> (30–60). Your monster fights everyone in the group <b>once on each side</b>. Your win rate decides your place.</p>
+      <ul><li>Battles are automatic. Results in about <b>20 minutes</b> after you enter</li><li>Tap anyone in your group for a <b>practice match</b> (no score change)</li><li>The top league is one group</li></ul>
+    </section>
+    <section class="card">
+      <h2><span class="n">3</span>Promotion and relegation at midnight</h2>
+      <p>Every day at <b>midnight (JST)</b> the top of each group moves up a league and the bottom moves down.</p>
+      <div class="tw"><table>
+        <tr><th>League</th><th>Promoted (from top)</th><th>Relegated (from bottom)</th></tr>
+        <tr><td>🥉 Bronze</td><td class="up">25%</td><td>none</td></tr>
+        <tr><td>🥈 Silver</td><td class="up">15%</td><td class="dn">10%</td></tr>
+        <tr><td>🥇 Gold</td><td class="up">10%</td><td class="dn">10%</td></tr>
+        <tr><td>🔷 Platinum and up</td><td class="up">7%</td><td class="dn">10%</td></tr>
+        <tr><td>Top league</td><td>—</td><td class="dn">10%</td></tr>
+      </table></div>
+      <ul style="margin-top:10px"><li>If less than half of your fights are done, you don't move</li><li>Groups only change at midnight. Newcomers join a group with room</li><li>Everyone is reshuffled on Monday at midnight</li></ul>
+    </section>
+    <section class="card">
+      <h2><span class="n">4</span>The top and the champion</h2>
+      <ul><li>Every midnight, <b>#1 of the top league</b> becomes champion 👑</li><li>When the top league <b>passes 60</b>, its top half by win rate opens a new league (Master → Grandmaster → Legend)</li><li>Use "See the top league" at the bottom of Ranked to practice against the strongest</li></ul>
+    </section>
+    <section class="card">
+      <h2><span class="n">5</span>Other rules</h2>
+      <ul><li>One entry per phone. Re-entering retires your previous monster</li><li>Groups with few players also get <b>computer monsters</b> (they don't move up or down)</li><li>Rest after 7 days away. Open the game to return to the same league</li><li>Don't use your real name or school name</li></ul>
+    </section>
+    <a class="cta" href="./">Go to Ranked ›</a>
+  </main>
+</div>
+<script>
+// ことば: ゲームと 同じ きめかた（えらんだ もの → スマホの 設定）。ボタンで きりかえ（ゲームにも おぼえる）
+(function () {
+  var KEY = 'drawrobot.lang', pick = null; try { pick = localStorage.getItem(KEY); } catch (e) {}
+  var en = (pick === 'en' || pick === 'ja') ? pick === 'en' : !/^ja/i.test(navigator.language || 'ja');
+  function apply() {
+    document.getElementById('ja').hidden = en; document.getElementById('en').hidden = !en;
+    document.documentElement.lang = en ? 'en' : 'ja';
+    document.getElementById('lang').textContent = en ? '日本語' : 'English';
+    var b = document.querySelector('.back'); b.textContent = en ? b.dataset.en : b.dataset.ja;
+    document.title = en ? 'How Ranked works | Draw! Monster Battle' : 'ランクせんの あそびかた｜かいて！モンスターバトル';
+  }
+  document.getElementById('lang').addEventListener('click', function () { en = !en; try { localStorage.setItem(KEY, en ? 'en' : 'ja'); } catch (e) {} apply(); });
+  apply();
+})();
+</script>
+</body>
+</html>
