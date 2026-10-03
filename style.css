@@ -627,3 +627,10 @@ body.tidy .rk-btnrow button { flex: 1 1 0; min-width: 0; margin: 0; padding: 10p
 body.tidy .rk-btnrow .rk-card { flex: 1.25 1 0; width: auto; }
 body.tidy .rk-btnrow { gap: 6px; }
 body.tidy .rk-btnrow button, body.tidy .rk-btnrow .rk-card { flex: 1 1 0; padding: 10px 4px; font-size: clamp(12px, 3.7vw, 15px); overflow: hidden; text-overflow: ellipsis; }   /* iPhone で「つくる・なおす」が はみ出た → おなじ 幅・文字は 画面に あわせて */
+/* 2026-10-03 かたまりを 四角で かこむ（body.boxt ＝ ?boxtest の 端末だけ） */
+body.boxt .sec-box { border-radius: 14px; padding: 10px 12px 12px; margin-top: 10px; }
+body.boxt .sec-box > .rk-h:first-child { margin-top: 0; }
+body.boxt .sec-me { background: #fff; border: 2px solid #ffb74d; }
+body.boxt .sec-evme { background: #fff; border: 2px solid #ce93d8; }
+body.boxt #rankmore:not(:empty) { margin-top: 12px; padding: 10px 10px 12px; border-radius: 14px; background: #f6ecd8; }
+body.boxt #rankmore > .rk-h:first-child { margin-top: 0; }

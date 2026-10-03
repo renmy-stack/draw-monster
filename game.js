@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '210';
+const VERSION = '211';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -90,6 +90,8 @@ const devFlag = n => OWNER && lsGet(n) === '1';
 // 2026-10-03 画面の 整理（まずは ?tidytest の 端末だけ）: どの タブも「題 → あなた → 本題 → その他」の じゅん、？？？ を へらす、ながい 一覧は みじかく
 if (OWNER && /[?&]tidytest(=|&|$)/.test(location.search)) lsSet('tidytest', '1');
 const TIDY = true;   // 2026-10-03 全員に（オーナー OK。前は ?tidytest の 端末だけ）
+if (OWNER && /[?&]boxtest(=|&|$)/.test(location.search)) lsSet('boxtest', '1');
+const BOXT = devFlag('boxtest');   // あなたの モンスターなどを 四角で かこむ（まずは ?boxtest の 端末だけ）
 // うら の並びを 変えたときは うら の途中経過と「倒したことがある」を 消す
 const URA_VER = '2';
 try { if (lsGet('uraver') !== URA_VER) { localStorage.removeItem(KEY + 'ura.stage'); localStorage.removeItem(KEY + 'ura.beaten'); lsSet('uraver', URA_VER); } } catch (e) {}
@@ -2363,6 +2365,14 @@ function tidyLayout() {
   // イベント: あなた → ランキング → きのうの いちばん
   const eh = document.createElement('div'); eh.className = 'rk-h ev-h rk-toph'; eh.textContent = '🎀 きのうの いちばん';
   $('evlist').after(eh); eh.after($('evchamp'), $('evhistbtn'), $('evhist'));
+  // かたまりを 四角で かこむ（?boxtest の 端末だけ。2026-10-03 オーナー「境目が わかりづらい」）: あなたの モンスター／グループの じゅんい
+  if (BOXT) {
+    document.body.classList.add('boxt');
+    const mb = document.createElement('div'); mb.className = 'sec-box sec-me'; const mh = document.querySelector('#rank .rk-h'); mh.before(mb);
+    mb.append(mh, $('rankme'), $('rankreg'), $('rankmsg'), $('rankbtnrow'));
+    const eb = document.createElement('div'); eb.className = 'sec-box sec-evme'; const ehh = document.querySelector('#ev .ev-h'); ehh.before(eb);
+    eb.append(ehh, $('evme'), $('evreg'), $('evdraw').parentNode, $('evmsg'));
+  }
   // ガチャ: 説明は たたむ（「とじる」は style.css で けす）
   const kn = document.querySelector('#kzbox .kz-note'), kd = document.createElement('details'); kd.className = 'kz-note kz-fold'; kd.innerHTML = '<summary>🪙 コインの もらいかた</summary>';
   kn.replaceWith(kd); kn.className = 'kz-foldt'; kd.append(kn);
