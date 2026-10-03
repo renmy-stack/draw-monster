@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '191';
+const VERSION = '192';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -1209,6 +1209,31 @@ function showRank(msg) {
   renderRank();
   loadRank().then(() => { if (mode === 'rank') { renderRank(); if (rankGotMedal) { $('rankmsg').textContent = '🏆 チャンピオン メダルを もらった！（チャンピオン ' + rankGotMedal + ' かいめ）'; rankGotMedal = 0; } } });
 }
+// ---------- リーグ と 成長（2026-10-03〜、まずは ?leaguetest の 端末だけ）----------
+// 950 体中 何百位 だと 次の 目標が 見えない → 順位の わりあいで 5 つの リーグに 分け、リーグの 中の 順位と「あと ○ い で 次の リーグ」を 出す
+// 上がった ときは「○ い アップ」「○○ に あがった」「じこベスト」を 出す（端末に 前の 順位を おぼえる）。総当たりの 計算は 今の まま
+if (OWNER && /[?&]leaguetest(=|&|$)/.test(location.search)) lsSet('leaguetest', '1');
+const LG_ON = devFlag('leaguetest');
+const LEAGUES = [{ k: 'dia', name: 'ダイヤ', mark: '💎', f: 0.03 }, { k: 'plat', name: 'プラチナ', mark: '🔷', f: 0.10 }, { k: 'gold', name: 'ゴールド', mark: '🥇', f: 0.25 }, { k: 'silver', name: 'シルバー', mark: '🥈', f: 0.50 }, { k: 'bronze', name: 'ブロンズ', mark: '🥉', f: 1 }];
+function leagueOf(pos, count) {
+  const n = Math.max(count, pos), ends = LEAGUES.map(l => Math.max(1, Math.ceil(n * l.f)));
+  const i = ends.findIndex(e => pos <= e), start = i ? ends[i - 1] + 1 : 1;
+  return { i, lg: LEAGUES[i], inPos: pos - start + 1, size: ends[i] - start + 1, toNext: i ? pos - ends[i - 1] : 0, next: i ? LEAGUES[i - 1] : null };
+}
+// 前の 順位と くらべて ほめる ことば（1 日 だけ 出す）。rank.prog = {id, pos, lg, best, msg, at}
+function rankProgress(me) {
+  if (!me || !me.pos || !me.count) return null;
+  let p = {}; try { p = JSON.parse(lsGet('rank.prog') || '{}'); } catch (e) {}
+  const L = leagueOf(me.pos, me.count), msgs = [];
+  if (p.id && p.id !== me.id && p.pos && me.pos < p.pos) msgs.push('まえの モンスターより ' + (p.pos - me.pos) + ' い アップ！');
+  if (p.lg != null && L.i < p.lg) msgs.push(L.lg.mark + ' ' + L.lg.name + ' リーグに あがった！');
+  if (p.best && me.pos < p.best) msgs.push('じこベスト こうしん！');
+  const changed = p.id !== me.id || p.pos !== me.pos;
+  if (msgs.length) { p.msg = msgs.join('　'); p.at = Date.now(); TR('rankup', { lg: L.lg.k, pos: me.pos, n: me.count }); }
+  else if (p.at && Date.now() - p.at > 864e5) p.msg = '';
+  if (changed || msgs.length) { p.id = me.id; p.pos = me.pos; p.lg = L.i; p.best = Math.min(p.best || me.pos, me.pos); lsSet('rank.prog', JSON.stringify(p)); }
+  return { L, best: p.best, msg: p.msg || '' };
+}
 function renderRank() {
   const t = rankTop, me = rankMe;
   $('ranksub').textContent = t ? t.count + ' たい さんか・20 ぷんごとに こうしん' : rankDown ? 'いま ランクせんに つながらないよ。しばらく してから また きてね' : 'よみこみちゅう…';
@@ -1225,6 +1250,16 @@ function renderRank() {
     const st = document.createElement('div'); st.className = 'rk-stat';
     st.textContent = me.pos ? me.pos + ' い / ' + me.count + ' たい　しょうりつ ' + me.pct + '%（' + me.w + 'しょう ' + me.l + 'はい' + (me.d ? ' ' + me.d + 'わけ' : '') + '）' + (me.pl < me.total ? '　けいさんちゅう ' + me.pl + '/' + me.total : '') : 'けいさんちゅう（20 ぷんくらい）';
     info.append(nm, st);
+    if (LG_ON && me.pos && !me.hidden) {
+      const pr = rankProgress(me), L = pr.L, lgb = document.createElement('div'); lgb.className = 'rk-league lg-' + L.lg.k;
+      lgb.innerHTML = '<b>' + L.lg.mark + ' ' + L.lg.name + ' リーグ</b> <span>' + L.inPos + ' い / ' + L.size + ' たい</span>';
+      info.append(lgb);
+      const sub = document.createElement('div'); sub.className = 'rk-lgsub';
+      sub.textContent = L.next ? 'あと ' + L.toNext + ' い で ' + L.next.mark + ' ' + L.next.name + '！' : 'さいこうの リーグ！ 1 い を めざそう';
+      const bst = document.createElement('div'); bst.className = 'rk-lgsub'; bst.textContent = 'じこベスト ' + pr.best + ' い';
+      info.append(sub, bst);
+      if (pr.msg) { const up = document.createElement('div'); up.className = 'rk-up'; up.textContent = '🎉 ' + pr.msg; info.append(up); }
+    }
     if (me.champ) { const c = document.createElement('div'); c.className = 'rk-champbadge'; c.textContent = '👑 きのうの チャンピオン' + (me.champ >= 2 ? '（' + me.champ + ' にち れんぞく！）' : '！'); info.append(c); }
     head.append(info); box.append(head);
     if (CARD_ON && me.pos && !me.hidden) { const cb = document.createElement('button'); cb.className = 'main rk-card'; cb.textContent = '📸 じゅんい カードを つくる'; cb.addEventListener('click', () => showRankCard(me)); box.append(cb); }
