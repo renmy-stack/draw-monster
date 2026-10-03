@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '188';
+const VERSION = '189';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -2187,7 +2187,7 @@ function showMore() { mode = 'more'; show('more'); renderSupport(); }
 // 金がくは いくらでも（オーナー）。見た目だけで 強さは かわらない。まずは ?supporttest の 端末だけ
 if (OWNER && /[?&]supporttest(=|&|$)/.test(location.search)) lsSet('supporttest', '1');
 const SUP_ON = devFlag('supporttest');
-const SUPPORT_URL = '';   // OFUSE の ページ（オーナーの 登録 待ち）
+const SUPPORT_URL = 'https://ofuse.me/a2b46de1';   // OFUSE の ページ（2026-10-03 オーナー 登録）
 const SUP_ITEM = 84;
 function renderSupport() {
   if (!SUP_ON) return;
