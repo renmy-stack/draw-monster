@@ -393,6 +393,12 @@ button:disabled { opacity: .45; }
 .kz-slot summary::before { flex: none; }
 .kz-slot .kz-desc { margin: -2px 0 6px; }
 .kz-items { display: flex; flex-wrap: wrap; gap: 5px; }
+/* ガチャで 出ない かざり（2026-10-04）: 見出しで わけて、手に 入れかたを 小さく */
+.kz-xlab { flex: 0 0 100%; margin-top: 6px; font-size: 11px; font-weight: 900; color: #6a1b9a; }
+.kz-items button.kz-x small { display: block; font-size: 9.5px; font-weight: 700; color: #6a1b9a; line-height: 1.2; }
+.kz-items button.kz-x.no { opacity: .7; }
+.kz-cntx { color: #6a1b9a; }
+.kz-got { font-size: 11.5px; font-weight: 800; color: #666; font-variant-numeric: tabular-nums; }
 .kz-items button { margin: 0; padding: 4px 8px; font-size: 12px; font-weight: 800; border: 2px solid var(--ink); border-radius: 10px; background: #fff; color: var(--ink); box-shadow: 0 2px 0 var(--ink); }
 .kz-items button.on { background: #ffe082; }
 .kz-items button.no { opacity: .35; border-style: dashed; box-shadow: none; }

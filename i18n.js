@@ -26,6 +26,9 @@
 
   // ---- 文 まるごと ----
   const D = {
+    'ガチャの かざりは ぜんぶ そろった！🎉': 'All gacha items collected! 🎉',
+    '🎁 ガチャでは でない': '🎁 Not from the gacha',
+    'おうえんの おれい': 'Thanks for supporting',
     // タイトル
     "かいて！<br>モンスターバトル": "Draw!<br>Monster Battle",
     "かいて！モンスターバトル": "Draw! Monster Battle",
@@ -400,6 +403,8 @@
     [/<br>かぶり 🪙 \+(\d+)/, '<br>Duplicate 🪙 +$1'],
     [/^10れん ＋1 の けっか：NEW (\d+) こ$/, '10+1 results: NEW $1'],
     [/いま: /, 'Now: '],
+    [/^ガチャの かざり (\d+) \/ (\d+)$/, 'Gacha items $1 / $2'],
+    [/^ちけいの うらを (\d+) つ クリア$/, 'Clear Hidden on $1 terrains'],
     [/^(\d+) たい さんか・2〜3 ぷんで こうしん$/, '$1 entered · updates within 2–3 min'],
     [/<b>👑 きのうの チャンピオン<\/b>/, "<b>👑 Yesterday's champion</b>"],
     [/^なかまリーグ けいさんちゅう (\d+) \/ (\d+)$/, 'Friends league: calculating $1 / $2'],
