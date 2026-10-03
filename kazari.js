@@ -735,6 +735,82 @@ function bodyMore(g, id, x0, y0, x1, y1, w, h, t) {
   }
 }
 // えふぇくと（v81）
+// きんの はね（id 84、おうえんの お礼。2026-10-03 オーナーが 5 案 から D「セラフの 金翼」を えらんだ）
+// 参考: 骨 → つけねは 小さい 羽根・外ほど 長い 羽根（3 段）、根もと 濃い金 → 先は 白、上の ふちが 光る、うしろから 光の すじ、上下 2 対
+// 羽根 1 枚: 根もと (0,0) → 先 (L,0)。先が とがって すこし そる。色は 根もと 濃い金 → 先 白
+function feather(g, L, W, cols, edge) {
+  g.beginPath(); g.moveTo(0, -W * 0.5);
+  g.bezierCurveTo(L * 0.35, -W * 0.75, L * 0.75, -W * 0.55, L, -W * 0.08);
+  g.bezierCurveTo(L * 0.8, W * 0.35, L * 0.35, W * 0.6, 0, W * 0.5); g.closePath();
+  const gr = g.createLinearGradient(0, 0, L, 0); cols.forEach((c, i) => gr.addColorStop(i / (cols.length - 1), c)); g.fillStyle = gr; g.fill();
+  if (edge) { g.strokeStyle = edge; g.lineWidth = 1; g.stroke(); }
+  g.strokeStyle = 'rgba(255,255,255,.45)'; g.lineWidth = 0.8; g.beginPath(); g.moveTo(L * 0.05, -W * 0.05); g.quadraticCurveTo(L * 0.5, -W * 0.18, L * 0.92, -W * 0.08); g.stroke();
+}
+// 翼 1 枚（右むき・肩が 原点）。S = 大きさ、up = 立ちあがり（ラジアン）
+// 1 枚ずつ 羽根を 描くと 重い（1 回 約 1ms・羽根 120 枚）ので、大きさごとに 1 回だけ 絵に して 使い回す。はばたきは 絵を まわす だけ
+const WING_CACHE = new Map();
+function wing(g, S, up, flap, t, dim) {
+  const s = Math.max(16, Math.round(S / 16) * 16), key = s + (dim ? "d" : ""), pad = s * 1.85, sc = 1.5;   // 大きさは 16px きざみ（戦いで かたむいても 作りなおさない）・1.5 倍で 描いて ぼやけない ように
+  let c = WING_CACHE.get(key);
+  if (!c && typeof document !== 'undefined') {
+    c = document.createElement('canvas'); c.width = c.height = Math.ceil(pad * 2 * sc);
+    const cg = c.getContext('2d'); cg.scale(sc, sc); cg.translate(pad, pad); wingPaint(cg, s, 0, 0, 0, dim);
+    if (WING_CACHE.size > 40) WING_CACHE.clear(); WING_CACHE.set(key, c);
+  }
+  if (!c) return wingPaint(g, S, up, flap, t, dim);
+  g.save(); g.rotate(-up + flap); g.scale(S / s / sc, S / s / sc); g.drawImage(c, -pad * sc, -pad * sc); g.restore();
+}
+function wingPaint(g, S, up, flap, t, dim) {
+  g.save(); g.rotate(-up + flap);
+  const E = [S * 0.32, -S * 0.18], Wr = [S * 0.72, -S * 0.02];   // ひじ・手首（立ちあがりは 外の rotate で）
+  const P = dim ? ['#6d4500', '#b8860b', '#f6c344', '#fff3c4'] : ['#8a5a00', '#d9a400', '#ffd54f', '#fffdf0'];
+  const Sd = dim ? ['#5a3a00', '#9c7200', '#e0ad2e', '#fbe7a6'] : ['#704800', '#c18f00', '#f9cb3c', '#fff6d8'];
+  // 長い 羽根（初列）: 手首から 扇に。外ほど 長い
+  for (let i = 0; i < 8; i++) {
+    const k = i / 7, a = -0.55 + k * 1.05 + Math.sin(t * 2 + i) * 0.015, L = S * (0.95 - k * 0.38);
+    g.save(); g.translate(Wr[0] - k * S * 0.12, Wr[1] + k * S * 0.05); g.rotate(a); feather(g, L, S * 0.13, P, 'rgba(90,55,0,.55)'); g.restore();
+  }
+  // 中くらいの 羽根（次列）: 前腕に そって 下・外へ
+  for (let i = 0; i < 9; i++) {
+    const k = i / 8, x = E[0] + (Wr[0] - E[0]) * (1 - k) * 0.85, y = E[1] + (Wr[1] - E[1]) * (1 - k) * 0.85;
+    g.save(); g.translate(x - k * S * 0.2, y + k * S * 0.05); g.rotate(0.55 + k * 0.55); feather(g, S * (0.5 - k * 0.12), S * 0.12, Sd, 'rgba(80,50,0,.5)'); g.restore();
+  }
+  // つけねの 小さい 羽根（2 列、うろこ）
+  for (let row = 0; row < 2; row++) for (let i = 0; i < 7; i++) {
+    const k = i / 6, x = k * Wr[0] * 0.9, y = E[1] * Math.sin(k * Math.PI) * 0.9 + row * S * 0.06;
+    g.save(); g.translate(x, y + S * 0.02); g.rotate(0.9 + row * 0.15); feather(g, S * (0.2 + row * 0.06), S * 0.09, ['#a87400', '#f2c230', '#fff1b8'], null); g.restore();
+  }
+  // 上の ふち（骨）: 白金の 光
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  g.strokeStyle = '#7a5200'; g.lineWidth = S * 0.05; g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(E[0], E[1] - S * 0.04, Wr[0], Wr[1]); g.stroke();
+  g.strokeStyle = '#fff3c4'; g.lineWidth = S * 0.025; g.stroke();
+  g.save(); g.globalCompositeOperation = 'lighter'; g.strokeStyle = 'rgba(255,236,160,' + (0.18 + 0.15 * wave(t, 3, 1)).toFixed(2) + ')'; g.lineWidth = S * 0.12; g.stroke(); g.lineWidth = S * 0.06; g.stroke(); g.restore();   // ぼかし（shadowBlur）は 重いので 太い 線 2 本で
+  g.restore();
+}
+function rays(g, x, y, S, t) {
+  g.save(); g.globalCompositeOperation = 'lighter';
+  for (let i = 0; i < 12; i++) { const a = -Math.PI / 2 + (i - 5.5) * 0.24 + Math.sin(t * 0.5) * 0.03, L = S * (1.5 + 0.3 * wave(t, 1.5, i)), wd = 0.05;
+    const gr = g.createLinearGradient(x, y, x + Math.cos(a) * L, y + Math.sin(a) * L); gr.addColorStop(0, 'rgba(255,240,190,.35)'); gr.addColorStop(1, 'rgba(255,215,64,0)');
+    g.fillStyle = gr; g.beginPath(); g.moveTo(x, y); g.lineTo(x + Math.cos(a - wd) * L, y + Math.sin(a - wd) * L); g.lineTo(x + Math.cos(a + wd) * L, y + Math.sin(a + wd) * L); g.closePath(); g.fill(); }
+  const gl = g.createRadialGradient(x, y, 0, x, y, S * 0.9); gl.addColorStop(0, 'rgba(255,248,220,.5)'); gl.addColorStop(1, 'rgba(255,215,64,0)'); g.fillStyle = gl; g.beginPath(); g.arc(x, y, S * 0.9, 0, 7); g.fill();
+  g.restore();
+}
+function goldWingsDraw(g, info, t, pairs) {
+  const { x0, x1, y0, y1 } = info, w = x1 - x0, h = y1 - y0, cx = (x0 + x1) / 2, ay = y0 + h * 0.3, S = Math.max(h * 1.2, w * 0.95), R = Math.random;
+  rays(g, cx, ay, S, t);
+  for (const s of [-1, 1]) {
+    const ax = s < 0 ? x0 + w * 0.3 : x1 - w * 0.3;
+    g.save(); g.translate(ax, ay); g.scale(s, 1);
+    if (pairs === 2) wing(g, S * 0.62, -0.35, Math.sin(t * 2.4 + 1.2) * 0.08, t, true);   // 下の 小さい 翼（先に 描いて うしろへ）
+    wing(g, S, pairs === 2 ? 0.75 : 0.55, Math.sin(t * 2.4) * 0.1, t, false);
+    g.restore();
+  }
+  if (info.spawn) {
+    if (R() < 0.25) info.spawn(cx + (R() - 0.5) * w * 3, y0 - R() * h * 0.6, { vx: (R() - 0.5) * 20, vy: -15 - R() * 25, g: -0.02, c: R() < 0.5 ? '#fff8e1' : '#ffe082', life: 60, k: 'ember' });
+    if (R() < 0.06) info.spawn(cx + (R() - 0.5) * w * 2.8, y0, { vx: (R() - 0.5) * 30, vy: 15 + R() * 20, g: 0.01, c: '#ffe9a8', life: 100, k: 'feather', rot: R() * 6, spin: (R() - 0.5) * 0.12 });
+  }
+}
+function goldWings(g, info, t) { goldWingsDraw(g, info, t, 2); }
 function fxBackMore(g, id, info, t, w, h, cx, cy) {
   const { x0, x1, y0, y1, pts } = info, facing = info.facing || 1, R = Math.random;
   if (id === 67 && R() < 0.1) info.spawn(x0 + R() * w, y0 + R() * h * 0.4, { vx: (R() - 0.5) * 40, vy: -50 - R() * 40, g: -0.03, c: R() < 0.5 ? '#ff4081' : '#ff80ab', life: 60, k: 'heart' });
@@ -773,32 +849,8 @@ function fxBackMore(g, id, info, t, w, h, cx, cy) {
       g.restore();
     }
     if (R() < 0.2) info.spawn(cx + (R() - 0.5) * w * 2.4, y0 + R() * h * 0.5, { vx: (R() - 0.5) * 40, vy: -50 - R() * 50, g: -0.06, c: R() < 0.5 ? '#ff6d00' : '#ffab40', life: 40, k: 'ember' });
-  } else if (id === 84) {   // きんの はね（おうえんの お礼）: 羽根を かさねた 金の はね・ゆっくり はばたく・光と 羽根が 舞う
-    const ay = y0 + h * 0.32, span = Math.max(h * 1.0, w * 0.85), flap = Math.sin(t * 3.2);
-    g.save(); g.globalCompositeOperation = 'lighter';
-    const gl = g.createRadialGradient(cx, ay, span * 0.2, cx, ay, span * 1.5); gl.addColorStop(0, 'rgba(255,224,130,' + (0.28 + 0.12 * wave(t, 2, 0)).toFixed(2) + ')'); gl.addColorStop(1, 'rgba(255,193,7,0)');
-    g.fillStyle = gl; g.beginPath(); g.ellipse(cx, ay, span * 1.6, span * 1.1, 0, 0, 7); g.fill(); g.restore();
-    for (const s of [-1, 1]) {
-      const ax = s < 0 ? x0 + w * 0.28 : x1 - w * 0.28;
-      g.save(); g.translate(ax, ay); g.scale(s, 1); g.rotate(-0.05 + flap * 0.22);
-      // 外がわ から 内がわへ 3 段の 羽根（長い → みじかい）
-      const rows = [[7, 1.0, 0.15, ['#e65100', '#ffa000', '#ffd54f']], [6, 0.72, 0.13, ['#ef6c00', '#ffb300', '#ffe082']], [5, 0.45, 0.11, ['#f57c00', '#ffca28', '#fff3c4']]];
-      for (const [n, len, wd, cols] of rows) for (let i = n - 1; i >= 0; i--) {
-        const a = -1.15 + i * (1.55 / (n - 1)) + flap * 0.05 * (i / n), L = span * len * (0.82 + 0.18 * Math.sin(i * 1.7 + 1));
-        g.save(); g.rotate(a);
-        g.beginPath(); g.ellipse(L * 0.5, 0, L * 0.5, span * wd, 0, 0, 7);
-        g.fillStyle = lin(g, 0, 0, L, 0, cols); g.fill();
-        g.strokeStyle = 'rgba(110,60,0,.85)'; g.lineWidth = 1.8; g.stroke();
-        g.strokeStyle = 'rgba(255,255,255,.6)'; g.lineWidth = 1; g.beginPath(); g.moveTo(L * 0.08, 0); g.lineTo(L * 0.9, 0); g.stroke();
-        g.restore();
-      }
-      // ふちの きらめき
-      g.save(); g.globalCompositeOperation = 'lighter'; g.fillStyle = 'rgba(255,255,255,' + (0.5 + 0.4 * wave(t, 5, s)).toFixed(2) + ')';
-      const ta = -1.15 + flap * 0.05, tx = Math.cos(ta) * span * 0.95, ty = Math.sin(ta) * span * 0.95; g.beginPath(); g.arc(tx, ty, 2.6, 0, 7); g.fill(); g.restore();
-      g.restore();
-    }
-    if (R() < 0.12) info.spawn(cx + (R() - 0.5) * w * 2.6, y0 + R() * h * 0.4, { vx: (R() - 0.5) * 30, vy: 15 + R() * 20, g: 0.01, c: R() < 0.5 ? '#ffe082' : '#fff8e1', life: 90, k: 'feather', rot: R() * 6, spin: (R() - 0.5) * 0.15 });
-    if (R() < 0.15) info.spawn(cx + (R() - 0.5) * w * 2.2, y0 + R() * h * 0.6, { vx: (R() - 0.5) * 30, vy: -30 - R() * 30, g: -0.03, c: '#ffd54f', life: 40, k: 'ember' });
+  } else if (id === 84) {   // きんの はね（おうえんの お礼）
+    goldWings(g, info, t);
   } else if (id === 79) {   // ブラックホール（★★★）: うずまく ひかりの わ・すいこまれる つぶ
     const Rr = Math.max(w, h) * 0.9;
     g.save(); g.globalCompositeOperation = 'lighter';

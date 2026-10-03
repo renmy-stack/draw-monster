@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '187';
+const VERSION = '188';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -613,7 +613,7 @@ function drawPreview(c, d, color, anim) {
   const hat = d.kz && d.kz[0];
   if ((d.crown || d.legend || d.halo || hat) && d.body && d.body.length > 2) { const cs = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); y0 = Math.min(y0, cs.y - (d.crown ? cs.s * 0.8 : 0) - (d.legend ? cs.s * 0.95 : 0) - (d.halo ? cs.s * 0.75 : 0) - (hat ? cs.hs * 1.05 : 0)); }
   const fx = anim && d.kz && d.kz[3] && d.body && d.body.length > 2 ? d.kz[3] : 0;
-  if (fx) { const big = [24, 73, 75, 76, 78, 79, 80, 84].includes(fx) ? 60 : 30; y0 -= 55; x0 -= big; x1 += big; y1 += 10; }   // えふぇくとの ぶん 広く（つばさ・ブラックホール などは もっと）
+  if (fx) { const big = fx === 84 ? 120 : [24, 73, 75, 76, 78, 79, 80].includes(fx) ? 60 : 30; y0 -= fx === 84 ? 130 : 55; x0 -= big; x1 += big; y1 += 10; }   // えふぇくとの ぶん 広く（つばさ・ブラックホール などは もっと）
   const s = Math.min(c.width / (x1 - x0 + 40), c.height / (y1 - y0 + 40));
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
   g.setTransform(s, 0, 0, s, c.width / 2 - (x0 + x1) / 2 * s, c.height / 2 - (y0 + y1) / 2 * s);
