@@ -50,9 +50,9 @@ async function main() {
   const can = (i, j) => i !== j && list[i].dev !== list[j].dev;   // 同じ 端末どうしは 戦わない
 
   // キャッシュを 読む（前の 形 { pairs: { 'L|R': 'A' } } も 読める）→ 今の 登録順の 表 R[i * n + j] に 並べなおす
-  let bh = {}, before = '', rep = { fixed: [], top: [], day: '' };
+  let bh = {}, before = '', rep = { fixed: [], top: [], day: '' }, lgH = {};
   try {
-    before = fs.readFileSync(CACHE, 'utf8'); const c = JSON.parse(before); bh = c.bh || {}; if (c.rep) rep = c.rep;
+    before = fs.readFileSync(CACHE, 'utf8'); const c = JSON.parse(before); bh = c.bh || {}; if (c.rep) rep = c.rep; if (c.lgh) lgH = c.lgh;
     if (c.v === 2) {
       const m = c.ids.length, bytes = Buffer.from(c.res, 'base64'), map = c.ids.map(id => idx.has(id) ? idx.get(id) : -1);
       for (let a = 0; a < m; a++) { const i = map[a]; if (i < 0) continue;
@@ -66,6 +66,7 @@ async function main() {
   // 勝率（代表 reps との 対戦だけで 数える）
   const statsOf = reps => {
     const isRep = new Uint8Array(n); for (const r of reps) isRep[r] = 1;
+
     const st = list.map(() => ({ w: 0, l: 0, d: 0, tot: 0, beat: [], lost: [] }));
     for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
       if (!can(i, j) || (!isRep[i] && !isRep[j])) continue;
@@ -110,11 +111,19 @@ async function main() {
   }
   const isRep = new Uint8Array(n); for (const r of reps) isRep[r] = 1;
 
+  // リーグ制（2026-10-03〜、tools/league.js）: リーグと グループを きめて（0 時の 昇格・降格・月曜の まぜなおし も ここ）、グループ内の 対戦を さきに 計算する
+  // 試す あいだは 今の 全体順位と ならべて 計算する（ゲームは まだ 全体順位を 見せる。リーグは ?leaguetest の 端末だけ）
+  const LG = require('./league.js'), stPre = statsOf(reps);
+  const lgPlan = LG.plan({ list, n, R, can, pct: i => playedOf(stPre[i]) ? pctOf(stPre[i]) : -1, meta: act.lg_meta, today });
+  if (lgPlan) for (const s of lgPlan.log) console.log('リーグ: ' + s); else console.log('リーグ: 計算ずみが 少ないので この 回は リーグ分けを しない');
+
   // 2) まだの 組み合わせ（代表との 左右 2 戦）を、計算ずみが 少ない モンスターから
   const done = new Array(n).fill(0);
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (R[i * n + j]) { done[i]++; done[j]++; }
   const order = list.map((m, i) => i).sort((a, b) => done[a] - done[b]);
   const todo = [], want = new Set();
+  if (lgPlan) for (const [i, j] of LG.todo(lgPlan, R, n, can)) { const k = i * n + j; if (!want.has(k)) { want.add(k); todo.push([i, j, list[i].code, list[j].code]); } }   // リーグの グループ内を さきに
+  const lgTodo = todo.length;
   for (const a of order) {
     if (todo.length >= MAX_TODO) break;
     for (const b of reps) {
@@ -137,6 +146,7 @@ async function main() {
 
   // 3) 勝率と 順位
   const st = statsOf(reps);
+  const lgOut = lgPlan ? LG.finish(lgPlan, { list, n, R, can, prevH: lgH, today, now }) : { entry: new Map(), lgroups: {}, players: [], H: lgH, meta: null };
   const ranked = list.map((m, i) => i).filter(i => playedOf(st[i]) > 0).sort((a, b) => pctOf(st[b]) - pctOf(st[a]) || playedOf(st[b]) - playedOf(st[a]));
   ranked.forEach((i, p) => { st[i].pos = p + 1; });
   const entry = i => {
@@ -149,7 +159,7 @@ async function main() {
   };
   const top = { t: now, n, reps: reps.length, top: ranked.slice(0, TOP_N).map(i => { const e = entry(i); return { id: list[i].id, name: list[i].name, pos: e.pos, pct: e.pct, pl: e.pl, tot: e.tot }; }) };
   const buckets = {};
-  for (let i = 0; i < n; i++) { const b = bucketOf(list[i].id); (buckets[b] = buckets[b] || { m: {} }).m[list[i].id] = entry(i); }
+  for (let i = 0; i < n; i++) { const b = bucketOf(list[i].id); (buckets[b] = buckets[b] || { m: {} }).m[list[i].id] = lgOut.entry.has(i) ? Object.assign(entry(i), { lg: lgOut.entry.get(i) }) : entry(i); }
   const changed = {};
   for (let b = 0; b < 64; b++) { const v = buckets[b] || { m: {} }, h = hashStr(JSON.stringify(v)); if (bh[b] !== h) { changed[b] = v; bh[b] = h; } }
 
@@ -161,6 +171,9 @@ async function main() {
     champion = { season: seasonOf(prev.t), id: cc.id, name: cc.name, code: byId.get(cc.id).code, pct: cc.pct, w: 0, l: 0, d: 0, n: prev.n };
   }
   const body = { top, buckets: changed }; if (champion) body.champion = champion;
+  if (lgOut.players.length) body.players = lgOut.players;
+  if (Object.keys(lgOut.lgroups).length) body.lgroups = lgOut.lgroups;
+  if (lgOut.meta) body.lg_meta = lgOut.meta;
   // RANK_DRY=1 は お試し（書き戻さない・キャッシュも 保存しない）
   if (process.env.RANK_DRY) { console.log('お試し: 代表', reps.length, '上位', top.top.slice(0, 5).map(x => x.pos + ' ' + x.name + ' ' + x.pct + '% ' + x.pl + '/' + x.tot).join(' / '), '固定', (rep.fixed || []).length, '上位代表', (rep.top || []).length); return; }
   const res = await (await fetch(API + '/admin/board', { method: 'POST', headers: H, body: JSON.stringify(body) })).json();
@@ -175,10 +188,10 @@ async function main() {
   // キャッシュを 詰めて 保存（変わった ときだけ Actions が 保存する）
   const packed = Buffer.alloc(Math.ceil(n * n / 4));
   for (let k = 0; k < n * n; k++) if (R[k]) packed[k >> 2] |= R[k] << ((k & 3) * 2);
-  const after = JSON.stringify({ v: 2, ids: list.map(m => m.id), res: packed.toString('base64'), bh, rep });
+  const after = JSON.stringify({ v: 2, ids: list.map(m => m.id), res: packed.toString('base64'), bh, rep, lgh: lgOut.H });
   fs.mkdirSync(path.dirname(CACHE), { recursive: true }); fs.writeFileSync(CACHE, after);
   if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'changed=' + (before !== after ? 1 : 0) + String.fromCharCode(10));
   const need = st.reduce((a, s) => a + s.tot, 0) / 2, have = st.reduce((a, s) => a + playedOf(s), 0) / 2;
   console.log('登録 ' + n + ' 体・代表 ' + reps.length + ' 体・今回 ' + fought + ' 戦' + (fought < todo.length ? '（のこり ' + (todo.length - fought) + ' 戦は 次の 回）' : '') +
-    '（' + ((Date.now() - t0) / 1000).toFixed(1) + ' 秒）・計算ずみ ' + have + ' / ' + need + ' 戦・キャッシュ ' + (after.length / 1024).toFixed(1) + ' KB・書きこみ ' + res.written + ' 行' + (champion ? '・きのうの チャンピオン ' + champion.name : ''));
+    '（' + ((Date.now() - t0) / 1000).toFixed(1) + ' 秒、うち リーグ ' + Math.min(fought, lgTodo) + ' / ' + lgTodo + ' 戦）・リーグ ' + (lgOut.meta ? lgOut.meta.sizes.join('/') : 'なし') + '・計算ずみ ' + have + ' / ' + need + ' 戦・キャッシュ ' + (after.length / 1024).toFixed(1) + ' KB・書きこみ ' + res.written + ' 行' + (champion ? '・きのうの チャンピオン ' + champion.name : ''));
 }
