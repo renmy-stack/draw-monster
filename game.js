@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '221';
+const VERSION = '222';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -2292,6 +2292,7 @@ function showMore() { mode = 'more'; show('more'); renderSupport(); }
 // 金がくは いくらでも（オーナー）。見た目だけで 強さは かわらない。まずは ?supporttest の 端末だけ
 if (OWNER && /[?&]supporttest(=|&|$)/.test(location.search)) lsSet('supporttest', '1');
 const SUP_ON = true;   // 2026-10-03 全員に（オーナー OK。前は ?supporttest の 端末だけ）
+const DISCORD_URL = 'https://discord.gg/tZYXj9Sg6V';   // 2026-10-04 オーナーの サーバー（招待は 期限なし）
 const SUPPORT_URL = 'https://ofuse.me/a2b46de1';   // OFUSE の ページ（2026-10-03 オーナー 登録）
 const SUP_ITEM = 84;
 function renderSupport() {
@@ -2358,6 +2359,10 @@ if (navOn()) {
   $('tmon').width = $('tmon').height = 480;   // トップの モンスターを 大きく 出すので 細かく
   const ml = $('morelist');
   { const row = document.createElement('div'); row.className = 'advrow'; $('adv').append(row); row.append($('advgo'), $('vs')); }   // ふたりで たたかう は「たたかう」の 横（たたかう が 広め。オーナー: そのほか では ない）
+  // Discord（2026-10-04 オーナー）: あそぶ 人どうしの 交流の 場。おうえんの すぐ 下
+  { const a = document.createElement('a'); a.id = 'dcgo'; a.className = 'dc-go'; a.href = DISCORD_URL; a.target = '_blank'; a.rel = 'noopener';
+    const b = document.createElement('b'), sm = document.createElement('small'); b.textContent = '💬 Discord で あそぶ 人と はなそう'; sm.textContent = 'モンスターの じまん・ランクせんの おしらせ・ようぼう（13 さい いじょう）';
+    a.append(b, sm); a.addEventListener('click', () => TR('discord', null)); ml.append(a); }
   for (const id of ['collection', 'bkbtn', 'langbtn']) ml.append($(id));
   ml.append(document.querySelector('#title .howto'), document.querySelector('#title .tfoot'));
   if (TIDY) tidyLayout();

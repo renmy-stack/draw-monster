@@ -647,3 +647,9 @@ body.tidy .rk-btnrow button, body.tidy .rk-btnrow .rk-card { flex: none; width: 
 /* 2026-10-04 オーナー: 結果の ボタンを おなじ 幅に（縦に ならべて 横いっぱい） */
 #result .rbtns { flex-direction: column; align-items: stretch; gap: 8px; }
 #result .rbtns button { width: 100%; margin: 0; }
+
+/* Discord（2026-10-04）: おうえんの 下。Discord の 色 */
+.dc-go { display: block; padding: 12px 14px; margin-bottom: 12px; border: 3px solid var(--ink); border-radius: 14px; background: #5865f2; color: #fff; text-decoration: none; box-shadow: 0 3px 0 var(--ink); }
+.dc-go b { display: block; font-size: 16px; font-weight: 900; }
+.dc-go small { display: block; margin-top: 2px; font-size: 12px; font-weight: 700; opacity: .9; }
+.dc-go:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }

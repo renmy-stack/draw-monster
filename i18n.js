@@ -26,6 +26,8 @@
 
   // ---- 文 まるごと ----
   const D = {
+    '💬 Discord で あそぶ 人と はなそう': '💬 Chat with other players on Discord',
+    'モンスターの じまん・ランクせんの おしらせ・ようぼう（13 さい いじょう）': 'Show off monsters · Ranked news · Requests (13+)',
     'ガチャの かざりは ぜんぶ そろった！🎉': 'All gacha items collected! 🎉',
     '🎁 ガチャでは でない': '🎁 Not from the gacha',
     'おうえんの おれい': 'Thanks for supporting',
