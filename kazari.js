@@ -982,12 +982,17 @@ function shSheen(g, x0, y0, x1, y1) { const w = x1 - x0, h = y1 - y0, ph = (now(
 const drawHeadX = (g, id, x, y, s) => { if (!isShiny(id)) return drawHead(g, id, x, y, s); const b = shBase(id), top = shinyRun(g, b, () => drawHead(g, b, x, y, s), s * 0.35); shMark(g, [[x + s * 0.55, y - top * 0.8], [x - s * 0.5, y - top * 0.35]], s * 0.3); return top; };
 const drawFaceX = (g, id, ex, ey, r, facing) => { if (!isShiny(id)) return drawFace(g, id, ex, ey, r, facing); const b = shBase(id); shinyRun(g, b, () => drawFace(g, b, ex, ey, r, facing), r * 1.6); shMark(g, [[ex + r * 3.3, ey - r * 1.5], [ex - r * 3.3, ey + r * 0.8]], r * 1.3); };
 const drawBodyX = (g, id, x0, y0, x1, y1) => { if (!isShiny(id)) return drawBody(g, id, x0, y0, x1, y1); const b = shBase(id); shinyRun(g, b, () => drawBody(g, b, x0, y0, x1, y1)); shSheen(g, x0, y0, x1, y1); shMark(g, [[x0 + (x1 - x0) * 0.72, y0 + (y1 - y0) * 0.28], [x0 + (x1 - x0) * 0.3, y0 + (y1 - y0) * 0.68]], Math.min(x1 - x0, y1 - y0) * 0.15); };
-const fxX = fn => (g, id, info) => {
+const fxX = (fn, front) => (g, id, info) => {
   if (!isShiny(id)) return fn(g, id, info);
-  const b = shBase(id), H = shHue(b), i2 = Object.assign({}, info, { spawn: info.spawn && ((x, y, q) => info.spawn(x, y, q && q.c ? Object.assign({}, q, { c: tint(q.c, H) }) : q)) });
+  // かけらには いろちがいの しるし（shb）を つけて、かく ときに 色を かえる（drawPartX）
+  const b = shBase(id), i2 = Object.assign({}, info, { spawn: info.spawn && ((x, y, q) => info.spawn(x, y, Object.assign({}, q, { shb: b }))) });
+  if (front) { const { x0, x1, y0, y1 } = info, w = x1 - x0, h = y1 - y0; g.save(); shMark(g, [[x1 + w * 0.08, y0 + h * 0.05], [x0 - w * 0.08, y0 + h * 0.45]], Math.max(9, Math.min(w, h) * 0.2)); g.restore(); }   // えふぇくとにも 光の つぶ
   const i0 = Object.assign({}, info, { spawn: () => {} });   // 光の ふちの ときは かけらを 出さない
   return shinyRun(g, b, glowPass => fn(g, b, glowPass ? i0 : i2), 14);
 };
 
-root.KZ = { SLOTS, SLOT_LABEL, ITEMS, PRICE, DUP_BACK, RATE, WIN, CLEAR, MULTI_PRICE, MULTI_N, SH, SHINY, shBase, isShiny, store, earn, winReward, pull, pullMulti, drawHead: drawHeadX, drawFace: drawFaceX, drawBody: drawBodyX, fxBack: fxX(fxBack), fxFront: fxX(fxFront), drawPart, star, heart, twinkle };
+// いろちがいの かけら: 色を かえて、白っぽい 水色の 光を そえる（かけらは 動きが ある ので 2 回は かかない）
+const drawPartX = (g, p) => { if (!p.shb) return drawPart(g, p); const dc = propOf(g, 'shadowColor'), db = propOf(g, 'shadowBlur'); g.save(); if (dc && db) { dc.set.call(g, SH_GLOW); db.set.call(g, 8); } try { return shinyRun(g, p.shb, () => drawPart(g, p)); } finally { g.restore(); } };
+
+root.KZ = { SLOTS, SLOT_LABEL, ITEMS, PRICE, DUP_BACK, RATE, WIN, CLEAR, MULTI_PRICE, MULTI_N, SH, SHINY, shBase, isShiny, store, earn, winReward, pull, pullMulti, drawHead: drawHeadX, drawFace: drawFaceX, drawBody: drawBodyX, fxBack: fxX(fxBack, false), fxFront: fxX(fxFront, true), drawPart: drawPartX, star, heart, twinkle };
 })(typeof module !== 'undefined' ? module.exports : window);

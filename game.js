@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '219';
+const VERSION = '220';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -653,11 +653,11 @@ function kzPrevFx(c, g, d, fx, front) {
   let floor = -Infinity; for (const p of d.leg) floor = Math.max(floor, p[1]);
   const foot = d.leg[d.leg.length - 1], fist = d.arm[d.arm.length - 1], w = x1 - x0;
   const now = performance.now(), dt = Math.min(0.05, (now - st.last) / 1000); st.last = now; st.n++;
-  fx = KZ.shBase(fx);   // いろちがいも 同じ うごき
-  if (fx === 19 && st.n % 10 === 0) st.parts.push({ x: foot[0] + (Math.random() - 0.5) * w * 1.2, y: floor, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 100, k: 'flower', rot: Math.random() * 6 });
-  if (fx === 20 && st.n % 35 === 0) for (let i = 0; i < 8; i++) { const a = Math.random() * 6.28, v = 200 * (0.5 + Math.random()); st.parts.push({ x: fist[0], y: fist[1], vx: Math.cos(a) * v, vy: Math.sin(a) * v - 140, c: '#ffeb3b', life: 40, k: 'star' }); }
-  if (fx === 21 && st.n % 18 === 0) { const sd = Math.random() < 0.5 ? -1 : 1; st.parts.push({ x: x0 + w * (0.5 + sd * 0.45), y: y0 + 12, vx: sd * 80, vy: -140, c: '#81d4fa', life: 40, k: 'drop' }); }
-  if (fx === 70 && st.n % 7 === 0) st.parts.push({ x: foot[0] + (Math.random() - 0.5) * w * 0.8, y: floor - 2, vx: (Math.random() - 0.5) * 40, vy: -15, g: -0.02, c: '#bcaaa4', life: 30, k: 'dust' });
+  const shb = KZ.isShiny(fx) ? KZ.shBase(fx) : 0; fx = KZ.shBase(fx);   // いろちがいも 同じ うごき（かけらに しるし shb）
+  if (fx === 19 && st.n % 10 === 0) st.parts.push({ shb, x: foot[0] + (Math.random() - 0.5) * w * 1.2, y: floor, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 100, k: 'flower', rot: Math.random() * 6 });
+  if (fx === 20 && st.n % 35 === 0) for (let i = 0; i < 8; i++) { const a = Math.random() * 6.28, v = 200 * (0.5 + Math.random()); st.parts.push({ shb, x: fist[0], y: fist[1], vx: Math.cos(a) * v, vy: Math.sin(a) * v - 140, c: '#ffeb3b', life: 40, k: 'star' }); }
+  if (fx === 21 && st.n % 18 === 0) { const sd = Math.random() < 0.5 ? -1 : 1; st.parts.push({ shb, x: x0 + w * (0.5 + sd * 0.45), y: y0 + 12, vx: sd * 80, vy: -140, c: '#81d4fa', life: 40, k: 'drop' }); }
+  if (fx === 70 && st.n % 7 === 0) st.parts.push({ shb, x: foot[0] + (Math.random() - 0.5) * w * 0.8, y: floor - 2, vx: (Math.random() - 0.5) * 40, vy: -15, g: -0.02, c: '#bcaaa4', life: 30, k: 'dust' });
   for (let i = st.parts.length - 1; i >= 0; i--) {
     const p = st.parts[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 900 * (p.g == null ? 1 : p.g) * dt; p.vx *= 0.96;
     if (--p.life <= 0 || p.y > floor + 1) { st.parts.splice(i, 1); continue; }
@@ -828,10 +828,10 @@ function drawArena(si) {
 }
 // かざりの えふぇくと（バトル中だけ。見た目だけで 強さには 関係ない）: 足もと・あせ は ここで、ほのお・かみなり・オーラ は kazari.js の fxBack / fxFront
 function kzFx(fx, tf, w, ex, ey, legA, legB) {
-  fx = KZ.shBase(fx);
-  if (fx === 21 && Math.random() < 0.06) { const s = Math.random() < 0.5 ? -1 : 1, p = tf(ex + s * w * 0.35, ey - 4); parts.push({ x: p[0], y: p[1], vx: s * 90, vy: -150, c: '#81d4fa', life: 40, k: 'drop' }); }   // あせ
-  else if (fx === 70) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.15) parts.push({ x: f[0], y: -2, vx: (Math.random() - 0.5) * 50, vy: -20, g: -0.02, c: '#bcaaa4', life: 30, k: 'dust' }); } }   // すなぼこり
-  else if (fx === 19) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.12) parts.push({ x: f[0], y: 0, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 110, k: 'flower', rot: Math.random() * 6 }); } }   // あしあとに はな
+  const shb = KZ.isShiny(fx) ? KZ.shBase(fx) : 0; fx = KZ.shBase(fx);
+  if (fx === 21 && Math.random() < 0.06) { const s = Math.random() < 0.5 ? -1 : 1, p = tf(ex + s * w * 0.35, ey - 4); parts.push({ shb, x: p[0], y: p[1], vx: s * 90, vy: -150, c: '#81d4fa', life: 40, k: 'drop' }); }   // あせ
+  else if (fx === 70) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.15) parts.push({ shb, x: f[0], y: -2, vx: (Math.random() - 0.5) * 50, vy: -20, g: -0.02, c: '#bcaaa4', life: 30, k: 'dust' }); } }   // すなぼこり
+  else if (fx === 19) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.12) parts.push({ shb, x: f[0], y: 0, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 110, k: 'flower', rot: Math.random() * 6 }); } }   // あしあとに はな
 }
 // かざりの ほのお・かみなり・オーラを 体の 座標で（back: 体の うしろ / front: まえ）
 function kzFxLayer(b, fx, front) {
