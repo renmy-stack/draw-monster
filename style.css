@@ -647,3 +647,13 @@ body.tidy .rk-btnrow button, body.tidy .rk-btnrow .rk-card { flex: none; width: 
 /* 2026-10-04 オーナー: 結果の ボタンを おなじ 幅に（縦に ならべて 横いっぱい） */
 #result .rbtns { flex-direction: column; align-items: stretch; gap: 8px; }
 #result .rbtns button { width: 100%; margin: 0; }
+/* いろちがい（2026-10-04）: 銀と 水色の 光。★★★ より めずらしい ことが わかる ように */
+#kzreveal.shiny { background: radial-gradient(circle at 50% 45%, #e1f5fe 0%, #7e57c2 35%, #1a237e 70%, #0a0c28 95%); }
+#kzreveal.shiny .kzr-rays { opacity: .7; background: repeating-conic-gradient(rgba(225,245,254,.85) 0 7deg, transparent 7deg 22deg); animation: kzrot 5s linear infinite; }
+#kzreveal.shiny .kzr-card { border-color: #7e57c2; box-shadow: 0 0 36px rgba(179, 157, 219, 1), 0 0 70px rgba(129, 212, 250, .8); }
+#kzreveal.shiny #kzrstars { color: #7e57c2; letter-spacing: 2px; }
+.kzg.sh { background: linear-gradient(135deg, #e1f5fe, #d1c4e9); border-color: #7e57c2; box-shadow: 0 0 12px rgba(126, 87, 194, .9); }
+.kzg.sh i { background: #7e57c2; }
+.kz-items button.kz-sh { background: linear-gradient(135deg, #e1f5fe, #ede7f6); border-color: #7e57c2; color: #4527a0; box-shadow: 0 2px 0 #7e57c2, 0 0 8px rgba(126, 87, 194, .55); }
+.kz-cnts { color: #7e57c2; }
+.kz-shmsg { color: #7e57c2; font-weight: 900; }

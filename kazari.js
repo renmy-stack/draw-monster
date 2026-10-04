@@ -97,6 +97,8 @@ const ITEMS = [
   { id: 84, slot: 'fx', name: 'きんの はね', r: 3, sup: true, desc: 'おうえん して くれた 人だけの きんの はね。せなかで はばたく' },
 ];
 const PRICE = 100, DUP_BACK = 30, RATE = [0, 0.6, 0.3, 0.1];
+const SH = 128, SHINY = 1 / 1000;   // いろちがい（下の「いろちがい」を 見て）: 番号＋SH、かぶった ときに SHINY
+const shBase = id => id > SH ? id - SH : id, isShiny = id => id > SH, shHue = b => 100 + (b * 67) % 160;
 const WIN = { omote: 10, ura: 30, minna: 60, kami: 120 }, CLEAR = { omote: 50, ura: 150, minna: 300, kami: 600 }, HIST_MAX = 30;   // かみ（v173）: ここに なくて コイン 0・毎回「かちすぎ」と 出て いた
 const now = () => (typeof performance !== 'undefined' ? performance.now() : Date.now()) / 1000;
 
@@ -107,7 +109,9 @@ function store(get, set) {
     coins: () => +(get('kz.coins') || 0),
     addCoins: n => { const c = Math.max(0, +(get('kz.coins') || 0) + n); set('kz.coins', String(c)); return c; },
     own: () => J('kz.own', []),
-    eq: () => { const e = J('kz.eq', [0, 0, 0, 0]); return SLOTS.map((s, i) => { const it = ITEMS[e[i]]; return it && it.slot === s ? e[i] : 0; }); },
+    eq: () => { const e = J('kz.eq', [0, 0, 0, 0]), sh = J('kz.shiny', []); return SLOTS.map((s, i) => { const b = shBase(e[i]), it = ITEMS[b]; return it && it.slot === s && (b === e[i] || sh.includes(b)) ? e[i] : 0; }); },   // いろちがいは 番号＋SH（もって いる ときだけ）
+    shiny: () => J('kz.shiny', []),
+    setShiny: o => set('kz.shiny', JSON.stringify(o)),
     setEq: e => set('kz.eq', JSON.stringify(e)),
     hist: () => J('kz.hist', []),
     setHist: h => set('kz.hist', JSON.stringify(h.slice(0, HIST_MAX))),
@@ -147,6 +151,10 @@ function roll(st, rand) {
   const pool = ITEMS.filter(it => it && it.r === r && !it.lim && !it.sup), it = pool[Math.floor(rand() * pool.length) % pool.length];
   const own = st.own(), dup = own.includes(it.id);
   if (dup) st.addCoins(DUP_BACK); else { own.push(it.id); st.setOwn(own); }
+  // いろちがい: かぶった ときだけ、SHINY（1/1000）で その かざりの いろちがいに（まだ もって いなければ）。st.shinyOn が ない ／ false の 端末は なし
+  if (dup && st.shinyOn && st.shinyOn() && st.shiny && rand() < (st.shinyRate ? st.shinyRate() : SHINY)) {
+    const sh = st.shiny(); if (!sh.includes(it.id)) { sh.push(it.id); st.setShiny(sh); return { item: it, dup, shiny: true }; }
+  }
   return { item: it, dup };
 }
 
@@ -932,5 +940,44 @@ function drawPart(g, p) {
   g.restore(); return true;
 }
 
-root.KZ = { SLOTS, SLOT_LABEL, ITEMS, PRICE, DUP_BACK, RATE, WIN, CLEAR, MULTI_PRICE, MULTI_N, store, earn, winReward, pull, pullMulti, drawHead, drawFace, drawBody, fxBack, fxFront, drawPart, star, heart, twinkle };
+// ---------- いろちがい（2026-10-04 オーナー「ポケモンの 色違いみたいに、確率は 低く」→ かぶった ときに 1/1000）----------
+// かざりの 番号＋SH（128）が いろちがい。サーバーの かざりは 0〜255 なので そのまま 送れる（ランクせんでも ほかの 人に 見える）
+// 色は かざりごとに きまった 角度だけ まわす。ふちの 黒・白い 光は そのまま、灰色には 色を つける。Safari は canvas の filter が ないので 色を ぬる ところで かえる
+function tint(c, H) {
+  if (typeof c !== 'string') return c;
+  let r, gg, b, a = 1, m;
+  if ((m = /^#([0-9a-f]{3,8})$/i.exec(c))) { let h = m[1]; if (h.length <= 4) h = h.split('').map(x => x + x).join(''); r = parseInt(h.slice(0, 2), 16); gg = parseInt(h.slice(2, 4), 16); b = parseInt(h.slice(4, 6), 16); if (h.length === 8) a = parseInt(h.slice(6, 8), 16) / 255; }
+  else if ((m = /^rgba?\(([^)]+)\)$/i.exec(c))) { const p = m[1].split(',').map(s => parseFloat(s)); r = p[0]; gg = p[1]; b = p[2]; if (p.length > 3) a = p[3]; }
+  else return c;
+  r /= 255; gg /= 255; b /= 255;
+  const mx = Math.max(r, gg, b), mn = Math.min(r, gg, b), l = (mx + mn) / 2, d = mx - mn;
+  if (l < 0.13 || l > 0.93) return c;
+  let h = 0, s = 0;
+  if (d > 1e-6) { s = d / (1 - Math.abs(2 * l - 1)); h = (mx === r ? ((gg - b) / d) % 6 : mx === gg ? (b - r) / d + 2 : (r - gg) / d + 4) * 60; if (h < 0) h += 360; }
+  if (s < 0.12) { s = 0.45; h = H; } else h = (h + H) % 360;
+  const C = (1 - Math.abs(2 * l - 1)) * Math.min(1, s), X = C * (1 - Math.abs((h / 60) % 2 - 1)), M = l - C / 2;
+  const [R, G, B] = h < 60 ? [C, X, 0] : h < 120 ? [X, C, 0] : h < 180 ? [0, C, X] : h < 240 ? [0, X, C] : h < 300 ? [X, 0, C] : [C, 0, X];
+  return 'rgba(' + Math.round((R + M) * 255) + ',' + Math.round((G + M) * 255) + ',' + Math.round((B + M) * 255) + ',' + a + ')';
+}
+function propOf(g, k) { for (let o = Object.getPrototypeOf(g); o; o = Object.getPrototypeOf(o)) { const d = Object.getOwnPropertyDescriptor(o, k); if (d) return d; } return null; }
+// f() の あいだだけ、g で ぬる 色（fillStyle・strokeStyle・shadowColor・グラデーション）を いろちがいの 色に
+function shinyRun(g, b, f) {
+  const H = shHue(b), had = [];
+  for (const k of ['fillStyle', 'strokeStyle', 'shadowColor']) { const d = propOf(g, k); if (!d || !d.set) continue; Object.defineProperty(g, k, { configurable: true, get() { return d.get.call(g); }, set(v) { d.set.call(g, tint(v, H)); } }); had.push(k); }
+  const wrapG = fn => function () { const gr = fn.apply(g, arguments), ad = gr.addColorStop; gr.addColorStop = (o, c) => ad.call(gr, o, tint(c, H)); return gr; };
+  const lg = g.createLinearGradient, rg = g.createRadialGradient; g.createLinearGradient = wrapG(lg); g.createRadialGradient = wrapG(rg);
+  try { return f(); } finally { for (const k of had) delete g[k]; delete g.createLinearGradient; delete g.createRadialGradient; }
+}
+// いろちがいの しるし: 2.5 秒に 1 回、小さい 光が ひとつ（黒や 白の かざりでも わかる ように）
+function shMark(g, x, y, r) { const ph = (now() * 0.4) % 1; if (ph < 0.25) twinkle(g, x, y, r, Math.sin(ph / 0.25 * Math.PI), '#fffde7'); }
+const drawHeadX = (g, id, x, y, s) => { if (!isShiny(id)) return drawHead(g, id, x, y, s); const b = shBase(id), top = shinyRun(g, b, () => drawHead(g, b, x, y, s)); shMark(g, x + s * 0.5, y - top * 0.85, s * 0.32); return top; };
+const drawFaceX = (g, id, ex, ey, r, facing) => { if (!isShiny(id)) return drawFace(g, id, ex, ey, r, facing); const b = shBase(id); shinyRun(g, b, () => drawFace(g, b, ex, ey, r, facing)); shMark(g, ex + r * 3.2, ey - r * 1.4, r * 1.4); };
+const drawBodyX = (g, id, x0, y0, x1, y1) => { if (!isShiny(id)) return drawBody(g, id, x0, y0, x1, y1); const b = shBase(id); shinyRun(g, b, () => drawBody(g, b, x0, y0, x1, y1)); shMark(g, x0 + (x1 - x0) * 0.72, y0 + (y1 - y0) * 0.28, Math.min(x1 - x0, y1 - y0) * 0.16); };
+const fxX = fn => (g, id, info) => {
+  if (!isShiny(id)) return fn(g, id, info);
+  const b = shBase(id), H = shHue(b), i2 = Object.assign({}, info, { spawn: info.spawn && ((x, y, q) => info.spawn(x, y, q && q.c ? Object.assign({}, q, { c: tint(q.c, H) }) : q)) });
+  return shinyRun(g, b, () => fn(g, b, i2));
+};
+
+root.KZ = { SLOTS, SLOT_LABEL, ITEMS, PRICE, DUP_BACK, RATE, WIN, CLEAR, MULTI_PRICE, MULTI_N, SH, SHINY, shBase, isShiny, store, earn, winReward, pull, pullMulti, drawHead: drawHeadX, drawFace: drawFaceX, drawBody: drawBodyX, fxBack: fxX(fxBack), fxFront: fxX(fxFront), drawPart, star, heart, twinkle };
 })(typeof module !== 'undefined' ? module.exports : window);
