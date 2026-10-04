@@ -1,9 +1,9 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '222';
+const VERSION = '223';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
-function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
+function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
 // Safari が おぼえていた 古い ページ（index.html）と 新しい game.js が まざると、部品（kazari.js など）が なくて 止まる
 // → 1 回だけ、URL に 印を つけて ページごと 読みなおす（2026-09-29 の 解析で 見つかった）
 // 部品の 有る無し だけでは、あいだの 版の 古い index.html（kamibox が ない など）を すり抜けて 止まる（10/2 の 解析で 5 台）
@@ -1018,10 +1018,10 @@ onTap($('start'), showDraw);
 onTap($('tmycard'), showDraw);
 onTap($('minnaabout'), showMinnaInfo);
 // ---------- かざり（ガチャ・かざる）----------
-const kzShown = it => it && (!it.sup || kzs.own().includes(it.id)) && (!it.lim || ARENA_ON || kzs.own().includes(it.id));   // おうえんの お礼（sup）は もって いる 人だけ   // ちけいの 限定かざりは ちけいが 出ている 端末だけ（もって いれば 出す）
+const kzShown = it => it && (!it.stamp || MSN_ON || kzs.own().includes(it.id)) && (!it.sup || kzs.own().includes(it.id)) && (!it.lim || ARENA_ON || kzs.own().includes(it.id));   // おうえんの お礼（sup）は もって いる 人だけ   // ちけいの 限定かざりは ちけいが 出ている 端末だけ（もって いれば 出す）
 // ガチャで 出る かざり（80 種）と、出ない かざり（ちけいの ごほうび lim・おうえんの お礼 sup）を わけて 見せる（2026-10-04 オーナー）
-const kzGacha = it => !it.lim && !it.sup;
-const kzHow = it => it.lim ? 'ちけいの うらを ' + it.lim + ' つ クリア' : 'おうえんの おれい';
+const kzGacha = it => !it.lim && !it.sup && !it.stamp;
+const kzHow = it => it.lim ? 'ちけいの うらを ' + it.lim + ' つ クリア' : it.stamp ? 'ミッションの スタンプを 7 こ' : 'おうえんの おれい';
 function kzSorted(slot) { return KZ.ITEMS.filter(it => kzShown(it) && it.slot === slot).sort((a, b) => a.r - b.r || a.id - b.id); }
 const kzOpen = new Set((() => { try { return JSON.parse(lsGet('kz.open') || '[]'); } catch (e) { return []; } })());
 // NEW: 手に 入れて から まだ 一覧で タップして いない かざり（ガチャで 自動で ついた ぶんも まだ NEW）。はじめは 持っている ものを ぜんぶ 見た ことに
@@ -2349,6 +2349,83 @@ if (window.ResizeObserver) { let lastH = 0; new ResizeObserver(es => { const h =
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setTimeout(fitTmon, 0));
 setTimeout(fitTmon, 400); setTimeout(fitTmon, 1500);
 // ホーム画面から 開いた iPhone で ページの 高さが 画面より 短い（下に ページの 外の 帯が できる）か。短い ときは タブの 下の よはくを へらす（style.css の html.sa-short）
+// ---------- 毎日の ミッション（2026-10-04 オーナー）----------
+// 毎日 3 つ（やさしい・ふつう・むずかしい から 1 つずつ、日付で きまる ＝ みんな 同じ）。1 つ 🪙50。3 つ ぜんぶで スタンプ 💮 1 こ
+// スタンプは つづけなくて いい（やった 日の ぶん たまる）。1〜6 こめ 🪙100、7 こめ 🪙10000 と げんてい かざり「はなまる」（id 85）→ 新しい カード
+// しんぽは TR（あそびの 記録）の できごと から 数える。まずは ?missiontest の オーナー端末だけ
+if (OWNER && /[?&]missiontest(=|&|$)/.test(location.search)) lsSet('missiontest', '1');
+const MSN_ON = OWNER && lsGet('missiontest') === '1';
+const MSN_POOL = [
+  // [id, むずかしさ 0〜2, ことば, かず, 数える できごと]
+  ['fight5', 0, 'どこでも 5 かい たたかう', 5, (e, d) => e === 'result'],
+  ['win3', 0, 'ぼうけんで 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && (d.side === 'omote' || d.side === 'ura') && !d.ter],
+  ['gacha1', 0, 'ガチャを 1 かい ひく', 1, (e, d) => e === 'gacha'],
+  ['rank2', 0, 'ランクせんで れんしゅう 2 かい', 2, (e, d) => e === 'result' && d.side === 'rank'],
+  ['ko3', 1, 'KO で 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && d.reason === 'ko'],
+  ['ter3', 1, 'ちけいで 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && !!d.ter],
+  ['kz1', 1, 'かざりを つけかえる', 1, (e, d) => e === 'kzeq' && !!d.id],
+  ['win8', 1, 'ぼうけんで 8 かい かつ', 8, (e, d) => e === 'result' && d.win === 'win' && (d.side === 'omote' || d.side === 'ura') && !d.ter],
+  ['fast3', 2, '10 びょう いないに 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && d.t <= 10],
+  ['terc1', 2, 'ちけいを 1 つ クリア', 1, (e, d) => e === 'terrainclear'],
+  ['ev1', 2, 'イベントに モンスターを だす', 1, (e, d) => e === 'evreg'],
+  ['fight20', 2, 'どこでも 20 かい たたかう', 20, (e, d) => e === 'result'],
+];
+const MSN_COIN = 50, MSN_STAMP_COIN = 100, MSN_BIG = 10000, MSN_ITEM = 85;
+const msnDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
+function msnToday(day) {   // その 日の 3 つ（日付から きまる）
+  let h = 0; for (const ch of day) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return [0, 1, 2].map(lv => { const p = MSN_POOL.filter(m => m[1] === lv); h = (Math.imul(h, 1103515245) + 12345) >>> 0; return p[h % p.length]; });
+}
+function msnLoad() { let s = {}; try { s = JSON.parse(lsGet('msn') || '{}'); } catch (e) {} const day = msnDay(); if (s.day !== day) { s = { day, prog: {}, done: [], stamps: s.stamps || 0, cards: s.cards || 0, stamped: false, seen: false }; lsSet('msn', JSON.stringify(s)); } return s; }
+const msnSave = s => lsSet('msn', JSON.stringify(s));
+function msnToast(txt, big) {
+  const t = document.createElement('div'); t.className = 'msn-toast' + (big ? ' big' : ''); t.textContent = txt; document.body.appendChild(t);
+  setTimeout(() => t.classList.add('out'), big ? 2600 : 1800); setTimeout(() => t.remove(), big ? 3200 : 2400);
+}
+window.MSN = (e, d) => {
+  if (!MSN_ON || e === 'mission') return;
+  const s = msnLoad(); let changed = false;
+  for (const [id, , label, need, hit] of msnToday(s.day)) {
+    if (s.done.includes(id) || !hit(e, d || {})) continue;
+    s.prog[id] = (s.prog[id] || 0) + 1; changed = true;
+    if (s.prog[id] >= need) { s.done.push(id); kzs.addCoins(MSN_COIN); msnToast('✅ ミッション クリア！「' + label + '」 🪙+' + MSN_COIN); TR('mission', { id }); }
+  }
+  if (changed && s.done.length >= 3 && !s.stamped) {
+    s.stamped = true; s.stamps++;
+    if (s.stamps >= 7) {
+      s.stamps = 0; s.cards++; kzs.addCoins(MSN_BIG);
+      const own = kzs.own(); if (!own.includes(MSN_ITEM)) { own.push(MSN_ITEM); kzs.setOwn(own); }
+      msnToast('🎉 スタンプ 7 こ！ 🪙+' + MSN_BIG + ' と かざり「はなまる」！', true); TR('mission', { card: s.cards });
+    } else { kzs.addCoins(MSN_STAMP_COIN); msnToast('💮 スタンプ ' + s.stamps + ' / 7 ゲット！ 🪙+' + MSN_STAMP_COIN, true); }
+  }
+  if (changed) { msnSave(s); msnBadge(); if (!$('msnbox').hidden) msnRender(); }
+};
+function msnBadge() { const b = $('msnbtn'); if (!b) return; const s = msnLoad(); b.querySelector('span').textContent = s.done.length + '/3'; b.classList.toggle('dot', !s.seen && s.done.length < 3); }
+function msnRender() {
+  const s = msnLoad(), box = $('msnlist'); box.innerHTML = '';
+  for (const [id, lv, label, need] of msnToday(s.day)) {
+    const n = Math.min(need, s.prog[id] || 0), ok = s.done.includes(id), row = document.createElement('div'); row.className = 'msn-row' + (ok ? ' ok' : '');
+    row.innerHTML = '<div class="msn-l"><b></b><small></small></div><div class="msn-bar"><i></i></div><div class="msn-n"></div>';
+    row.querySelector('b').textContent = (ok ? '✅ ' : ['⭐ ', '⭐⭐ ', '⭐⭐⭐ '][lv]) + label; row.querySelector('small').textContent = '🪙' + MSN_COIN;
+    row.querySelector('i').style.width = (n / need * 100) + '%'; row.querySelector('.msn-n').textContent = n + ' / ' + need; box.appendChild(row);
+  }
+  const card = $('msncard'); card.innerHTML = '';
+  for (let i = 1; i <= 7; i++) { const c = document.createElement('div'); c.className = 'msn-st' + (i <= s.stamps ? ' on' : '') + (i === 7 ? ' big' : ''); c.textContent = i <= s.stamps ? '💮' : i === 7 ? '🎁' : i; card.appendChild(c); }
+  $('msnnote').textContent = s.stamped ? 'きょうの スタンプは もう もらったよ。また あした！' : '3 つ ぜんぶ クリアで スタンプ 1 こ（' + s.done.length + ' / 3）';
+}
+function msnOpen() { const s = msnLoad(); s.seen = true; msnSave(s); msnRender(); $('msnbox').hidden = false; msnBadge(); TR('nav', { t: 'mission' }); }
+if (MSN_ON) {
+  const btn = document.createElement('button'); btn.id = 'msnbtn'; btn.className = 'msn-btn'; btn.innerHTML = '📅 <span>0/3</span>';
+  const tp = document.querySelector('#title .panel'); tp.classList.add('msn-host'); tp.appendChild(btn); onTap(btn, msnOpen);
+  const box = document.createElement('div'); box.id = 'msnbox'; box.hidden = true;
+  box.innerHTML = '<div class="msn-panel"><h2>📅 きょうの ミッション</h2><div id="msnlist"></div><div id="msnnote" class="msn-note"></div>'
+    + '<h3>💮 スタンプカード</h3><div id="msncard" class="msn-card"></div>'
+    + '<p class="msn-help">スタンプは まいにち つづけなくても たまるよ。7 こ あつめると 🪙' + MSN_BIG.toLocaleString() + ' と、ここでしか もらえない かざり「はなまる」！</p>'
+    + '<button id="msnclose" class="main">とじる</button></div>';
+  document.body.appendChild(box); onTap($('msnclose'), () => { box.hidden = true; });
+  box.addEventListener('click', e => { if (e.target === box) box.hidden = true; });
+  msnBadge();
+}
 function fixStandalone() {
   const sa = window.navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches);
   document.documentElement.classList.toggle('sa-short', !!sa && screen.height > screen.width && screen.height - window.innerHeight > 8);
