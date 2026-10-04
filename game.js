@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '225';
+const VERSION = '226';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
@@ -2350,7 +2350,7 @@ if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => setT
 setTimeout(fitTmon, 400); setTimeout(fitTmon, 1500);
 // ホーム画面から 開いた iPhone で ページの 高さが 画面より 短い（下に ページの 外の 帯が できる）か。短い ときは タブの 下の よはくを へらす（style.css の html.sa-short）
 // ---------- 毎日の ミッション（2026-10-04 オーナー）----------
-// 毎日 3 つ（やさしい・ふつう・むずかしい から 1 つずつ、日付で きまる ＝ みんな 同じ）。1 つ 🪙50。3 つ ぜんぶで スタンプ 💮 1 こ
+// 毎日 3 つ（やさしい・ふつう・むずかしい から 1 つずつ、日付で きまる ＝ みんな 同じ）。1 つ 🪙500（10/5 に 50 から）。3 つ ぜんぶで スタンプ 💮 1 こ
 // スタンプは つづけなくて いい（やった 日の ぶん たまる）。1〜6 こめ 🪙100、7 こめ 🪙10000 と げんてい かざり「スタンプかんむり」（id 85）→ 新しい カード
 // しんぽは TR（あそびの 記録）の できごと から 数える。まずは ?missiontest の オーナー端末だけ
 if (OWNER && /[?&]missiontest(=|&|$)/.test(location.search)) lsSet('missiontest', '1');
@@ -2370,7 +2370,7 @@ const MSN_POOL = [
   ['ev1', 2, 'イベントに モンスターを だす', 1, (e, d) => e === 'evreg'],
   ['fight20', 2, 'どこでも 20 かい たたかう', 20, (e, d) => e === 'result'],
 ];
-const MSN_COIN = 50, MSN_STAMP_COIN = 100, MSN_BIG = 10000, MSN_ITEM = 85;
+const MSN_COIN = 500, MSN_STAMP_COIN = 100, MSN_BIG = 10000, MSN_ITEM = 85;   // 2026-10-05 オーナー: 1 つ 50 → 500
 const msnDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
 function msnToday(day) {   // その 日の 3 つ（日付から きまる）
   let h = 0; for (const ch of day) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
