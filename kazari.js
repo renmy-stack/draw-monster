@@ -95,7 +95,7 @@ const ITEMS = [
   { id: 83, slot: 'head', name: 'せかいの かんむり', r: 3, lim: 9, desc: 'ちけいの うらを 9 つ クリアで もらえる（水平も 1 つ）' },
   // おうえん（OFUSE）の お礼（2026-10-03）。ガチャには 出ない・もって いない 人には 見せない。コードを 入れると もらえる（game.js）
   { id: 84, slot: 'fx', name: 'きんの はね', r: 3, sup: true, desc: 'おうえん して くれた 人だけの きんの はね。せなかで はばたく' },
-  { id: 85, slot: 'head', name: 'はなまる', r: 3, stamp: true, desc: 'まいにちの ミッションで スタンプを 7 こ あつめると もらえる' },   // 2026-10-04 ガチャには 出ない
+  { id: 85, slot: 'head', name: 'スタンプかんむり', r: 3, stamp: true, desc: 'まいにちの ミッションで スタンプを 7 こ あつめると もらえる' },   // 2026-10-04 ガチャには 出ない
 ];
 const PRICE = 100, DUP_BACK = 30, RATE = [0, 0.6, 0.3, 0.1];
 const WIN = { omote: 10, ura: 30, minna: 60, kami: 120 }, CLEAR = { omote: 50, ura: 150, minna: 300, kami: 600 }, HIST_MAX = 30;   // かみ（v173）: ここに なくて コイン 0・毎回「かちすぎ」と 出て いた
@@ -239,15 +239,17 @@ function drawHead(g, id, x, y, s) {
   else if (id >= 25) top = headMore(g, id, x, y, s, t);
   g.restore(); return top;
 }
-// はなまる（85、毎日の ミッションの スタンプ 7 こ）: 赤い ぐるぐると 花びらの ふち が 頭の 上に うかんで ゆれる
+// スタンプかんむり（85、毎日の ミッションの スタンプ 7 こ。2026-10-05 オーナーが 4 案から D）: 金の 王冠に 7 色の スタンプ、ときどき キラッ
 function headStamp(g, x, y, s, t) {
-  const R = s * 0.44, cy = y - R * 1.15 - Math.sin(t * 2) * s * 0.03;
-  g.save(); g.translate(x, cy); g.rotate(Math.sin(t * 1.3) * 0.18);
-  g.fillStyle = 'rgba(255,255,255,.92)'; g.beginPath(); g.arc(0, 0, R * 1.1, 0, 7); g.fill();
-  g.strokeStyle = '#e53935'; g.lineCap = 'round'; g.lineJoin = 'round'; g.lineWidth = Math.max(2.5, s * 0.08);
-  for (let i = 0; i < 7; i++) { const a = i / 7 * Math.PI * 2 - Math.PI / 2; g.beginPath(); g.arc(Math.cos(a) * R * 0.8, Math.sin(a) * R * 0.8, R * 0.34, a - 1.7, a + 1.7); g.stroke(); }
-  g.beginPath(); for (let k = 0; k <= 60; k++) { const a = k / 60 * Math.PI * 4.2, r = R * (0.06 + 0.5 * k / 60); const px = Math.cos(a) * r, py = Math.sin(a) * r; if (k) g.lineTo(px, py); else g.moveTo(px, py); } g.stroke();
-  g.restore(); return R * 2.3;
+  g.save(); g.lineJoin = 'round'; g.strokeStyle = INK; g.lineWidth = Math.max(2, s * 0.06);
+  const gr = g.createLinearGradient(0, y - s * 0.7, 0, y); gr.addColorStop(0, '#fff59d'); gr.addColorStop(1, '#ffb300');
+  g.fillStyle = gr; g.beginPath(); g.moveTo(x - s * 0.55, y); g.lineTo(x - s * 0.58, y - s * 0.42);
+  for (let i = 0; i < 7; i++) { const px = x - s * 0.58 + (i + 0.5) / 7 * s * 1.16; g.lineTo(px, y - s * (i % 2 ? 0.5 : 0.72)); g.lineTo(px + s * 0.083, y - s * 0.42); }
+  g.lineTo(x + s * 0.55, y); g.closePath(); g.fill(); g.stroke();
+  const cs = ['#e53935', '#fb8c00', '#fdd835', '#43a047', '#1e88e5', '#5e35b1', '#d81b60'];
+  g.lineWidth = Math.max(1, s * 0.03); for (let i = 0; i < 7; i++) { g.fillStyle = cs[i]; g.beginPath(); g.arc(x - s * 0.5 + i / 6 * s, y - s * 0.18, s * 0.075, 0, 7); g.fill(); g.stroke(); }
+  twinkle(g, x + s * 0.3, y - s * 0.6, s * 0.2, (Math.sin(t * 2.5) + 1) / 2);
+  g.restore(); return s * 0.75;
 }
 // ちけいの ごほうびの ぼうし（81 たんけんぼう・82 ちけいの かんむり・83 せかいの かんむり）
 function headTerrain(g, id, x, y, s, t) {

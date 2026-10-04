@@ -672,6 +672,6 @@ body.tidy .rk-btnrow button, body.tidy .rk-btnrow .rk-card { flex: none; width: 
 .msn-st { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; border: 2px dashed #bbb; border-radius: 50%; font-weight: 900; color: #bbb; font-size: 14px; }
 .msn-st.on { border: 2px solid #e53935; background: #fff; font-size: 20px; } .msn-st.big { border-color: #ffb300; color: #ff8f00; font-size: 18px; }
 .msn-help { font-size: 12px; line-height: 1.6; margin: 10px 0; color: #555; }
-.msn-toast { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 60; max-width: 92vw; padding: 8px 14px; border: 3px solid var(--ink); border-radius: 14px; background: #fff; color: var(--ink); font-weight: 900; font-size: 14px; box-shadow: 0 3px 0 var(--ink); transition: opacity .5s, transform .5s; }
+.msn-toast { width: max-content; text-align: center; position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px)); transform: translateX(-50%); z-index: 60; max-width: 92vw; padding: 8px 14px; border: 3px solid var(--ink); border-radius: 14px; background: #fff; color: var(--ink); font-weight: 900; font-size: 14px; box-shadow: 0 3px 0 var(--ink); transition: opacity .5s, transform .5s; }
 .msn-toast.big { background: #fff8e1; border-color: #e53935; font-size: 16px; }
 .msn-toast.out { opacity: 0; transform: translate(-50%, -10px); }
