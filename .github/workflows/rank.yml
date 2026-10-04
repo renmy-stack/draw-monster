@@ -26,6 +26,7 @@ jobs:
         run: node tools/rank_batch.js
         env:
           RANK_ADMIN: ${{ secrets.RANK_ADMIN }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}   # 1 日 1 回 Discord の 🏆ランクせん へ（2026-10-04）
       # きょうの イベント（1 日で 完結する ランクせん）。計算は 1.5 分まで。ふだんの ほうが 失敗しても 動かす
       - id: ev
         if: always()

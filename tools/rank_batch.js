@@ -188,6 +188,11 @@ async function main() {
     try { res = JSON.parse(tx); } catch (e) { if (k === 2) throw new Error('board 失敗 ' + rr.status + ' ' + tx.slice(0, 80)); }
   }
   if (!res.ok) throw new Error('board 失敗 ' + JSON.stringify(res));
+  // Discord の 🏆ランクせん へ 1 日 1 回（チャンピオンが きまった 回 ＝ 0 時すぎ）。しっぱいしても 計算は とめない（2026-10-04 オーナー）
+  if (champion && process.env.DISCORD_WEBHOOK) {
+    const pc = act.champion, streak = pc && pc.id === champion.id ? (pc.streak || 1) + 1 : 1;
+    await postDiscord(process.env.DISCORD_WEBHOOK, discordText(champion, streak, prev.top.filter(x => byId.has(x.id) && !byId.get(x.id).dev.startsWith('testdev')).slice(0, 3), lgPlan ? lgPlan.log : [])).catch(e => console.log('Discord: しっぱい ' + e.message));
+  }
   // 順位表の ファイル（.board/top.json → rank.yml が board 枝へ）。ゲームは まず これを 読む（受付係への 通信を へらす）。形は GET /top と おなじ
   {
     const pc = act.champion, ch = champion ? { season: champion.season, id: champion.id, name: champion.name, code: champion.code, rating: champion.pct, streak: pc && pc.id === champion.id ? (pc.streak || 1) + 1 : 1 } : pc;
@@ -204,4 +209,24 @@ async function main() {
   const need = st.reduce((a, s) => a + s.tot, 0) / 2, have = st.reduce((a, s) => a + playedOf(s), 0) / 2;
   console.log('登録 ' + n + ' 体・代表 ' + reps.length + ' 体・今回 ' + fought + ' 戦' + (fought < todo.length ? '（のこり ' + (todo.length - fought) + ' 戦は 次の 回）' : '') +
     '（' + ((Date.now() - t0) / 1000).toFixed(1) + ' 秒、うち リーグ ' + Math.min(fought, lgTodo) + ' / ' + lgTodo + ' 戦）・リーグ ' + (lgOut.meta ? lgOut.meta.sizes.join('/') : 'なし') + '・計算ずみ ' + have + ' / ' + need + ' 戦・キャッシュ ' + (after.length / 1024).toFixed(1) + ' KB・書きこみ ' + res.written + ' 行' + (champion ? '・きのうの チャンピオン ' + champion.name : ''));
+}
+
+// ---------- Discord（2026-10-04〜）: きのうの チャンピオン・ダイヤ 上位 3・0 時の 昇格／降格 ----------
+// 名前の 中の 記号で 太字などに ならない ように、@ で だれかを よばない ように（allowed_mentions: なし）
+const dEsc = s => String(s == null ? '' : s).replace(/([\\*_~`|>#[\]()-])/g, '\\$1').slice(0, 40);
+function discordText(ch, streak, top3, log) {
+  const md = s => { const [, m, d] = String(s).split('-'); return +m + '/' + +d; };
+  const lines = ['🏆 **' + md(ch.season) + ' の チャンピオンは「' + dEsc(ch.name) + '」！**（ダイヤ 1 い・しょうりつ ' + ch.pct + '%' + (streak > 1 ? '・' + streak + ' 日 れんぞく' : '') + '）'];
+  if (top3.length) lines.push('', '💎 ダイヤ リーグ の 上位', ...top3.map((x, i) => ['🥇', '🥈', '🥉'][i] + ' ' + dEsc(x.name) + '　' + x.pct + '%'));
+  const ud = log.map(s => /0 時の 昇格 (\d+)・降格 (\d+)/.exec(s)).find(Boolean);
+  if (ud) lines.push('', '⬆️ しょうかく ' + ud[1] + ' 人・⬇️ こうかく ' + ud[2] + ' 人');
+  if (log.some(s => s.includes('まぜなおし'))) lines.push('🔀 きょうは グループの まぜなおし の 日');
+  if (log.some(s => /を 足した/.test(s))) lines.push('✨ ' + log.find(s => /を 足した/.test(s)));
+  lines.push('', 'ランクせん → https://renmygames.com/draw-monster/#rank');
+  return lines.join('\n');
+}
+async function postDiscord(url, content) {
+  const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ content, username: 'ランクせん', allowed_mentions: { parse: [] } }), signal: AbortSignal.timeout(10e3) });
+  if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + (await r.text()).slice(0, 80));
+  console.log('Discord: おくった');
 }
