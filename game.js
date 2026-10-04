@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '224';
+const VERSION = '225';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
@@ -2354,7 +2354,7 @@ setTimeout(fitTmon, 400); setTimeout(fitTmon, 1500);
 // スタンプは つづけなくて いい（やった 日の ぶん たまる）。1〜6 こめ 🪙100、7 こめ 🪙10000 と げんてい かざり「スタンプかんむり」（id 85）→ 新しい カード
 // しんぽは TR（あそびの 記録）の できごと から 数える。まずは ?missiontest の オーナー端末だけ
 if (OWNER && /[?&]missiontest(=|&|$)/.test(location.search)) lsSet('missiontest', '1');
-const MSN_ON = OWNER && lsGet('missiontest') === '1';
+const MSN_ON = true;   // 2026-10-05 全員に（オーナー OK。前は ?missiontest の 端末だけ）
 const MSN_POOL = [
   // [id, むずかしさ 0〜2, ことば, かず, 数える できごと]
   ['fight5', 0, 'どこでも 5 かい たたかう', 5, (e, d) => e === 'result'],
@@ -2418,10 +2418,9 @@ if (MSN_ON) {
   const btn = document.createElement('button'); btn.id = 'msnbtn'; btn.className = 'msn-btn'; btn.innerHTML = '📅 <span>0/3</span>';
   const tp = document.querySelector('#title .panel'); tp.classList.add('msn-host'); tp.appendChild(btn); onTap(btn, msnOpen);
   const box = document.createElement('div'); box.id = 'msnbox'; box.hidden = true;
-  box.innerHTML = '<div class="msn-panel"><h2>📅 きょうの ミッション</h2><div id="msnlist"></div><div id="msnnote" class="msn-note"></div>'
-    + '<h3>💮 スタンプカード</h3><div id="msncard" class="msn-card"></div>'
-    + '<p class="msn-help">スタンプは まいにち つづけなくても たまるよ。7 こ あつめると 🪙' + MSN_BIG.toLocaleString() + ' と、ここでしか もらえない かざり「スタンプかんむり」！</p>'
-    + '<button id="msnclose" class="main">とじる</button></div>';
+  box.innerHTML = '<div class="msn-panel"><h2></h2><div id="msnlist"></div><div id="msnnote" class="msn-note"></div><h3></h3><div id="msncard" class="msn-card"></div><p class="msn-help"></p><button id="msnclose" class="main"></button></div>';
+  box.querySelector('h2').textContent = '📅 きょうの ミッション'; box.querySelector('h3').textContent = '💮 スタンプカード'; box.querySelector('#msnclose').textContent = 'とじる';
+  box.querySelector('.msn-help').textContent = 'スタンプは まいにち つづけなくても たまるよ。7 こ あつめると 🪙10,000 と、ここでしか もらえない かざり「スタンプかんむり」！';
   document.body.appendChild(box); onTap($('msnclose'), () => { box.hidden = true; });
   box.addEventListener('click', e => { if (e.target === box) box.hidden = true; });
   msnBadge();
