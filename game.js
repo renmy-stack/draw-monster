@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '220';
+const VERSION = '221';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} }
@@ -169,11 +169,6 @@ const SLOT_N = 12;
 if (OWNER && /[?&]backuptest(=|&|$)/.test(location.search)) lsSet('backuptest', '1');
 const BK_ON = true;
 const kzs = KZ.store(k => lsGet(k), (k, v) => lsSet(k, v));
-// いろちがい（2026-10-04 オーナー「ポケモンの 色違いみたいに」、かぶった ときに 1/1000）: まずは ?kztest の オーナー端末だけ（OK で 全員に）。?kzshiny で 次の かぶりを かならず いろちがいに（ためし）
-if (OWNER && /[?&]kztest(=|&|$)/.test(location.search)) lsSet('kztest', '1');
-const SHINY_ON = OWNER && lsGet('kztest') === '1';
-kzs.shinyOn = () => SHINY_ON;
-if (OWNER && /[?&]kzshiny(=|&|$)/.test(location.search)) kzs.shinyRate = () => 1;
 function withKz(d) { if (d && KZ_ON) { const e = kzs.eq(); d.kz = e.some(Boolean) ? e : null; } return d; }
 let side = uraOpen && lsGet('side') === 'ura' ? 'ura' : MINNA_OPEN && lsGet('side') === 'minna' ? 'minna' : KAMI_OPEN && lsGet('side') === 'kami' ? 'kami' : 'omote';
 if (terrain !== 'flat') side = ['ura', 'minna', 'kami'].includes(lsGet('side')) && sideOpen(lsGet('side')) ? lsGet('side') : 'omote';
@@ -631,7 +626,7 @@ function drawPreview(c, d, color, anim) {
   const hat = d.kz && d.kz[0];
   if ((d.crown || d.legend || d.halo || hat) && d.body && d.body.length > 2) { const cs = crownSpot(d.body.map(p => ({ x: p[0], y: p[1] }))); y0 = Math.min(y0, cs.y - (d.crown ? cs.s * 0.8 : 0) - (d.legend ? cs.s * 0.95 : 0) - (d.halo ? cs.s * 0.75 : 0) - (hat ? cs.hs * 1.05 : 0)); }
   const fx = anim && d.kz && d.kz[3] && d.body && d.body.length > 2 ? d.kz[3] : 0;
-  if (fx) { const fb = KZ.shBase(fx), big = fb === 84 ? 120 : [24, 73, 75, 76, 78, 79, 80].includes(fb) ? 60 : 30; y0 -= fb === 84 ? 130 : 55; x0 -= big; x1 += big; y1 += 10; }   // えふぇくとの ぶん 広く（つばさ・ブラックホール などは もっと）
+  if (fx) { const big = fx === 84 ? 120 : [24, 73, 75, 76, 78, 79, 80].includes(fx) ? 60 : 30; y0 -= fx === 84 ? 130 : 55; x0 -= big; x1 += big; y1 += 10; }   // えふぇくとの ぶん 広く（つばさ・ブラックホール などは もっと）
   const s = Math.min(c.width / (x1 - x0 + 40), c.height / (y1 - y0 + 40));
   g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, c.width, c.height);
   g.setTransform(s, 0, 0, s, c.width / 2 - (x0 + x1) / 2 * s, c.height / 2 - (y0 + y1) / 2 * s);
@@ -653,11 +648,10 @@ function kzPrevFx(c, g, d, fx, front) {
   let floor = -Infinity; for (const p of d.leg) floor = Math.max(floor, p[1]);
   const foot = d.leg[d.leg.length - 1], fist = d.arm[d.arm.length - 1], w = x1 - x0;
   const now = performance.now(), dt = Math.min(0.05, (now - st.last) / 1000); st.last = now; st.n++;
-  const shb = KZ.isShiny(fx) ? KZ.shBase(fx) : 0; fx = KZ.shBase(fx);   // いろちがいも 同じ うごき（かけらに しるし shb）
-  if (fx === 19 && st.n % 10 === 0) st.parts.push({ shb, x: foot[0] + (Math.random() - 0.5) * w * 1.2, y: floor, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 100, k: 'flower', rot: Math.random() * 6 });
-  if (fx === 20 && st.n % 35 === 0) for (let i = 0; i < 8; i++) { const a = Math.random() * 6.28, v = 200 * (0.5 + Math.random()); st.parts.push({ shb, x: fist[0], y: fist[1], vx: Math.cos(a) * v, vy: Math.sin(a) * v - 140, c: '#ffeb3b', life: 40, k: 'star' }); }
-  if (fx === 21 && st.n % 18 === 0) { const sd = Math.random() < 0.5 ? -1 : 1; st.parts.push({ shb, x: x0 + w * (0.5 + sd * 0.45), y: y0 + 12, vx: sd * 80, vy: -140, c: '#81d4fa', life: 40, k: 'drop' }); }
-  if (fx === 70 && st.n % 7 === 0) st.parts.push({ shb, x: foot[0] + (Math.random() - 0.5) * w * 0.8, y: floor - 2, vx: (Math.random() - 0.5) * 40, vy: -15, g: -0.02, c: '#bcaaa4', life: 30, k: 'dust' });
+  if (fx === 19 && st.n % 10 === 0) st.parts.push({ x: foot[0] + (Math.random() - 0.5) * w * 1.2, y: floor, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 100, k: 'flower', rot: Math.random() * 6 });
+  if (fx === 20 && st.n % 35 === 0) for (let i = 0; i < 8; i++) { const a = Math.random() * 6.28, v = 200 * (0.5 + Math.random()); st.parts.push({ x: fist[0], y: fist[1], vx: Math.cos(a) * v, vy: Math.sin(a) * v - 140, c: '#ffeb3b', life: 40, k: 'star' }); }
+  if (fx === 21 && st.n % 18 === 0) { const sd = Math.random() < 0.5 ? -1 : 1; st.parts.push({ x: x0 + w * (0.5 + sd * 0.45), y: y0 + 12, vx: sd * 80, vy: -140, c: '#81d4fa', life: 40, k: 'drop' }); }
+  if (fx === 70 && st.n % 7 === 0) st.parts.push({ x: foot[0] + (Math.random() - 0.5) * w * 0.8, y: floor - 2, vx: (Math.random() - 0.5) * 40, vy: -15, g: -0.02, c: '#bcaaa4', life: 30, k: 'dust' });
   for (let i = st.parts.length - 1; i >= 0; i--) {
     const p = st.parts[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 900 * (p.g == null ? 1 : p.g) * dt; p.vx *= 0.96;
     if (--p.life <= 0 || p.y > floor + 1) { st.parts.splice(i, 1); continue; }
@@ -828,10 +822,9 @@ function drawArena(si) {
 }
 // かざりの えふぇくと（バトル中だけ。見た目だけで 強さには 関係ない）: 足もと・あせ は ここで、ほのお・かみなり・オーラ は kazari.js の fxBack / fxFront
 function kzFx(fx, tf, w, ex, ey, legA, legB) {
-  const shb = KZ.isShiny(fx) ? KZ.shBase(fx) : 0; fx = KZ.shBase(fx);
-  if (fx === 21 && Math.random() < 0.06) { const s = Math.random() < 0.5 ? -1 : 1, p = tf(ex + s * w * 0.35, ey - 4); parts.push({ shb, x: p[0], y: p[1], vx: s * 90, vy: -150, c: '#81d4fa', life: 40, k: 'drop' }); }   // あせ
-  else if (fx === 70) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.15) parts.push({ shb, x: f[0], y: -2, vx: (Math.random() - 0.5) * 50, vy: -20, g: -0.02, c: '#bcaaa4', life: 30, k: 'dust' }); } }   // すなぼこり
-  else if (fx === 19) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.12) parts.push({ shb, x: f[0], y: 0, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 110, k: 'flower', rot: Math.random() * 6 }); } }   // あしあとに はな
+  if (fx === 21 && Math.random() < 0.06) { const s = Math.random() < 0.5 ? -1 : 1, p = tf(ex + s * w * 0.35, ey - 4); parts.push({ x: p[0], y: p[1], vx: s * 90, vy: -150, c: '#81d4fa', life: 40, k: 'drop' }); }   // あせ
+  else if (fx === 70) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.15) parts.push({ x: f[0], y: -2, vx: (Math.random() - 0.5) * 50, vy: -20, g: -0.02, c: '#bcaaa4', life: 30, k: 'dust' }); } }   // すなぼこり
+  else if (fx === 19) { for (const L of [legA, legB]) { const f = L[L.length - 1]; if (f[1] > -8 && Math.random() < 0.12) parts.push({ x: f[0], y: 0, vx: 0, vy: 0, g: 0, c: ['#f48fb1', '#ce93d8', '#fff59d', '#80deea'][Math.random() * 4 | 0], life: 110, k: 'flower', rot: Math.random() * 6 }); } }   // あしあとに はな
 }
 // かざりの ほのお・かみなり・オーラを 体の 座標で（back: 体の うしろ / front: まえ）
 function kzFxLayer(b, fx, front) {
@@ -1044,15 +1037,15 @@ function showKz(msg) {
   if (myRobot) drawPreview($('kzprev'), withKz(withCrown(myRobot)), ME.color);
   const own = kzs.own(), eq = kzs.eq(), seen = kzSeen(), list = $('kzlist'); list.innerHTML = '';
   const gAll = KZ.ITEMS.filter(it => it && kzGacha(it)), gGot = gAll.filter(it => own.includes(it.id)).length;
-  $('kzgot').textContent = (gGot >= gAll.length ? 'ガチャの かざりは ぜんぶ そろった！🎉' : 'ガチャの かざり ' + gGot + ' / ' + gAll.length) + (SHINY_ON || kzs.shiny().length ? '・✦ いろちがい ' + kzs.shiny().length + ' / ' + gAll.length : '');
+  $('kzgot').textContent = gGot >= gAll.length ? 'ガチャの かざりは ぜんぶ そろった！🎉' : 'ガチャの かざり ' + gGot + ' / ' + gAll.length;
   KZ.SLOTS.forEach((slot, si) => {
     // 場所ごとに 折りたたみ（見出しに 集めた数 と いま つけている もの）。開いて いるかは おぼえておく
     const box = document.createElement('details'); box.className = 'kz-slot'; box.open = kzOpen.has(slot);
     box.addEventListener('toggle', () => { if (box.open) kzOpen.add(slot); else kzOpen.delete(slot); lsSet('kz.open', JSON.stringify([...kzOpen])); });
-    const cur = KZ.ITEMS[KZ.shBase(eq[si])], curSh = KZ.isShiny(eq[si]), shOwn = kzs.shiny(), total = KZ.ITEMS.filter(it => kzShown(it) && it.slot === slot), gac = total.filter(kzGacha), ext = total.filter(it => !kzGacha(it));
+    const cur = KZ.ITEMS[eq[si]], total = KZ.ITEMS.filter(it => kzShown(it) && it.slot === slot), gac = total.filter(kzGacha), ext = total.filter(it => !kzGacha(it));
     const got = gac.filter(it => own.includes(it.id)).length, gotX = ext.filter(it => own.includes(it.id)).length;   // 数は ガチャの ぶんと 🎁（ガチャでは でない）を べつに
     const nNew = total.filter(it => own.includes(it.id) && !seen.includes(it.id)).length;
-    box.innerHTML = '<summary><b>' + KZ.SLOT_LABEL[slot] + '</b><span class="kz-cnt">' + got + ' / ' + gac.length + '</span>' + (ext.length ? '<span class="kz-cnt kz-cntx">🎁 ' + gotX + ' / ' + ext.length + '</span>' : '') + (gac.some(it => shOwn.includes(it.id)) ? '<span class="kz-cnt kz-cnts">✦ ' + gac.filter(it => shOwn.includes(it.id)).length + '</span>' : '') + (nNew ? '<span class="kz-new">NEW ' + nNew + '</span>' : '') + '<span class="kz-cur">' + (cur ? 'いま: ' + (curSh ? '✦ ' : '') + cur.name : 'なし') + '</span></summary>' + (cur && cur.desc ? '<small class="kz-desc">' + cur.desc + '</small>' : '') + '<div class="kz-items"></div>';
+    box.innerHTML = '<summary><b>' + KZ.SLOT_LABEL[slot] + '</b><span class="kz-cnt">' + got + ' / ' + gac.length + '</span>' + (ext.length ? '<span class="kz-cnt kz-cntx">🎁 ' + gotX + ' / ' + ext.length + '</span>' : '') + (nNew ? '<span class="kz-new">NEW ' + nNew + '</span>' : '') + '<span class="kz-cur">' + (cur ? 'いま: ' + cur.name : 'なし') + '</span></summary>' + (cur && cur.desc ? '<small class="kz-desc">' + cur.desc + '</small>' : '') + '<div class="kz-items"></div>';
     const row = box.querySelector('.kz-items');
     const none = document.createElement('button'); none.textContent = 'なし'; none.className = eq[si] ? '' : 'on';
     onTap(none, () => { const e = kzs.eq(); e[si] = 0; kzs.setEq(e); showKz(); }); row.appendChild(none);
@@ -1067,10 +1060,6 @@ function showKz(msg) {
       if (has) onTap(b, () => { kzMarkSeen(it.id); const e = kzs.eq(); e[si] = e[si] === it.id ? 0 : it.id; kzs.setEq(e); TR('kzeq', { s: slot, id: e[si] }); showKz(); });
       else b.disabled = true;
       row.appendChild(b);
-      if (has && shOwn.includes(it.id)) {   // いろちがい: ふつうの ボタンの となりに ✦ の ボタン
-        const sid = it.id + KZ.SH, sb = document.createElement('button'); sb.className = 'r' + it.r + ' kz-sh' + (eq[si] === sid ? ' on' : ''); sb.textContent = '✦ ' + it.name;
-        onTap(sb, () => { const e = kzs.eq(); e[si] = e[si] === sid ? 0 : sid; kzs.setEq(e); TR('kzeq', { s: slot, id: e[si] }); showKz(); }); row.appendChild(sb);
-      }
     }
     list.appendChild(box);
   });
@@ -1080,7 +1069,7 @@ onTap($('kzclose'), () => { $('kzbox').hidden = true; showTitle(); });
 onTap($('kzpull'), () => {
   if (kzs.coins() < KZ.PRICE) return;
   const r = KZ.pull(kzs, Math.random); if (!r) { showKz(); return; }   // 先に 引いて、星の 数で 演出を 変える
-  TR('gacha', r.shiny ? { id: r.item.id, dup: 1, sh: 1 } : { id: r.item.id, dup: r.dup ? 1 : 0 });
+  TR('gacha', { id: r.item.id, dup: r.dup ? 1 : 0 });
   $('kzpull').disabled = true; $('kzpull10').disabled = true;
   KZStage.play({ rs: [r], multi: false, onDone: () => {   // ガチャマシンの 演出（kzstage.js）の あとに 当たりカード
     const si = KZ.SLOTS.indexOf(r.item.slot);
@@ -1092,14 +1081,13 @@ onTap($('kzpull'), () => {
     $('kzrsub').textContent = '👀 おためし（まだ つけて ないよ）\n' + (r.dup ? 'もう もってた… 🪙 +' + KZ.DUP_BACK + ' もどったよ' : 'NEW！ ' + KZ.SLOT_LABEL[r.item.slot] + 'の いちらんから つけてね') + (r.item.desc ? '\n' + r.item.desc : '');
     kzShow = r.item; kzRevealDraw();
     showKz('<span class="r' + r.item.r + '">' + '★'.repeat(r.item.r) + ' ' + r.item.name + '</span>' + (r.dup ? '<br>かぶり 🪙 +' + KZ.DUP_BACK : '<br>ゲット！'));
-    if (r.shiny) kzShinyReveal(r.item);
   } });
 });
 onTap($('kzrok'), () => { $('kzreveal').hidden = true; kzShow = null; });
 // 10 連＋1: 11 こ いっぺんに。演出は いちばん 高い 星に 合わせる。自動では つけない（NEW が つく ので 一覧から えらぶ）
 onTap($('kzpull10'), () => {
   const rs = KZ.pullMulti(kzs, Math.random); if (!rs) { showKz(); return; }
-  for (const r of rs) TR('gacha', r.shiny ? { id: r.item.id, dup: 1, m: 1, sh: 1 } : { id: r.item.id, dup: r.dup ? 1 : 0, m: 1 });
+  for (const r of rs) TR('gacha', { id: r.item.id, dup: r.dup ? 1 : 0, m: 1 });
   const top = Math.max(...rs.map(r => r.item.r));
   const best = rs.filter(r => r.item.r === top).sort((a, b) => (a.dup - b.dup))[0];
   $('kzpull10').disabled = true; $('kzpull').disabled = true;
@@ -1111,10 +1099,9 @@ onTap($('kzpull10'), () => {
     const nNew = rs.filter(r => !r.dup).length, back = rs.filter(r => r.dup).length * KZ.DUP_BACK;
     $('kzrsub').textContent = '👀 おためし（まだ つけて ないよ）\n' + 'NEW ' + nNew + ' こ' + (back ? '・かぶり 🪙 +' + back : '') + '\n' + '★★★ ' + rs.filter(r => r.item.r === 3).length + '・★★ ' + rs.filter(r => r.item.r === 2).length + '・★ ' + rs.filter(r => r.item.r === 1).length;
     const grid = $('kzrgrid'); grid.innerHTML = ''; grid.hidden = false;
-    rs.forEach((r, i) => { const d = document.createElement('div'); d.className = 'kzg r' + r.item.r + (r.shiny ? ' sh' : r.dup ? ' dup' : ''); d.style.animationDelay = (i * 0.07) + 's'; d.innerHTML = '<b>' + '★'.repeat(r.item.r) + '</b>' + r.item.name + (r.shiny ? '<i>✦</i>' : r.dup ? '' : '<i>NEW</i>'); grid.appendChild(d); });
+    rs.forEach((r, i) => { const d = document.createElement('div'); d.className = 'kzg r' + r.item.r + (r.dup ? ' dup' : ''); d.style.animationDelay = (i * 0.07) + 's'; d.innerHTML = '<b>' + '★'.repeat(r.item.r) + '</b>' + r.item.name + (r.dup ? '' : '<i>NEW</i>'); grid.appendChild(d); });
     kzShow = best.item; kzRevealDraw();
     showKz('10れん ＋1 の けっか：NEW ' + nNew + ' こ');
-    const shr = rs.find(r => r.shiny); if (shr) kzShinyReveal(shr.item);
   } });
 });
 // かざりの 一覧（オーナーの 確認用）: 場所ごとに 20 こを 並べて 動かす。上の ボタンで 場所を かえる・とじる
@@ -1147,15 +1134,6 @@ function kzGallery(slot, nocrown) {
 }
 // ガチャ画面を 開いている 間は 見本を 動かす（★★ ★★★ の かざりは ずっと 動いている）
 let kzShow = null;
-// いろちがいが 出た: カードを いろちがいの 見た目に して ひかる
-function kzShinyReveal(it) {
-  const rv = $('kzreveal'); rv.classList.add('shiny');
-  $('kzrstars').textContent = '✦ いろちがい ✦'; $('kzrname').textContent = it.name;
-  const sub = '1000 かいに 1 かいの いろちがい！\n' + KZ.SLOT_LABEL[it.slot] + 'の いちらんの ✦ から つけてね';
-  $('kzrsub').textContent = rv.classList.contains('multi') ? sub + '\n' + $('kzrsub').textContent.replace(/^👀[^\n]*\n/, '') : sub;
-  kzShow = Object.assign({}, it, { id: it.id + KZ.SH }); kzRevealDraw();
-  showKz('<span class="kz-shmsg">✦ いろちがい ' + it.name + ' ✦</span>');
-}
 var kzAnimOn = false;
 function kzRevealDraw() {   // 当たりの おためしは 素の モンスターに その かざりだけ（出た ときに すぐ 1 回、あとは kzAnim で 動く）
   if (!kzShow || !myRobot) return;

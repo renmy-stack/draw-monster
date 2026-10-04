@@ -471,7 +471,6 @@
     'かいて！モンスターバトル': 'Draw! Monster Battle', 'ランクせん': 'Ranked', 'けいさんちゅう': 'calculating',
     'たたかう': 'Fight', 'クリア': 'Clear',
     'からだの日': 'Body day', 'うでの日': 'Arm day', 'あしの日': 'Leg day',
-    '1000 かいに 1 かいの いろちがい！': 'A 1-in-1000 shiny!', 'の いちらんの ✦ から つけてね': ' list: equip it from ✦', 'いろちがい': 'shiny',   // 2026-10-04 いろちがい
   }, SIDE)).sort((a, b) => b[0].length - a[0].length);
 
   const cache = new Map();
