@@ -43,7 +43,8 @@ jobs:
           git init -q -b board
           git add -A
           git -c user.name=rank-bot -c user.email=279485679+renmy-stack@users.noreply.github.com commit -qm "board $(date -u +%FT%TZ)"
-          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" board
+          # GitHub が いっしゅん「fatal error in commit_refs」を 返す ことが ある（2026-10-05 18:31）→ 10 びょう まって 3 回まで
+          for i in 1 2 3; do git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" board && break; [ "$i" = 3 ] && exit 1; echo "push しっぱい → もう 1 回 ($i)"; sleep 10; done
       # 新しい 組み合わせを 計算した ときだけ 保存（同じ 中身の キャッシュを 積み上げない）
       - if: always() && (steps.batch.outputs.changed == '1' || steps.ev.outputs.changed == '1')
         uses: actions/cache/save@v4
