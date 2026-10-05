@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '227';
+const VERSION = '228';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
@@ -2355,16 +2355,18 @@ setTimeout(fitTmon, 400); setTimeout(fitTmon, 1500);
 // しんぽは TR（あそびの 記録）の できごと から 数える。まずは ?missiontest の オーナー端末だけ
 if (OWNER && /[?&]missiontest(=|&|$)/.test(location.search)) lsSet('missiontest', '1');
 const MSN_ON = true;   // 2026-10-05 全員に（オーナー OK。前は ?missiontest の 端末だけ）
+// ぼうけん ＝ おもて・うら・みんな・かみ（ちけいも ふくむ）。10/5 オーナー「ぼうけんで 3 かい かつ が ふえない」→ はじめは 水平だけ 数えて いた
+const MSN_ADV = ['omote', 'ura', 'minna', 'kami'];
 const MSN_POOL = [
   // [id, むずかしさ 0〜2, ことば, かず, 数える できごと]
   ['fight5', 0, 'どこでも 5 かい たたかう', 5, (e, d) => e === 'result'],
-  ['win3', 0, 'ぼうけんで 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && (d.side === 'omote' || d.side === 'ura') && !d.ter],
+  ['win3', 0, 'ぼうけんで 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && MSN_ADV.includes(d.side)],
   ['gacha1', 0, 'ガチャを 1 かい ひく', 1, (e, d) => e === 'gacha'],
   ['rank2', 0, 'ランクせんで れんしゅう 2 かい', 2, (e, d) => e === 'result' && d.side === 'rank'],
   ['ko3', 1, 'KO で 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && d.reason === 'ko'],
   ['ter3', 1, 'ちけいで 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && !!d.ter],
   ['kz1', 1, 'かざりを つけかえる', 1, (e, d) => e === 'kzeq' && !!d.id],
-  ['win8', 1, 'ぼうけんで 8 かい かつ', 8, (e, d) => e === 'result' && d.win === 'win' && (d.side === 'omote' || d.side === 'ura') && !d.ter],
+  ['win8', 1, 'ぼうけんで 8 かい かつ', 8, (e, d) => e === 'result' && d.win === 'win' && MSN_ADV.includes(d.side)],
   ['rankreg1', 1, 'ランクせんに とうろく（しなおし も OK）', 1, (e, d) => e === 'rankreg', '2026-10-06'],   // 10/5 オーナー: 描きなおして 登録しなおす 人を ふやす。日の とちゅうで きょうの 3 つが かわらない ように あした から
   ['fast3', 2, '10 びょう いないに 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && d.t <= 10],
   ['terc1', 2, 'ちけいを 1 つ クリア', 1, (e, d) => e === 'terrainclear'],
