@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '226';
+const VERSION = '227';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
@@ -2365,6 +2365,7 @@ const MSN_POOL = [
   ['ter3', 1, 'ちけいで 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && !!d.ter],
   ['kz1', 1, 'かざりを つけかえる', 1, (e, d) => e === 'kzeq' && !!d.id],
   ['win8', 1, 'ぼうけんで 8 かい かつ', 8, (e, d) => e === 'result' && d.win === 'win' && (d.side === 'omote' || d.side === 'ura') && !d.ter],
+  ['rankreg1', 1, 'ランクせんに とうろく（しなおし も OK）', 1, (e, d) => e === 'rankreg', '2026-10-06'],   // 10/5 オーナー: 描きなおして 登録しなおす 人を ふやす。日の とちゅうで きょうの 3 つが かわらない ように あした から
   ['fast3', 2, '10 びょう いないに 3 かい かつ', 3, (e, d) => e === 'result' && d.win === 'win' && d.t <= 10],
   ['terc1', 2, 'ちけいを 1 つ クリア', 1, (e, d) => e === 'terrainclear'],
   ['ev1', 2, 'イベントに モンスターを だす', 1, (e, d) => e === 'evreg'],
@@ -2374,7 +2375,7 @@ const MSN_COIN = 500, MSN_STAMP_COIN = 100, MSN_BIG = 10000, MSN_ITEM = 85;   //
 const msnDay = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
 function msnToday(day) {   // その 日の 3 つ（日付から きまる）
   let h = 0; for (const ch of day) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return [0, 1, 2].map(lv => { const p = MSN_POOL.filter(m => m[1] === lv); h = (Math.imul(h, 1103515245) + 12345) >>> 0; return p[h % p.length]; });
+  return [0, 1, 2].map(lv => { const p = MSN_POOL.filter(m => m[1] === lv && !(m[5] && day < m[5])); h = (Math.imul(h, 1103515245) + 12345) >>> 0; return p[h % p.length]; });
 }
 function msnLoad() { let s = {}; try { s = JSON.parse(lsGet('msn') || '{}'); } catch (e) {} const day = msnDay(); if (s.day !== day) { s = { day, prog: {}, done: [], stamps: s.stamps || 0, cards: s.cards || 0, stamped: false, seen: false }; lsSet('msn', JSON.stringify(s)); } return s; }
 const msnSave = s => lsSet('msn', JSON.stringify(s));
