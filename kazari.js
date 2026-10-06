@@ -97,6 +97,8 @@ const ITEMS = [
   { id: 84, slot: 'fx', name: 'きんの はね', r: 3, sup: true, desc: 'おうえん して くれた 人だけの きんの はね。せなかで はばたく' },
   // 配布イベントの かざり（2026-10-06〜）は gift: true（ガチャには 出ない・もって いない 人には 見せない）。コードは tools/event_codes.js
   { id: 85, slot: 'head', name: 'スタンプかんむり', r: 3, stamp: true, desc: 'まいにちの ミッションで スタンプを 7 こ あつめると もらえる' },   // 2026-10-04 ガチャには 出ない
+  // ハロウィン（配布イベント 2026-10、オーナーが 5 案から C を えらんだ）
+  { id: 86, slot: 'fx', name: 'ランタンおばけ', r: 3, gift: true, desc: 'かぼちゃの ランタンを もった おばけが ついてくる' },
 ];
 const PRICE = 100, DUP_BACK = 30, RATE = [0, 0.6, 0.3, 0.1];
 const WIN = { omote: 10, ura: 30, minna: 60, kami: 120 }, CLEAR = { omote: 50, ura: 150, minna: 300, kami: 600 }, HIST_MAX = 30;   // かみ（v173）: ここに なくて コイン 0・毎回「かちすぎ」と 出て いた
@@ -826,6 +828,56 @@ function goldWingsDraw(g, info, t, pairs) {
   }
 }
 function goldWings(g, info, t) { goldWingsDraw(g, info, t, 2); }
+// ---------- ランタンおばけ（id 86、ハロウィンの 配布。2026-10-06 オーナーが 5 案から C）----------
+// おばけ 1 ぴき: 原点が からだの まんなか、S = 高さの めやす、dir = 向き（1 右）。うしろの 手に かぼちゃの ランタン
+function ghostPaint(g, S, t, dir) {
+  const top = -S * 0.5, hw = S * 0.42, hem = S * 0.42, line = 'rgba(70,60,120,.55)';
+  g.save(); g.scale(dir, 1);
+  // ふんわり 光る まわり
+  g.save(); g.globalCompositeOperation = 'lighter';
+  const gl = g.createRadialGradient(0, 0, S * 0.2, 0, 0, S * 0.95); gl.addColorStop(0, 'rgba(220,230,255,.35)'); gl.addColorStop(1, 'rgba(220,230,255,0)'); g.fillStyle = gl; g.beginPath(); g.arc(0, 0, S * 0.95, 0, 7); g.fill();
+  g.restore();
+  // うで（ちいさい だえん）: ふる
+  const arm = sx => { g.save(); g.translate(sx * hw * 0.95, S * 0.02); g.rotate(sx * (-0.3 + Math.sin(t * 5 + sx) * 0.25)); g.beginPath(); g.ellipse(sx * S * 0.1, 0, S * 0.14, S * 0.08, 0, 0, 7); g.fillStyle = '#e8ecfb'; g.fill(); g.strokeStyle = line; g.lineWidth = S * 0.035; g.stroke(); g.restore(); };
+  arm(1);
+  // からだ: まるい あたま・すその なみ 3 つ（ゆれる）
+  g.beginPath(); g.moveTo(-hw, hem * 0.2);
+  g.bezierCurveTo(-hw, top - S * 0.08, hw, top - S * 0.08, hw, hem * 0.2);
+  g.lineTo(hw, hem);
+  for (let i = 0, wv = S * 0.09; i < 3; i++) { const xa = hw - (i + 0.5) / 3 * hw * 2, xb = hw - (i + 1) / 3 * hw * 2; g.quadraticCurveTo(xa, hem + wv * 1.6 + Math.sin(t * 4 + i * 1.7) * wv, xb, hem); }
+  g.closePath();
+  g.globalAlpha = 0.95; g.fillStyle = lin(g, 0, top, 0, hem + S * 0.2, ['#ffffff', '#e3e7f8']); g.fill();
+  g.globalAlpha = 1; g.strokeStyle = line; g.lineWidth = S * 0.04; g.stroke();
+  // かお（ときどき まばたき）
+  const blink = (t % 3.7) < 0.13 ? 0.15 : 1, ex = S * 0.06, ey = -S * 0.1;
+  g.fillStyle = '#2a2440';
+  for (const k of [-1, 1]) { g.beginPath(); g.ellipse(ex + k * S * 0.15, ey, S * 0.055, S * 0.085 * blink, 0, 0, 7); g.fill(); }
+  g.fillStyle = '#fff'; for (const k of [-1, 1]) { g.beginPath(); g.arc(ex + k * S * 0.15 + S * 0.02, ey - S * 0.035, S * 0.018, 0, 7); g.fill(); }
+  g.fillStyle = 'rgba(255,128,171,.55)'; for (const k of [-1, 1]) { g.beginPath(); g.ellipse(ex + k * S * 0.25, ey + S * 0.1, S * 0.06, S * 0.035, 0, 0, 7); g.fill(); }
+  g.fillStyle = '#2a2440'; g.beginPath(); g.ellipse(ex, ey + S * 0.13, S * 0.035, S * 0.045, 0, 0, 7); g.fill();
+  // かぼちゃの ランタン（うしろの 手に ぶらさげる。モンスターの からだに かくれない ように）
+  const pr = S * 0.2, py = S * 0.38;
+  g.save(); g.translate(-hw * 1.05, S * 0.05); g.rotate(Math.sin(t * 2.2) * 0.25);
+  g.strokeStyle = '#4e342e'; g.lineWidth = S * 0.03; g.beginPath(); g.moveTo(0, 0); g.lineTo(0, S * 0.22); g.stroke();
+  g.save(); g.globalCompositeOperation = 'lighter'; const lg = g.createRadialGradient(0, py, pr * 0.3, 0, py, pr * 3.2); lg.addColorStop(0, 'rgba(255,171,64,' + (0.45 + 0.15 * wave(t, 6, 2)).toFixed(2) + ')'); lg.addColorStop(1, 'rgba(255,145,0,0)'); g.fillStyle = lg; g.beginPath(); g.arc(0, py, pr * 3.2, 0, 7); g.fill(); g.restore();
+  g.fillStyle = lin(g, 0, py - pr, 0, py + pr, ['#ffa726', '#ef6c00']); g.strokeStyle = '#8d3c00'; g.lineWidth = S * 0.025;
+  g.beginPath(); g.ellipse(0, py, pr * 1.2, pr, 0, 0, 7); g.fill(); g.stroke();
+  g.beginPath(); g.moveTo(0, py - pr); g.quadraticCurveTo(-pr * 0.45, py, 0, py + pr); g.moveTo(0, py - pr); g.quadraticCurveTo(pr * 0.45, py, 0, py + pr); g.stroke();
+  g.fillStyle = '#5d4037'; g.fillRect(-pr * 0.1, py - pr * 1.3, pr * 0.2, pr * 0.35);
+  g.fillStyle = '#fff59d';
+  for (const k of [-1, 1]) { g.beginPath(); g.moveTo(k * pr * 0.45, py - pr * 0.35); g.lineTo(k * pr * 0.2, py - pr * 0.05); g.lineTo(k * pr * 0.7, py - pr * 0.05); g.closePath(); g.fill(); }
+  g.beginPath(); g.moveTo(-pr * 0.6, py + pr * 0.25); g.quadraticCurveTo(0, py + pr * 0.75, pr * 0.6, py + pr * 0.25); g.quadraticCurveTo(0, py + pr * 0.45, -pr * 0.6, py + pr * 0.25); g.fill();
+  g.restore();
+  arm(-1);
+  g.restore();
+}
+// モンスターの うしろ・上を ふわふわ ついてくる
+function ghostFx(g, info, t) {
+  const { x0, x1, y0, y1 } = info, w = x1 - x0, h = y1 - y0, cx = (x0 + x1) / 2, f = info.facing || 1;
+  const S = Math.max(40, Math.min(95, Math.max(w, h) * 0.8));
+  const gx = cx - f * (w * 0.5 + S * 0.35) + Math.sin(t * 1.1) * S * 0.15, gy = y0 + S * 0.1 + Math.sin(t * 2.2) * S * 0.12;
+  g.save(); g.translate(gx, gy); g.rotate(Math.sin(t * 1.6) * 0.12); ghostPaint(g, S, t, f); g.restore();
+}
 function fxBackMore(g, id, info, t, w, h, cx, cy) {
   const { x0, x1, y0, y1, pts } = info, facing = info.facing || 1, R = Math.random;
   if (id === 67 && R() < 0.1) info.spawn(x0 + R() * w, y0 + R() * h * 0.4, { vx: (R() - 0.5) * 40, vy: -50 - R() * 40, g: -0.03, c: R() < 0.5 ? '#ff4081' : '#ff80ab', life: 60, k: 'heart' });
@@ -866,6 +918,8 @@ function fxBackMore(g, id, info, t, w, h, cx, cy) {
     if (R() < 0.2) info.spawn(cx + (R() - 0.5) * w * 2.4, y0 + R() * h * 0.5, { vx: (R() - 0.5) * 40, vy: -50 - R() * 50, g: -0.06, c: R() < 0.5 ? '#ff6d00' : '#ffab40', life: 40, k: 'ember' });
   } else if (id === 84) {   // きんの はね（おうえんの お礼）
     goldWings(g, info, t);
+  } else if (id === 86) {   // ランタンおばけ（ハロウィンの 配布）
+    ghostFx(g, info, t);
   } else if (id === 79) {   // ブラックホール（★★★）: うずまく ひかりの わ・すいこまれる つぶ
     const Rr = Math.max(w, h) * 0.9;
     g.save(); g.globalCompositeOperation = 'lighter';
