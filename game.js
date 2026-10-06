@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '231';
+const VERSION = '232';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
@@ -2292,9 +2292,9 @@ function showMore() { mode = 'more'; show('more'); renderSupport(); renderCodeBo
 // 金がくは いくらでも（オーナー）。見た目だけで 強さは かわらない。まずは ?supporttest の 端末だけ
 if (OWNER && /[?&]supporttest(=|&|$)/.test(location.search)) lsSet('supporttest', '1');
 const SUP_ON = true;   // 2026-10-03 全員に（オーナー OK。前は ?supporttest の 端末だけ）
-// コードを いれる 欄（下の renderCodeBox）。まずは ?codetest の 端末だけ
+// コードを いれる 欄（下の renderCodeBox）
 if (OWNER && /[?&]codetest(=|&|$)/.test(location.search)) lsSet('codetest', '1');
-const CODE_ON = devFlag('codetest');
+const CODE_ON = true;   // 2026-10-06 全員に（オーナー「すぐ だそう」、1 万人の おいわい。前は ?codetest の 端末だけ）
 const DISCORD_URL = 'https://discord.gg/tZYXj9Sg6V';   // 2026-10-04 オーナーの サーバー（招待は 期限なし）
 const SUPPORT_URL = 'https://ofuse.me/a2b46de1';   // OFUSE の ページ（2026-10-03 オーナー 登録）
 const SUP_ITEM = 84;
@@ -2337,7 +2337,7 @@ async function redeemSupport() {
     TR('supcode', { ok: 1, item: r.item }); renderSupport();
   } catch (e) { msg.textContent = 'つながらなかったよ。すこし まってから もういちど'; }
 }
-// ---------- コードを いれる（2026-10-06〜）: 配布イベントの コード（みんな 同じ・期限つき・1 台 1 回）と おうえんの コードを ここで。まずは ?codetest の 端末だけ ----------
+// ---------- コードを いれる（2026-10-06〜）: 配布イベントの コード（みんな 同じ・期限つき・1 台 1 回）と おうえんの コードを ここで ----------
 // もらえるのは イベント限定の かざり（kazari.js の gift）。コードは tools/event_codes.js で 作る
 function renderCodeBox() {
   if (!CODE_ON || $('codebox')) return;
