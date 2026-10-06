@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '232';
+const VERSION = '233';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
@@ -2360,9 +2360,12 @@ async function redeemCode() {
     const it = KZ.ITEMS[r.item], own = kzs.own(), had = own.includes(r.item);
     if (!had) { own.push(r.item); kzs.setOwn(own); }
     if (it) { const e = kzs.eq(); e[KZ.SLOTS.indexOf(it.slot)] = r.item; kzs.setEq(e); }   // すぐ つける
+    // コインも つく コード（2026-10-06〜）: この 端末で コードごとに 1 回だけ 足す（同じ コードを もう一度 入れても ふえない）
+    let got = 0;
+    if (r.coins > 0) { let done = []; try { done = JSON.parse(lsGet('kz.codecoins') || '[]'); } catch (e) {} if (!done.includes(code)) { done.push(code); lsSet('kz.codecoins', JSON.stringify(done)); kzs.addCoins(r.coins); got = r.coins; } }
     $('codein').value = '';
-    msg.textContent = !it ? 'もらった！ ゲームを さいしんに すると 見られるよ' : had ? '「' + it.name + '」は もう もって いるよ。つけて おいたよ' : r.item === SUP_ITEM ? '🪽 きんの はね を もらった！ もう せなかに ついて います。おうえん ありがとう！' : '🎁「' + it.name + '」を もらった！ もう つけて います';
-    TR('code', { ok: 1, item: r.item }); renderSupport();
+    msg.textContent = (!it ? 'もらった！ ゲームを さいしんに すると 見られるよ' : had ? '「' + it.name + '」は もう もって いるよ。つけて おいたよ' : r.item === SUP_ITEM ? '🪽 きんの はね を もらった！ もう せなかに ついて います。おうえん ありがとう！' : '🎁「' + it.name + '」を もらった！ もう つけて います') + (got ? '\n🪙 コイン ' + got.toLocaleString('ja-JP') + ' まいも もらった！' : '');
+    TR('code', { ok: 1, item: r.item, coins: got }); renderSupport(); navSync(mode);
   } catch (e) { msg.textContent = 'つながらなかったよ。すこし まってから もういちど'; }
 }
 // トップの モンスターの 絵を 枠の あいている 高さ・はばに あわせる（Safari は vh が バーの ぶん ずれるので 測る）。いちど 小さく して 枠の 大きさを 測る

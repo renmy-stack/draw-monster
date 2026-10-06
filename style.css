@@ -591,7 +591,7 @@ body.browser #statsbox { padding-bottom: calc(16px + env(safe-area-inset-bottom)
 .sup-code button { font-size: 14px; padding: 6px 12px; }
 .codebox { display: flex; flex-direction: column; gap: 6px; padding: 12px; margin-bottom: 12px; border: 3px solid var(--ink); border-radius: 14px; background: #fff; text-align: left; }
 .code-d { font-size: 12px; line-height: 1.5; color: #555; }
-.sup-msg { font-size: 12px; font-weight: 700; color: #8d5a00; min-height: 1em; }
+.sup-msg { font-size: 12px; font-weight: 700; color: #8d5a00; min-height: 1em; white-space: pre-line; }
 
 /* リーグ（2026-10-03〜）: ランクせんの じぶんの モンスターの 名前の 下 */
 .rk-league { display: inline-flex; flex-wrap: wrap; column-gap: 6px; align-items: baseline; margin-top: 4px; padding: 3px 10px; border-radius: 999px; border: 2px solid var(--ink); font-size: 13px; }

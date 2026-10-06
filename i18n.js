@@ -391,6 +391,7 @@
     [/^🏔 つぎの ちけい「(.+)」が ひらいた！$/, '🏔 New terrain unlocked: $1!'],
     [/^🎁「(.+)」を もらった！ もう つけて います$/, "🎁 You got \"$1\"! It's on now"],
     [/^「(.+)」は もう もって いるよ。つけて おいたよ$/, 'You already have "$1". Put it on for you'],
+    [/🪙 コイン ([\d,]+) まいも もらった！/, '🪙 You also got $1 coins!'],
     [/^⭐ (.+) の しるしを もらった！（この モンスター (\d+) こ）$/, '⭐ Got the $1 mark! (this monster has $2)'],
     [/^⭐ (.+) の しるし（もう もってる）（この モンスター (\d+) こ）$/, '⭐ $1 mark (already had it) (this monster has $2)'],
     [/^🎁 うらを (\d+) つの ちけいで クリア！ げんてい かざり「(.+)」を もらった！$/, '🎁 Hidden cleared on $1 terrains! Got the limited item "$2"!'],
