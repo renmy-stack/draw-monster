@@ -95,6 +95,7 @@ const ITEMS = [
   { id: 83, slot: 'head', name: 'せかいの かんむり', r: 3, lim: 9, desc: 'ちけいの うらを 9 つ クリアで もらえる（水平も 1 つ）' },
   // おうえん（OFUSE）の お礼（2026-10-03）。ガチャには 出ない・もって いない 人には 見せない。コードを 入れると もらえる（game.js）
   { id: 84, slot: 'fx', name: 'きんの はね', r: 3, sup: true, desc: 'おうえん して くれた 人だけの きんの はね。せなかで はばたく' },
+  // 配布イベントの かざり（2026-10-06〜）は gift: true（ガチャには 出ない・もって いない 人には 見せない）。コードは tools/event_codes.js
   { id: 85, slot: 'head', name: 'スタンプかんむり', r: 3, stamp: true, desc: 'まいにちの ミッションで スタンプを 7 こ あつめると もらえる' },   // 2026-10-04 ガチャには 出ない
 ];
 const PRICE = 100, DUP_BACK = 30, RATE = [0, 0.6, 0.3, 0.1];
@@ -145,7 +146,7 @@ function pullMulti(st, rand) {
 }
 function roll(st, rand) {
   const u = rand(); const r = u < RATE[3] ? 3 : u < RATE[3] + RATE[2] ? 2 : 1;
-  const pool = ITEMS.filter(it => it && it.r === r && !it.lim && !it.sup && !it.stamp), it = pool[Math.floor(rand() * pool.length) % pool.length];
+  const pool = ITEMS.filter(it => it && it.r === r && !it.lim && !it.sup && !it.stamp && !it.gift), it = pool[Math.floor(rand() * pool.length) % pool.length];
   const own = st.own(), dup = own.includes(it.id);
   if (dup) st.addCoins(DUP_BACK); else { own.push(it.id); st.setOwn(own); }
   return { item: it, dup };

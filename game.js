@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '228';
+const VERSION = '229';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
@@ -1018,10 +1018,10 @@ onTap($('start'), showDraw);
 onTap($('tmycard'), showDraw);
 onTap($('minnaabout'), showMinnaInfo);
 // ---------- かざり（ガチャ・かざる）----------
-const kzShown = it => it && (!it.stamp || MSN_ON || kzs.own().includes(it.id)) && (!it.sup || kzs.own().includes(it.id)) && (!it.lim || ARENA_ON || kzs.own().includes(it.id));   // おうえんの お礼（sup）は もって いる 人だけ   // ちけいの 限定かざりは ちけいが 出ている 端末だけ（もって いれば 出す）
+const kzShown = it => it && (!it.stamp || MSN_ON || kzs.own().includes(it.id)) && (!(it.sup || it.gift) || kzs.own().includes(it.id)) && (!it.lim || ARENA_ON || kzs.own().includes(it.id));   // おうえんの お礼（sup）・配布イベント（gift）は もって いる 人だけ   // ちけいの 限定かざりは ちけいが 出ている 端末だけ（もって いれば 出す）
 // ガチャで 出る かざり（80 種）と、出ない かざり（ちけいの ごほうび lim・おうえんの お礼 sup）を わけて 見せる（2026-10-04 オーナー）
-const kzGacha = it => !it.lim && !it.sup && !it.stamp;
-const kzHow = it => it.lim ? 'ちけいの うらを ' + it.lim + ' つ クリア' : it.stamp ? 'ミッションの スタンプを 7 こ' : 'おうえんの おれい';
+const kzGacha = it => !it.lim && !it.sup && !it.stamp && !it.gift;
+const kzHow = it => it.lim ? 'ちけいの うらを ' + it.lim + ' つ クリア' : it.stamp ? 'ミッションの スタンプを 7 こ' : it.gift ? 'イベントの コード' : 'おうえんの おれい';
 function kzSorted(slot) { return KZ.ITEMS.filter(it => kzShown(it) && it.slot === slot).sort((a, b) => a.r - b.r || a.id - b.id); }
 const kzOpen = new Set((() => { try { return JSON.parse(lsGet('kz.open') || '[]'); } catch (e) { return []; } })());
 // NEW: 手に 入れて から まだ 一覧で タップして いない かざり（ガチャで 自動で ついた ぶんも まだ NEW）。はじめは 持っている ものを ぜんぶ 見た ことに
@@ -2287,11 +2287,14 @@ function navSync(id) {
   nb.querySelector('[data-tab=kz]').classList.toggle('dot', KZ_ON && kzs.coins() >= KZ.PRICE);
   nb.querySelector('[data-tab=ev]').hidden = !EV_ON;
 }
-function showMore() { mode = 'more'; show('more'); renderSupport(); }
+function showMore() { mode = 'more'; show('more'); renderSupport(); renderCodeBox(); }
 // ---------- おうえん（2026-10-03〜、OFUSE）: おうえん して くれた 人に お礼の かざり「きんの はね」の コードを おくる。コードは 1 回きり（受付係 POST /code）----------
 // 金がくは いくらでも（オーナー）。見た目だけで 強さは かわらない。まずは ?supporttest の 端末だけ
 if (OWNER && /[?&]supporttest(=|&|$)/.test(location.search)) lsSet('supporttest', '1');
 const SUP_ON = true;   // 2026-10-03 全員に（オーナー OK。前は ?supporttest の 端末だけ）
+// コードを いれる 欄（下の renderCodeBox）。まずは ?codetest の 端末だけ
+if (OWNER && /[?&]codetest(=|&|$)/.test(location.search)) lsSet('codetest', '1');
+const CODE_ON = devFlag('codetest');
 const DISCORD_URL = 'https://discord.gg/tZYXj9Sg6V';   // 2026-10-04 オーナーの サーバー（招待は 期限なし）
 const SUPPORT_URL = 'https://ofuse.me/a2b46de1';   // OFUSE の ページ（2026-10-03 オーナー 登録）
 const SUP_ITEM = 84;
@@ -2303,11 +2306,13 @@ function renderSupport() {
     box.innerHTML = '<canvas id="supprev" width="240" height="240"></canvas><div class="sup-body"><div class="sup-t">🪽 おうえんする</div>'
       + '<div class="sup-d">ゲームを おうえん して くれた 人に、お礼の かざり「きんの はね」の コードを おくります。金がくは いくらでも OK。見た目だけで、強さは かわりません。</div>'
       + '<a id="supgo" class="sup-go" target="_blank" rel="noopener">OFUSE で おうえんする</a>'
-      + '<div class="sup-code"><input id="supcode" placeholder="コード" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="supok" class="sub">つかう</button></div>'
+      + (CODE_ON ? '<div class="sup-d">コードは 下の「🎁 コードを いれる」で つかえるよ</div>' : '<div class="sup-code"><input id="supcode" placeholder="コード" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="supok" class="sub">つかう</button></div>')
       + '<div id="supmsg" class="sup-msg"></div></div>';
     $('morelist').prepend(box);
-    onTap($('supok'), redeemSupport);
-    $('supcode').addEventListener('keydown', e => { if (e.key === 'Enter') redeemSupport(); });
+    if (!CODE_ON) {
+      onTap($('supok'), redeemSupport);
+      $('supcode').addEventListener('keydown', e => { if (e.key === 'Enter') redeemSupport(); });
+    }
     $('supgo').addEventListener('click', () => TR('supgo', null));
   }
   const go = $('supgo');
@@ -2330,6 +2335,34 @@ async function redeemSupport() {
     const it = KZ.ITEMS[r.item]; if (it) { const e = kzs.eq(); e[KZ.SLOTS.indexOf(it.slot)] = r.item; kzs.setEq(e); }   // すぐ つける
     $('supcode').value = ''; msg.textContent = '🪽 きんの はね を もらった！ もう せなかに ついて います。おうえん ありがとう！';
     TR('supcode', { ok: 1, item: r.item }); renderSupport();
+  } catch (e) { msg.textContent = 'つながらなかったよ。すこし まってから もういちど'; }
+}
+// ---------- コードを いれる（2026-10-06〜）: 配布イベントの コード（みんな 同じ・期限つき・1 台 1 回）と おうえんの コードを ここで。まずは ?codetest の 端末だけ ----------
+// もらえるのは イベント限定の かざり（kazari.js の gift）。コードは tools/event_codes.js で 作る
+function renderCodeBox() {
+  if (!CODE_ON || $('codebox')) return;
+  const box = document.createElement('div'); box.id = 'codebox'; box.className = 'codebox';
+  box.innerHTML = '<div class="sup-t">🎁 コードを いれる</div>'
+    + '<div class="code-d">イベントや おうえんの コードを いれると、かざりが もらえるよ</div>'
+    + '<div class="sup-code"><input id="codein" placeholder="コード" maxlength="16" autocomplete="off" autocapitalize="characters" spellcheck="false"><button id="codeok" class="sub">つかう</button></div>'
+    + '<div id="codemsg" class="sup-msg"></div>';
+  const sb = $('supbox'); if (sb) sb.after(box); else $('morelist').prepend(box);
+  onTap($('codeok'), redeemCode);
+  $('codein').addEventListener('keydown', e => { if (e.key === 'Enter') redeemCode(); });
+}
+async function redeemCode() {
+  const code = ($('codein').value || '').toUpperCase().replace(/[^0-9A-Z]/g, ''), msg = $('codemsg');
+  if (code.length < 4) { msg.textContent = 'コードを ぜんぶ 入れてね'; return; }
+  msg.textContent = 'たしかめて います…';
+  try {
+    const r = await (await fetch(RANK_API + '/code', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ dev: rankDev(), code }) })).json();
+    if (!r || !r.item) { msg.textContent = (r && r.error) || 'その コードは つかえないよ'; TR('code', { ok: 0 }); return; }
+    const it = KZ.ITEMS[r.item], own = kzs.own(), had = own.includes(r.item);
+    if (!had) { own.push(r.item); kzs.setOwn(own); }
+    if (it) { const e = kzs.eq(); e[KZ.SLOTS.indexOf(it.slot)] = r.item; kzs.setEq(e); }   // すぐ つける
+    $('codein').value = '';
+    msg.textContent = !it ? 'もらった！ ゲームを さいしんに すると 見られるよ' : had ? '「' + it.name + '」は もう もって いるよ。つけて おいたよ' : r.item === SUP_ITEM ? '🪽 きんの はね を もらった！ もう せなかに ついて います。おうえん ありがとう！' : '🎁「' + it.name + '」を もらった！ もう つけて います';
+    TR('code', { ok: 1, item: r.item }); renderSupport();
   } catch (e) { msg.textContent = 'つながらなかったよ。すこし まってから もういちど'; }
 }
 // トップの モンスターの 絵を 枠の あいている 高さ・はばに あわせる（Safari は vh が バーの ぶん ずれるので 測る）。いちど 小さく して 枠の 大きさを 測る
