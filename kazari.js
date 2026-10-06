@@ -99,6 +99,8 @@ const ITEMS = [
   { id: 85, slot: 'head', name: 'スタンプかんむり', r: 3, stamp: true, desc: 'まいにちの ミッションで スタンプを 7 こ あつめると もらえる' },   // 2026-10-04 ガチャには 出ない
   // ハロウィン（配布イベント 2026-10、オーナーが 5 案から C を えらんだ）
   { id: 86, slot: 'fx', name: 'ランタンおばけ', r: 3, gift: true, desc: 'かぼちゃの ランタンを もった おばけが ついてくる' },
+  // 1 万人の おいわい（配布イベント 2026-10、オーナーが 4 案から B を えらんだ）
+  { id: 87, slot: 'fx', name: 'おいわいふうせん', r: 3, gift: true, desc: '1万人 ありがとう！ 金の「1万」と 赤・青の ふうせん' },
 ];
 const PRICE = 100, DUP_BACK = 30, RATE = [0, 0.6, 0.3, 0.1];
 const WIN = { omote: 10, ura: 30, minna: 60, kami: 120 }, CLEAR = { omote: 50, ura: 150, minna: 300, kami: 600 }, HIST_MAX = 30;   // かみ（v173）: ここに なくて コイン 0・毎回「かちすぎ」と 出て いた
@@ -878,6 +880,53 @@ function ghostFx(g, info, t) {
   const gx = cx - f * (w * 0.5 + S * 0.35) + Math.sin(t * 1.1) * S * 0.15, gy = y0 + S * 0.1 + Math.sin(t * 2.2) * S * 0.12;
   g.save(); g.translate(gx, gy); g.rotate(Math.sin(t * 1.6) * 0.12); ghostPaint(g, S, t, f); g.restore();
 }
+// ---------- おいわいふうせん（id 87、1 万人の おいわいの 配布。2026-10-06 オーナーが 4 案から B）----------
+// 金の 文字ふうせん: 字の 形に ふくらんだ アルミの ふうせん。x, y = 字の まんなか
+function foilText(g, txt, x, y, size, rot, t, cols) {
+  const c = cols || ['#fff6c8', '#ffd54f', '#e0a800', '#a86b00'];
+  g.save(); g.translate(x, y); g.rotate(rot);
+  g.font = '900 ' + size + 'px "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Yu Gothic", sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+  g.strokeStyle = 'rgba(80,45,0,.85)'; g.lineWidth = size * 0.3; g.strokeText(txt, 0, 0);
+  const gr = g.createLinearGradient(-size * 0.4, -size * 0.5, size * 0.4, size * 0.5); gr.addColorStop(0, c[0]); gr.addColorStop(0.35, c[1]); gr.addColorStop(0.75, c[2]); gr.addColorStop(1, c[3]);
+  g.strokeStyle = gr; g.lineWidth = size * 0.2; g.strokeText(txt, 0, 0);
+  g.fillStyle = gr; g.fillText(txt, 0, 0);
+  // つや: 左上に 白い すじ（ゆっくり 光る）
+  g.save(); g.globalCompositeOperation = 'lighter'; g.globalAlpha = 0.35 + 0.25 * wave(t, 2, size);
+  g.strokeStyle = '#fff'; g.lineWidth = size * 0.05; g.beginPath(); g.ellipse(-size * 0.12, -size * 0.2, size * 0.12, size * 0.05, -0.6, 0, 7); g.stroke();
+  g.restore();
+  g.restore();
+}
+// まるい ふうせん
+function roundBalloon(g, x, y, r, rot, col) {
+  g.save(); g.translate(x, y); g.rotate(rot);
+  const gr = g.createRadialGradient(-r * 0.35, -r * 0.4, r * 0.1, 0, 0, r * 1.15); gr.addColorStop(0, col[0]); gr.addColorStop(0.5, col[1]); gr.addColorStop(1, col[2]);
+  g.fillStyle = gr; g.beginPath(); g.ellipse(0, 0, r * 0.88, r, 0, 0, 7); g.fill();
+  g.strokeStyle = 'rgba(0,0,0,.25)'; g.lineWidth = r * 0.06; g.stroke();
+  g.fillStyle = col[2]; g.beginPath(); g.moveTo(-r * 0.12, r * 1.08); g.lineTo(r * 0.12, r * 1.08); g.lineTo(0, r * 0.95); g.closePath(); g.fill();
+  g.fillStyle = 'rgba(255,255,255,.7)'; g.beginPath(); g.ellipse(-r * 0.35, -r * 0.45, r * 0.16, r * 0.26, -0.5, 0, 7); g.fill();
+  g.restore();
+}
+// ひも: (ax, ay) → (bx, by)、すこし たるませて ゆらす
+function balloonString(g, ax, ay, bx, by, t, i) {
+  const mx = (ax + bx) / 2 + Math.sin(t * 2 + i) * 6, my = (ay + by) / 2 + 6;
+  g.strokeStyle = 'rgba(255,255,255,.75)'; g.lineWidth = 1.4; g.beginPath(); g.moveTo(ax, ay); g.quadraticCurveTo(mx, my, bx, by); g.stroke();
+}
+// 金の「1」「万」と 赤・青の まる ふうせん。ひもは からだの うしろ・上に むすぶ
+function balloonFx(g, info, t) {
+  const { x0, x1, y0, y1 } = info, w = x1 - x0, h = y1 - y0, cx = (x0 + x1) / 2, f = info.facing || 1;
+  const S = Math.max(40, Math.min(95, Math.max(w, h) * 0.8)), sz = S * 0.8, r = S * 0.32;
+  const ax = cx - f * w * 0.3, ay = y0 + h * 0.15;   // ひもを むすぶ ところ
+  const bx = cx - f * (w * 0.35 + S * 0.25), by = y0 - S * 0.95;   // ふうせんの まんなか
+  const sway = i => Math.sin(t * 1.4 + i * 1.3) * 0.12, en = typeof window !== 'undefined' && window.LANG === 'en';   // 英語は「10」「K」
+  const list = [   // [x, y, ひもの 先までの 下, 絵]
+    [bx - S * 1.0, by + S * 0.15 + Math.sin(t * 1.6 + 2) * 4, r * 1.1, (x, y, i) => roundBalloon(g, x, y, r, sway(i), ['#ffcdd2', '#e53935', '#8e0000'])],
+    [bx + S * 1.0, by + S * 0.1 + Math.sin(t * 1.6 + 3) * 4, r * 1.1, (x, y, i) => roundBalloon(g, x, y, r, sway(i), ['#bbdefb', '#1e88e5', '#0d3c7a'])],
+    [bx - sz * 0.5, by - S * 0.1 + Math.sin(t * 1.8) * 4, sz * 0.5, (x, y, i) => foilText(g, en ? '10' : '1', x - (en ? sz * 0.08 : 0), y, en ? sz * 0.8 : sz, sway(i), t)],
+    [bx + sz * 0.5, by - S * 0.2 + Math.sin(t * 1.8 + 1) * 4, sz * 0.5, (x, y, i) => foilText(g, en ? 'K' : '万', x, y, sz, sway(i), t)],
+  ];
+  list.forEach(([x, y, dy], i) => balloonString(g, ax, ay, x, y + dy, t, i));
+  list.forEach(([x, y, , draw], i) => draw(x, y, i));
+}
 function fxBackMore(g, id, info, t, w, h, cx, cy) {
   const { x0, x1, y0, y1, pts } = info, facing = info.facing || 1, R = Math.random;
   if (id === 67 && R() < 0.1) info.spawn(x0 + R() * w, y0 + R() * h * 0.4, { vx: (R() - 0.5) * 40, vy: -50 - R() * 40, g: -0.03, c: R() < 0.5 ? '#ff4081' : '#ff80ab', life: 60, k: 'heart' });
@@ -920,6 +969,8 @@ function fxBackMore(g, id, info, t, w, h, cx, cy) {
     goldWings(g, info, t);
   } else if (id === 86) {   // ランタンおばけ（ハロウィンの 配布）
     ghostFx(g, info, t);
+  } else if (id === 87) {   // おいわいふうせん（1 万人の おいわいの 配布）
+    balloonFx(g, info, t);
   } else if (id === 79) {   // ブラックホール（★★★）: うずまく ひかりの わ・すいこまれる つぶ
     const Rr = Math.max(w, h) * 0.9;
     g.save(); g.globalCompositeOperation = 'lighter';
