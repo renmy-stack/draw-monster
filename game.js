@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '233';
+const VERSION = '234';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
@@ -2365,6 +2365,7 @@ async function redeemCode() {
     if (r.coins > 0) { let done = []; try { done = JSON.parse(lsGet('kz.codecoins') || '[]'); } catch (e) {} if (!done.includes(code)) { done.push(code); lsSet('kz.codecoins', JSON.stringify(done)); kzs.addCoins(r.coins); got = r.coins; } }
     $('codein').value = '';
     msg.textContent = (!it ? 'もらった！ ゲームを さいしんに すると 見られるよ' : had ? '「' + it.name + '」は もう もって いるよ。つけて おいたよ' : r.item === SUP_ITEM ? '🪽 きんの はね を もらった！ もう せなかに ついて います。おうえん ありがとう！' : '🎁「' + it.name + '」を もらった！ もう つけて います') + (got ? '\n🪙 コイン ' + got.toLocaleString('ja-JP') + ' まいも もらった！' : '');
+    if (got) for (const id of ['kzcoins', 'kzcoins2']) if ($(id)) $(id).textContent = '🪙 ' + kzs.coins();   // ぼうけん・ガチャの コイン表示も すぐ
     TR('code', { ok: 1, item: r.item, coins: got }); renderSupport(); navSync(mode);
   } catch (e) { msg.textContent = 'つながらなかったよ。すこし まってから もういちど'; }
 }
