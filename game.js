@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '235';
+const VERSION = '236';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
@@ -2531,6 +2531,10 @@ if (OWNER) {
   const sample = () => { const c = RB.CPU[2]; myRobot = RB.design(c.body, c.arm, c.leg); strokes = { body: myRobot.body, arm: myRobot.arm, leg: myRobot.leg }; };
   if (q.has('stage') && !q.has('shot')) stage = +q.get('stage');
   if (q.has('beaten')) beaten = [true, true, true, true, true];   // 開発用: 早送りボタンを見る
+  // 開発用: ?putslot=形の コード で あいている ほぞん スロットに 入れる（2026-10-07、ボス候補を オーナーの 端末で ためす）。URL から すぐ 消す
+  if (q.get('putslot')) { const c = q.get('putslot'); let d = null; try { d = RB.decodeDesign(c); } catch (e) {}
+    if (d && RB.validDesign(d)) { let i = 1; while (i < SLOT_N && slotDesign(i)) i++; lsSet('slot' + i, c); setTimeout(() => msnToast('🧪 ほぞん ' + i + ' に 入れました（そのほか の ほぞん から よびだしてね）', true), 1500); }
+    history.replaceState(null, '', location.pathname + location.hash); }
   if (KZ_OWNER && q.has('kzgallery')) kzGallery(q.get('kzgallery') || 'head', q.has('nocrown'));   // オーナーの 確認用: ?gachatest&kzgallery=head|face|body|fx（&nocrown で 王冠なし）
   if (KZ_OWNER) {
     if (q.get('kzreveal')) { const it = KZ.ITEMS[+q.get('kzreveal')]; showKz(''); const rv = $('kzreveal'); rv.className = 'r' + it.r; rv.hidden = false; $('kzrstars').textContent = '★'.repeat(it.r); $('kzrname').textContent = it.name; $('kzrsub').textContent = '👀 おためし（まだ つけて ないよ）\nNEW！ ' + KZ.SLOT_LABEL[it.slot] + 'の いちらんから つけてね' + (it.desc ? '\n' + it.desc : ''); kzShow = it; kzRevealDraw(); }
