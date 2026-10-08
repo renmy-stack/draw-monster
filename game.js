@@ -1,6 +1,6 @@
 // かいて！モンスターバトル — 描く画面（からだ・うで・あし）・バトルの描画・勝ち抜き・モンスターを送る
 'use strict';
-const VERSION = '237';
+const VERSION = '238';
 // あそびの きろく（/t.js。なくても うごく）
 window.T_VER = VERSION;
 function TR(e, d) { try { if (window.T) window.T(e, d); } catch (err) {} try { if (window.MSN) window.MSN(e, d); } catch (err) {} }   // MSN: 毎日の ミッション（2026-10-04）
@@ -1723,7 +1723,8 @@ function nkStop() { clearTimeout(nkLgTimer); for (const w of nkPool) w.terminate
 function nkWorkers() {
   if (nkPool.length) return nkPool;
   try {
-    const src = 'importScripts(' + JSON.stringify(new URL('sim.js?v=' + VERSION, location.href).href) + ');onmessage=function(e){var d=e.data;postMessage([d[0],RB.fight(RB.decodeDesign(d[1]),RB.decodeDesign(d[2])).winner||"D"]);};';
+    // 1 試合で エラーに なっても Worker ごと 止めない（"E" を 返して この 画面で 計算しなおす、2026-10-08）
+    const src = 'importScripts(' + JSON.stringify(new URL('sim.js?v=' + VERSION, location.href).href) + ');onmessage=function(e){var d=e.data,w;try{w=RB.fight(RB.decodeDesign(d[1]),RB.decodeDesign(d[2])).winner||"D";}catch(x){w="E";}postMessage([d[0],w]);};';
     const url = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
     const n = Math.max(1, Math.min(4, (navigator.hardwareConcurrency || 2) - 1));
     for (let i = 0; i < n; i++) nkPool.push(new Worker(url));
@@ -1751,12 +1752,22 @@ function nkLeague(g) {
   const pool = lg.todo.length ? nkWorkers() : [];
   lg.workers = pool.length;
   if (pool.length) {
+    // Worker が だめなら（sim.js が 読めない・エラー）この 画面で。計算中だった 組み合わせは ぜんぶ もどして から（2026-10-08: 前は ほかの Worker の ぶんが 消えて いた）
+    const fallback = ev => {
+      if (ev && ev.preventDefault) ev.preventDefault();
+      if (lg.fell) return; lg.fell = true;
+      for (const x of pool) { if (x._p) lg.todo.unshift(x._p); x._p = null; x.terminate(); }
+      nkPool = []; lg.busy = 0; lg.workers = 0;
+      TR('nkworker', { m: String(ev && ev.message || '').slice(0, 80) });
+      clearTimeout(nkLgTimer); nkLgTimer = setTimeout(step, 16);
+    };
     const feed = w => {
+      if (lg.fell) return;
       if (nkLg !== lg || mode !== 'nakama') { nkStop(); return; }
       const p = lg.todo.shift(); if (!p) { finish(); return; }
-      lg.busy++;
-      w.onmessage = e => { lg.busy--; ok(e.data[0], e.data[1]); feed(w); };
-      w.onerror = () => { lg.busy--; lg.todo.unshift(p); for (const x of nkPool) x.terminate(); nkPool = []; lg.busy = 0; nkLgTimer = setTimeout(step, 16); };   // Worker が だめなら この 画面で
+      lg.busy++; w._p = p;
+      w.onmessage = e => { if (lg.fell) return; lg.busy--; w._p = null; const r = e.data[1] === 'E' ? (RB.fight(RB.decodeDesign(p[0].code), RB.decodeDesign(p[1].code)).winner || 'D') : e.data[1]; ok(e.data[0], r); feed(w); };
+      w.onerror = fallback;
       w.postMessage([p[2], p[0].code, p[1].code]);
     };
     for (const w of pool) feed(w);
